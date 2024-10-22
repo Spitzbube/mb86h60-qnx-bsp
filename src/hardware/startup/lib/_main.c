@@ -33,7 +33,9 @@ unsigned long				cycles_freq;
 unsigned long				timer_freq;
 chip_info					dbg_device[2];
 unsigned					patch_channel;
+#endif //TODO
 struct startup_header		*shdr;
+#if 0 //TODO
 char						**_argv;
 int							_argc;
 unsigned 					max_cpus = ~0;
@@ -45,15 +47,14 @@ unsigned 					(*timer_diff)(unsigned start);
 struct syspage_entry		*_syspage_ptr;
 unsigned					misc_flags;
 
-extern struct bootargs_entry	boot_args;	//filled in by mkifs
-
 #endif //TODO
+
+extern struct bootargs_entry	boot_args;	//filled in by mkifs
 
 extern int	main(int argc,char **argv,char **envv);
 
 static char				*argv[20], *envv[20];
 
-#if 0 //TODO
 
 static void
 setup_cmdline(void) {
@@ -84,13 +85,10 @@ setup_cmdline(void) {
 
 }
 
-#endif //TODO
-
 
 void
 _main(void) {
 
-#if 0 //TODO
 	shdr = (struct startup_header *)boot_args.shdr_addr;
 
 	board_init();
@@ -98,6 +96,8 @@ _main(void) {
 	setup_cmdline();
 
 	cpu_startup();
+
+#if 0 //TODO
 
 	#define INIT_SYSPAGE_SIZE 0x600
 	init_syspage_memory(ws_alloc(INIT_SYSPAGE_SIZE), INIT_SYSPAGE_SIZE);
