@@ -25,12 +25,18 @@
 
 #include "startup.h"
 
+
+
 void board_init(void)
 {
 	/* 
 	 * put any board specific init (such as checking for arguments 
 	 * passed from IPL here.
 	 */
+
+	mb86h60_board_init();
+
+	console_send_string("board_init complete\n");
 }
 
 __SRCVERSION("board_init.c $Rev: 657836 $");

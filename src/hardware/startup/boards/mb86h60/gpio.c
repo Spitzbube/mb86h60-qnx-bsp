@@ -4,13 +4,13 @@
 #include "gpio.h"
 
 
-#define FAPI_GPIO_PIN_COUNT           96
+#define GPIO_PIN_COUNT           96
 
 
-int Data_20408478; //20408478 -4
-int Data_2040847c; //2040847c
+static int Data_20408478; //20408478 -4
+static int Data_2040847c; //2040847c
 
-Struct_20611068 Data_20611068[FAPI_GPIO_PIN_COUNT];
+static Struct_20611068 Data_20611068[GPIO_PIN_COUNT];
 
 
 typedef union
@@ -40,7 +40,7 @@ typedef union
 
 int gpio_init(void)
 {
-	unsigned char pin;
+	uint32_t pin;
 
 	Data_2040847c = (1 << 9);
 
@@ -58,9 +58,9 @@ int gpio_init(void)
 		Data_20408478 = 0xc3000504;
 	}
 
-	memset(Data_20611068, 0xff, FAPI_GPIO_PIN_COUNT*sizeof(Struct_20611068));
+	memset(&Data_20611068[0], 0xff, GPIO_PIN_COUNT * sizeof(Struct_20611068));
 
-	for (pin = 0; pin < FAPI_GPIO_PIN_COUNT; pin++)
+	for (pin = 0; pin < GPIO_PIN_COUNT; pin++)
 	{
 		//loc_204012e8
 		DataOut dataOut; //sp
@@ -87,7 +87,7 @@ int gpio_init(void)
 }
 
 
-int gpio_open(Struct_20401328* pParams, Struct_20611068** r5)
+int gpio_open(GPIO_Params* pParams, Struct_20611068** r5)
 {
 	DataOut dataOut; //sp
 
@@ -100,7 +100,7 @@ int gpio_open(Struct_20401328* pParams, Struct_20611068** r5)
 	}
 	else
 	{
-		if (pParams->bPin < FAPI_GPIO_PIN_COUNT)
+		if (pParams->bPin < GPIO_PIN_COUNT)
 		{
 			//20401358
 			Struct_20611068* r1 = &Data_20611068[pParams->bPin];

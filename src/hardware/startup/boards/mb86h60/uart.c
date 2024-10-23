@@ -3,35 +3,34 @@
 #include "gpio.h"
 #include "uart.h"
 
+#define UART_BAUDRATE 115200
 
-Uart_Module* Data_20408480; //20408480 +0
+Uart_Module* uart_hw_block; //20408480 +0 /  / 234c05c4
 unsigned int uartClockFrequency; //20408484 + 4
 Struct_20611068* Data_2040848c; //2040848c
 Struct_20611068* Data_20408490; //20408490
-Uart_Module Data_20408494[2] = //20408494
+Uart_Module uart_h60[2] = //20408494
 {
 		{0, (void*)0xc2000000},
 		{0, (void*)0xce000000},
 };
-Uart_Module Data_204084a4[2] = //204084a4
+Uart_Module uart_h61[2] = //204084a4
 {
 		{0, (void*)0xcd000000},
 		{0, (void*)0xce000000},
 };
 
 
-/* 2341ada0 - todo */
 int uart_write_byte(Uart_Module* r0, unsigned char ch)
 {
 	Uart_Regs* regs;
-	uint8_t sp;
 
 	if (r0 == 0)
 	{
 		return 1;
 	}
 
-	regs = r0->Data_4;
+	regs = r0->regs;
 
 	while ((regs->FREG_UART_FR & 0x28) != 0)
 	{
@@ -44,27 +43,26 @@ int uart_write_byte(Uart_Module* r0, unsigned char ch)
 }
 
 
-/* 2341adec - todo */
 char uart_init(Uart_Init_Params* pParams, Uart_Module** ppModule)
 {
 	int i;
 	uint8_t sp = 0;
 
-	if (pParams->bData_0 > 2)
+	if (pParams->index > 2)
 	{
 		return 3;
 	}
 
-	if (Data_20408480[pParams->bData_0].bData_0 != 0)
+	if (uart_hw_block[pParams->index].inUse != 0)
 	{
 		sp = 4;
 	}
 	else
 	{
-		Uart_Regs* pRegs = Data_20408480[pParams->bData_0].Data_4;
+		Uart_Regs* pRegs = uart_hw_block[pParams->index].regs;
 
-		unsigned int r8 = uartClockFrequency / (115200 * 16);
-		unsigned int r0 = ((uartClockFrequency * 4) / 115200);
+		unsigned int r8 = uartClockFrequency / (UART_BAUDRATE * 16);
+		unsigned int r0 = ((uartClockFrequency * 4) / UART_BAUDRATE);
 		r0 = r0 - (r8 * 64);
 		r0 = (5 + r0 * 10) / 10;
 
@@ -83,9 +81,9 @@ char uart_init(Uart_Init_Params* pParams, Uart_Module** ppModule)
 			gpio_open(&pParams->rxPin, &Data_20408490);
 		}
 
-		Data_20408480[pParams->bData_0].bData_0 = 1;
+		uart_hw_block[pParams->index].inUse = 1;
 
-		*ppModule = &Data_20408480[pParams->bData_0];
+		*ppModule = &uart_hw_block[pParams->index];
 
 		for (i = 0; i < 0xffff; i++)
 		{
@@ -103,27 +101,25 @@ char uart_init(Uart_Init_Params* pParams, Uart_Module** ppModule)
 }
 
 
-/* 2341acb4 - todo */
 int uart_setup(void)
 {
 	unsigned char i;
 
 	if (0 != sys_get_device_id())
 	{
-		Data_20408480 = Data_20408494;
+		uart_hw_block = uart_h60;
 		uartClockFrequency = 81000000;
 	}
 	else
 	{
-		Data_20408480 = Data_204084a4;
+		uart_hw_block = uart_h61;
 		uartClockFrequency = 99000000;
 	}
 
 	for (i = 0; i < 2; i++)
 	{
-		//loc_20401630
-		Data_20408480[i].bData_0 = 0;
-		Data_20408480[i].Data_4->FREG_UART_CR = 0;
+		uart_hw_block[i].inUse = 0;
+		uart_hw_block[i].regs->FREG_UART_CR = 0;
 	}
 
 	return 0;

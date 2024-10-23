@@ -21,8 +21,25 @@
 
 
 #include "startup.h"
-#include "gpio.h"
-#include "uart.h"
+
+
+const struct debug_device debug_devices[] = {
+	{ 	"mb86h60",
+#if 0
+		{	"0xFFFFEE00^0.0.133000000.16",	/* Use whatever boot loader baud rate */
+		},
+		init_bcm2835_debug,
+		put_bcm2835,
+		{	&display_char_bcm2835,
+			&poll_key_bcm2835,
+			&break_detect_bcm2835,
+		}
+#endif
+	},
+};
+
+
+
 
 /*
  * main()
@@ -38,30 +55,15 @@
  *    in the image file system.
  */
 
-Uart_Module* main_hUart0 = 0;
-
 int
 main(int argc, char **argv, char **envv)
 {
-	gpio_init();
-	uart_setup();
 
-	Uart_Init_Params uartParams;
+	console_send_string("Hello QNX!\n");
 
-	uartParams.bData_0 = 0;
-
-	uartParams.rxPin.bPin = 32;
-	uartParams.rxPin.dwOutFunction = 0xff;
-	uartParams.rxPin.dwInFunction = 21; //0x15; //+ 0x0100 /*0x115*/ = FAPI_GPIO_IN_UART0_DATA
-
-	uartParams.txPin.bPin = 33;
-	uartParams.txPin.dwOutFunction = 23; //0x17; //+ 0x0080 /*0x97*/ = FAPI_GPIO_OUT_UART0_DATA
-	uartParams.txPin.dwInFunction = 0xff;
-
-	uart_init(&uartParams, &main_hUart0);
-	console_init(main_hUart0);
-
-	console_send_string("Hello World!\n");
+#if 0
+	select_debug(debug_devices, sizeof(debug_devices));
+#endif
 
 	return 0;
 }

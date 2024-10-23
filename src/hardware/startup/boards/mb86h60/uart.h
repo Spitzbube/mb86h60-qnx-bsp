@@ -1,9 +1,9 @@
 
 typedef struct
 {
-	char bData_0; //0
-	Struct_20401328 txPin; //4
-	Struct_20401328 rxPin; //16
+	uint32_t index; //0
+	GPIO_Params txPin; //4
+	GPIO_Params rxPin; //16
 	//28?
 } Uart_Init_Params;
 
@@ -23,8 +23,8 @@ typedef struct
 
 typedef struct
 {
-	char bData_0; //0
-	Uart_Regs* Data_4; //4
+	char inUse; //0
+	Uart_Regs* regs; //4
 	//8
 } Uart_Module;
 

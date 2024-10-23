@@ -1,4 +1,4 @@
-[image=0x23f00000 ]
+[image=0x20000000 ]
 
 [virtual=armle,raw] .bootstrap = {
     startup-mb86h60

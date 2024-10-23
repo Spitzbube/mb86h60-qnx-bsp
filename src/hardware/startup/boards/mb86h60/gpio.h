@@ -4,18 +4,18 @@ typedef struct
 {
 	uint32_t dwOutFunction; //0
 	uint32_t dwInFunction; //4
-	uint8_t bPin; //8
+	uint32_t bPin; //8
 
-} Struct_20401328;
+} GPIO_Params;
 
 
 typedef struct
 {
-	char bData_0;
+	uint8_t bData_0;
 	int fill_4; //4
 	int Data_8; //8
 	//12
 } Struct_20611068;
 
 extern int gpio_init(void);
-extern int gpio_open(Struct_20401328* pParams, Struct_20611068** r5);
+extern int gpio_open(GPIO_Params* pParams, Struct_20611068** r5);

@@ -5,7 +5,6 @@
 
 
 Uart_Module* consoleUart; //23492280 +0
-
 char debug_string[500];
 
 

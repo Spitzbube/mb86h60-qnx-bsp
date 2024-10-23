@@ -25,7 +25,9 @@
 #if 0 //TODO
 
 unsigned					paddr_bits = 32;
+#endif //TODO
 int							debug_flag = 0;
+#if 0 //TODO
 unsigned					reserved_size;
 unsigned					reserved_align;
 unsigned long				cpu_freq;
@@ -95,9 +97,8 @@ _main(void) {
 
 	setup_cmdline();
 
-	cpu_startup();
-
 #if 0 //TODO
+	cpu_startup();
 
 	#define INIT_SYSPAGE_SIZE 0x600
 	init_syspage_memory(ws_alloc(INIT_SYSPAGE_SIZE), INIT_SYSPAGE_SIZE);

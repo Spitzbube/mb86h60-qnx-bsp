@@ -4,7 +4,7 @@
 
 int sys_get_device_id(void)
 {     
-   volatile int* reg = (void*) 0xd5000000;
+   volatile int* reg = (void*) 0xd5000000; //FREG_EFUSE_BASE_ADDRESS
    int r1 = reg[0];
    int r0 = reg[3];
    
