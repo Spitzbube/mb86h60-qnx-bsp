@@ -35,10 +35,8 @@ unsigned long				timer_freq;
 chip_info					dbg_device[2];
 unsigned					patch_channel;
 struct startup_header		*shdr;
-#if 0 //TODO
 char						**_argv;
 int							_argc;
-#endif
 unsigned 					max_cpus = ~0;
 unsigned					system_icache_idx = CACHE_LIST_END;
 unsigned					system_dcache_idx = CACHE_LIST_END;
@@ -47,9 +45,7 @@ chip_info					timer_chip;
 #endif
 unsigned 					(*timer_start)(void);
 unsigned 					(*timer_diff)(unsigned start);
-#if 0
 struct syspage_entry		*_syspage_ptr;
-#endif
 unsigned					misc_flags;
 
 
@@ -110,7 +106,6 @@ _main(void) {
 
 	main(_argc, _argv, envv);
 
-#if 0 //TODO
 	//
 	// Tell the mini-drivers that the next time they're called, they're
 	// going to be in the kernel. Also flip the handler & data pointers
@@ -130,7 +125,6 @@ _main(void) {
 	smp_hook_rtn();
 
 	startnext();
-#endif //TODO
 }
 
 static void

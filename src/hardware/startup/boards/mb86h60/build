@@ -1,7 +1,7 @@
 [image=0x20000000 ]
 
 [virtual=armle,raw] .bootstrap = {
-    startup-mb86h60
+    startup-mb86h60 -vvvvvvv
 
     PATH=:/proc/boot procnto-v6
      

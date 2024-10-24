@@ -62,11 +62,21 @@ const struct debug_device debug_devices[] = {
 int
 main(int argc, char **argv, char **envv)
 {
+	int opt;
+
 	console_send_string("Hello QNX!\n");
 
 #if 0 //TODO
 	add_callout_array(callouts, sizeof(callouts));
 #endif //TODO
+
+	while ( ( opt = getopt( argc, argv, COMMON_OPTIONS_STRING ) ) != -1 ) {
+		switch ( opt ) {
+			default:
+				handle_common_option( opt );
+				break;
+		}
+	}
 
 	kprintf("main: before select_debug\n");
 
