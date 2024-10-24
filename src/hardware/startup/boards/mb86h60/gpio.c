@@ -1,6 +1,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include "arm/mb86h60.h"
 #include "gpio.h"
 
 
@@ -112,7 +113,7 @@ int gpio_open(GPIO_Params* pParams, Struct_20611068** r5)
 			else
 			{
 				//loc_2040137c
-				volatile uint32_t* gpioRegs = (void*) 0xc3000000;
+				volatile uint32_t* gpioRegs = (void*) MB86H60_GPIO_BASE;
 
 				dataOut.dwData = 0; //r6;
 

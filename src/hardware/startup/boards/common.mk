@@ -8,7 +8,7 @@ LIB_VARIANT = $(subst .o,,a.$(COMPOUND_VARIANT))$(PSTAG_$(PADDR_SIZE))
 
 LINKER_TYPE=BOOTSTRAP
 INSTALLDIR = boot/sys
-LIBS = startup$(subst .,-,$(PSTAG_$(PADDR_SIZE))) #lzo ucl drvr
+LIBS = startup$(subst .,-,$(PSTAG_$(PADDR_SIZE))) ucl #lzo ucl drvr
 
 NAME = startup-$(SECTION)
 EXTRA_SILENT_VARIANTS+=$(subst -, ,$(SECTION))

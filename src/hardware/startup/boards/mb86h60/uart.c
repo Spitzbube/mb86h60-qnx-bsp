@@ -1,5 +1,6 @@
 
 #include <stdint.h>
+#include "arm/mb86h60.h"
 #include "gpio.h"
 #include "uart.h"
 
@@ -11,8 +12,8 @@ Struct_20611068* Data_2040848c; //2040848c
 Struct_20611068* Data_20408490; //20408490
 Uart_Module uart_h60[2] = //20408494
 {
-		{0, (void*)0xc2000000},
-		{0, (void*)0xce000000},
+		{0, (void*)MB86H60_UART0_BASE},
+		{0, (void*)MB86H60_UART1_BASE},
 };
 Uart_Module uart_h61[2] = //204084a4
 {

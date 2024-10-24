@@ -31,6 +31,7 @@
 
 
 #define MB86H60_UART0_BASE  0xc2000000
+#define MB86H60_UART1_BASE  0xce000000
 #define	MB86H60_UART_DR		    0x00	/* Data register */
 #define	MB86H60_UART_RSR		0x04	/* Receive status register */
 #define	MB86H60_UART_ECR		0x04	/* Error Clear register */
@@ -46,10 +47,10 @@
 #define	MB86H60_UART_MIS		0x40	/* Masked interrupt status register */
 #define	MB86H60_UART_ICR		0x44	/* Interrupt clear register */
 #define MB86H60_UART_SIZE       0x48
-
 #define	MB86H60_UART_FR_TXFF		(1 << 5)	/* Transmit FIFO full */
 #define	MB86H60_UART_FR_BUSY		(1 << 3)	/* UART Busy */
 
+#define MB86H60_GPIO_BASE   0xc3000000
 
 
 #endif /* MB86H60_H_ */

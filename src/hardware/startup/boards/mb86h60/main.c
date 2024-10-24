@@ -77,5 +77,58 @@ main(int argc, char **argv, char **envv)
 
 	kprintf("main: after select_debug\n");
 
+	/*
+	 * Collect information on all free RAM in the system
+	 */
+	init_raminfo();
+
+	/*
+	 * set CPU frequency
+	 */
+	if (cpu_freq == 0)
+	{
+        cpu_freq = 324000000;
+	}
+
+	/*
+	 * Remove RAM used by modules in the image
+	 */
+	alloc_ram(shdr->ram_paddr, shdr->ram_size, 1);
+	if (shdr->flags1 & STARTUP_HDR_FLAGS1_VIRTUAL)
+	{
+		init_mmu();
+	}
+
+    init_intrinfo();
+
+	init_qtime_mb86h60();
+
+	init_cacheattr();
+
+	kprintf("main: before init_cpuinfo\n");
+
+    init_cpuinfo();
+
+	kprintf("main: after init_cpuinfo\n");
+
+    init_hwinfo();
+
+	add_typed_string(_CS_MACHINE, "MB86H60");
+
+	/*
+	 * Load bootstrap executables in the image file system and Initialise
+	 * various syspage pointers. This must be the _last_ initialisation done
+	 * before transferring control to the next program.
+	 */
+	init_system_private();
+
+	/*
+	 * This is handy for debugging a new version of the startup program.
+	 * Commenting this line out will save a great deal of code.
+	 */
+	print_syspage();
+
+	kprintf("Jumping to QNX\n");
+
 	return 0;
 }
