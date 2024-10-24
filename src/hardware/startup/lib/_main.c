@@ -27,23 +27,19 @@
 unsigned					paddr_bits = 32;
 #endif //TODO
 int							debug_flag = 0;
-#if 0 //TODO
 unsigned					reserved_size;
 unsigned					reserved_align;
-#endif
 unsigned long				cpu_freq;
-#if 0
 unsigned long				cycles_freq;
 unsigned long				timer_freq;
-#endif //TODO
 chip_info					dbg_device[2];
 unsigned					patch_channel;
 struct startup_header		*shdr;
 #if 0 //TODO
 char						**_argv;
 int							_argc;
-unsigned 					max_cpus = ~0;
 #endif
+unsigned 					max_cpus = ~0;
 unsigned					system_icache_idx = CACHE_LIST_END;
 unsigned					system_dcache_idx = CACHE_LIST_END;
 #if 0
@@ -53,9 +49,9 @@ unsigned 					(*timer_start)(void);
 unsigned 					(*timer_diff)(unsigned start);
 #if 0
 struct syspage_entry		*_syspage_ptr;
+#endif
 unsigned					misc_flags;
 
-#endif //TODO
 
 extern struct bootargs_entry	boot_args;	//filled in by mkifs
 

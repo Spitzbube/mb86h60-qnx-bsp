@@ -22,19 +22,23 @@
 
 #include "startup.h"
 
+void init_mb86h60_debug(unsigned, const char *, const char *);
+void put_mb86h60(int);
+extern struct callout_rtn display_char_mb86h60;
+
 
 const struct debug_device debug_devices[] = {
 	{ 	"mb86h60",
-#if 0
 		{	"0xFFFFEE00^0.0.133000000.16",	/* Use whatever boot loader baud rate */
 		},
-		init_bcm2835_debug,
-		put_bcm2835,
-		{	&display_char_bcm2835,
-			&poll_key_bcm2835,
-			&break_detect_bcm2835,
-		}
+		init_mb86h60_debug,
+		put_mb86h60,
+		{	&display_char_mb86h60,
+#if 0 //TODO
+			&poll_key_mb86h60,
+			&break_detect_mb86h60,
 #endif
+		}
 	},
 };
 
@@ -58,12 +62,20 @@ const struct debug_device debug_devices[] = {
 int
 main(int argc, char **argv, char **envv)
 {
-
 	console_send_string("Hello QNX!\n");
 
-#if 0
+#if 0 //TODO
+	add_callout_array(callouts, sizeof(callouts));
+#endif //TODO
+
+	kprintf("main: before select_debug\n");
+
+	/*
+	 * Initialise debugging output
+	 */
 	select_debug(debug_devices, sizeof(debug_devices));
-#endif
+
+	kprintf("main: after select_debug\n");
 
 	return 0;
 }
