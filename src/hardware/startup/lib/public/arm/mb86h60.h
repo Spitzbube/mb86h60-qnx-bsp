@@ -29,7 +29,6 @@
 #ifndef MB86H60_H_
 #define MB86H60_H_
 
-
 #define MB86H60_UART0_BASE  0xc2000000
 #define MB86H60_UART1_BASE  0xce000000
 #define	MB86H60_UART_DR		    0x00	/* Data register */
@@ -51,6 +50,17 @@
 #define	MB86H60_UART_FR_BUSY		(1 << 3)	/* UART Busy */
 
 #define MB86H60_GPIO_BASE   0xc3000000
+
+#define MB86H60_TIMER0_BASE 0xcf000000
+#define MB86H60_TIMER1_BASE 0xcf000040
+#define MB86H60_TIMER2_BASE 0xcf000080
+#define MB86H60_TIMER_ENABLE    0x00
+#define MB86H60_TIMER_COUNT_PRE 0x04
+#define MB86H60_TIMER_COUNT_LOW 0x08
+#define MB86H60_TIMER_COUNT_HI  0x0c
+#define MB86H60_TIMER_SIZE      0x28
+#define MB86H60_TIMER_EN_ENDLESS    (1 << 2)
+#define MB86H60_TIMER_EN_ENABLE     (1 << 0)
 
 
 #endif /* MB86H60_H_ */

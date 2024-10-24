@@ -26,9 +26,76 @@
  */
 
 #include "startup.h"
+#include "arm/mb86h60.h"
+
+#define MB86H60_CLOCK_FREQ      81000000
+#define MB86H60_CLOCK_RATE      12345679
+#define MB86H60_CLOCK_SCALE     -15
+
+#define TIMER_PRESCALE		(MB86H60_CLOCK_FREQ/1000000)
+#define TIMER_LOAD_VAL		(~0UL)
+
+static uintptr_t mb86h60_timer_base;
+
+
+static unsigned
+timer_start_mb86h60() 
+{
+    out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_PRE, TIMER_PRESCALE);
+    out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW, TIMER_LOAD_VAL);
+    out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_HI, 0);
+
+    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 
+        (MB86H60_TIMER_EN_ENDLESS | MB86H60_TIMER_EN_ENABLE));
+
+    unsigned start = in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
+
+    kprintf("timer_start_mb86h60: start=%u\n", start);
+
+	return start;
+}
+
+static unsigned
+timer_diff_mb86h60(unsigned start)
+{
+	unsigned now = in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
+
+    kprintf("timer_diff_mb86h60: start=%u, now=%u\n", start, now);
+
+    if (start >= now)
+    {
+        return (start - now);
+    }
+    else
+    {
+        return (start + TIMER_LOAD_VAL - now);
+    }
+}
 
 void
 init_qtime_mb86h60(void)
 {
     kprintf("init_qtime_mb86h60: TODO\n");
+
+	struct qtime_entry *qtime = alloc_qtime();
+
+	/*
+	 * Map the timer registers
+	 */
+	mb86h60_timer_base = startup_io_map(MB86H60_TIMER_SIZE, MB86H60_TIMER0_BASE);
+
+    /*
+     * Setup Timer0
+     * Stop timer, timer_load will enable it
+     */
+    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 0);
+
+	timer_start = timer_start_mb86h60;
+	timer_diff = timer_diff_mb86h60;
+
+	qtime->intr = 5;  /* Timer0 irq */
+	qtime->timer_rate  = MB86H60_CLOCK_RATE;
+	qtime->timer_scale = MB86H60_CLOCK_SCALE;
+	qtime->cycles_per_sec = (uint64_t)MB86H60_CLOCK_FREQ;
+
 }
