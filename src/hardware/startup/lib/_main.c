@@ -30,22 +30,28 @@ int							debug_flag = 0;
 #if 0 //TODO
 unsigned					reserved_size;
 unsigned					reserved_align;
+#endif
 unsigned long				cpu_freq;
+#if 0
 unsigned long				cycles_freq;
 unsigned long				timer_freq;
+#endif //TODO
 chip_info					dbg_device[2];
 unsigned					patch_channel;
-#endif //TODO
 struct startup_header		*shdr;
 #if 0 //TODO
 char						**_argv;
 int							_argc;
 unsigned 					max_cpus = ~0;
+#endif
 unsigned					system_icache_idx = CACHE_LIST_END;
 unsigned					system_dcache_idx = CACHE_LIST_END;
+#if 0
 chip_info					timer_chip;
+#endif
 unsigned 					(*timer_start)(void);
 unsigned 					(*timer_diff)(unsigned start);
+#if 0
 struct syspage_entry		*_syspage_ptr;
 unsigned					misc_flags;
 
@@ -97,7 +103,6 @@ _main(void) {
 
 	setup_cmdline();
 
-#if 0 //TODO
 	cpu_startup();
 
 	#define INIT_SYSPAGE_SIZE 0x600
@@ -106,7 +111,6 @@ _main(void) {
 	if(shdr->imagefs_paddr != 0) {
 		avoid_ram(shdr->imagefs_paddr, shdr->stored_size);
 	}
-#endif //TODO
 
 	main(_argc, _argv, envv);
 
@@ -133,8 +137,6 @@ _main(void) {
 #endif //TODO
 }
 
-#if 0 //TODO
-
 static void
 hook_dummy(void) {
 }
@@ -143,6 +145,8 @@ void						(*smp_hook_rtn)(void) = hook_dummy;
 void						(*mdriver_check)(void) = hook_dummy;
 void						(*mdriver_hook)(void) = hook_dummy;
 
+
+#if 0 //TODO
 
 // Replacement for some C library stuff to minimize startup size
 int errno;

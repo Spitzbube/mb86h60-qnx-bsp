@@ -66,7 +66,7 @@ const struct armv_chip *armv_list[] = {
 
 	&armv_chip_1136,
 #endif //TODO
-//	&armv_chip_1176,
+	&armv_chip_1176,
 #if 0 //TODO
 	&armv_chip_mp11,
 
