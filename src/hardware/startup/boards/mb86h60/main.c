@@ -78,8 +78,6 @@ main(int argc, char **argv, char **envv)
 		}
 	}
 
-	kprintf("main: before select_debug\n");
-
 	/*
 	 * Initialise debugging output
 	 */
@@ -115,11 +113,7 @@ main(int argc, char **argv, char **envv)
 
 	init_cacheattr();
 
-	kprintf("main: before init_cpuinfo\n");
-
     init_cpuinfo();
-
-	kprintf("main: after init_cpuinfo\n");
 
     init_hwinfo();
 

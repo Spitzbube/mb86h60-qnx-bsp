@@ -42,26 +42,11 @@ armv_chip_detect()
 	 */
 	cpuid = arm_mmu_cpuid();
 
-#if 1
-	{
-		extern char debug_string[];
-		sprintf(debug_string, "armv_chip_detect: cpuid=0x%x\n", cpuid);
-		console_send_string(debug_string);
-	}
-#endif
-
 	for (cp = armv_list; (chip = *cp) != 0; cp++) {
 		if (chip->cpuid == (cpuid & 0xfff0)) {
 			break;
 		}
 	}
-#if 1
-	{
-		extern char debug_string[];
-		sprintf(debug_string, "armv_chip_detect: chip=%p\n", chip);
-		console_send_string(debug_string);
-	}
-#endif
 	if (chip && chip->name == 0 && chip->detect) {
 		chip = chip->detect();
 	}
