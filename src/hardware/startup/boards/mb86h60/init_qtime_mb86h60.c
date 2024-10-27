@@ -35,8 +35,17 @@
 #define TIMER_PRESCALE		(MB86H60_CLOCK_FREQ/1000000)
 #define TIMER_LOAD_VAL		(~0UL)
 
+extern struct callout_rtn   timer_load_mb86h60;
+extern struct callout_rtn   timer_value_mb86h60;
+extern struct callout_rtn   timer_reload_mb86h60;
+
 static uintptr_t mb86h60_timer_base;
 
+static const struct callout_slot	timer_callouts[] = {
+	{ CALLOUT_SLOT(timer_load, _mb86h60) },
+	{ CALLOUT_SLOT(timer_value, _mb86h60) },
+	{ CALLOUT_SLOT(timer_reload, _mb86h60) },
+};
 
 static unsigned
 timer_start_mb86h60() 
@@ -98,4 +107,5 @@ init_qtime_mb86h60(void)
 	qtime->timer_scale = MB86H60_CLOCK_SCALE;
 	qtime->cycles_per_sec = (uint64_t)MB86H60_CLOCK_FREQ;
 
+	add_callout_array(timer_callouts, sizeof(timer_callouts));
 }

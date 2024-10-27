@@ -24,9 +24,39 @@
  */
 
 #include "startup.h"
+#include "arm/mb86h60.h"
+
+
+static paddr_t	mb86h60_intc_base      = MB86H60_UART0_BASE;
+
+extern struct callout_rtn interrupt_id_mb86h60;
+extern struct callout_rtn interrupt_eoi_mb86h60;
+extern struct callout_rtn interrupt_mask_mb86h60;
+extern struct callout_rtn interrupt_unmask_mb86h60;
+
+
+const static struct startup_intrinfo	intrs[] = {
+	{	_NTO_INTR_CLASS_EXTERNAL, 	// vector base
+		64,							// number of vectors
+		_NTO_INTR_SPARE,			// cascade vector
+		0,							// CPU vector base
+		0,							// CPU vector stride
+		0,							// flags
+
+		{ INTR_GENFLAG_LOAD_SYSPAGE,	0, &interrupt_id_mb86h60 },
+		{ INTR_GENFLAG_LOAD_SYSPAGE | INTR_GENFLAG_LOAD_INTRMASK, 0, &interrupt_eoi_mb86h60 },
+		&interrupt_mask_mb86h60,	// mask   callout
+		&interrupt_unmask_mb86h60,	// unmask callout
+		0,							// config callout
+		&mb86h60_intc_base,
+	},
+};
+
 
 
 void init_intrinfo(void)
 {
     kprintf("init_intrinfo: TODO\n");
+
+    add_interrupt_array(intrs, sizeof(intrs));
 }
