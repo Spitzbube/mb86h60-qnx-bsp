@@ -97,7 +97,7 @@ init_qtime_mb86h60(void)
      * Setup Timer0
      * Stop timer, timer_load will enable it
      */
-    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 0);
+    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 0x07);
 
 	timer_start = timer_start_mb86h60;
 	timer_diff = timer_diff_mb86h60;

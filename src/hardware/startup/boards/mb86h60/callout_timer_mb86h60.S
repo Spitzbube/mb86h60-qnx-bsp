@@ -43,19 +43,25 @@ patch_timer_mb86h60:
     stmdb   sp!, {r4, lr}
     add     r4, r0, r2                  // address of callout routine
 
-    ldr     r0, Lvaddr
-    cmp     r0, #-1
-    bne     1f
-
     /*
      * Map registers
      */
     mov     r0, #MB86H60_TIMER_SIZE      // size of registers
     ldr     r1, Lpaddr
     bl      callout_io_map
-    str     r0, Lvaddr
 
-1:
+    /*
+     * Patch the callout routine
+     */
+    CALLOUT_PATCH   r4, r0, r1, r2, ip
+
+    /*
+     * Map uart registers
+     */
+    mov     r0, #MB86H60_UART_SIZE      // size of registers
+    ldr     r1, Lpaddr_uart
+    bl      callout_io_map
+
     /*
      * Patch the callout routine
      */
@@ -63,9 +69,16 @@ patch_timer_mb86h60:
 
     ldmia   sp!, {r4, pc}
 
-Lpaddr: .word   MB86H60_UART0_BASE /*MB86H60_TIMER0_BASE*/
-Lvaddr: .word   -1
+Lpaddr: .word   MB86H60_TIMER0_BASE
+Lpaddr_uart: .word   MB86H60_UART0_BASE
 
+.macro uart_tx reg_base, scratch_reg, ch
+0:  ldr     \scratch_reg, [\reg_base, #MB86H60_UART_FR]
+    tst     \scratch_reg, #(MB86H60_UART_FR_TXFF|MB86H60_UART_FR_BUSY)
+    bne     0b
+    mov     \scratch_reg, #\ch
+    str     \scratch_reg, [\reg_base, #MB86H60_UART_DR]
+.endm
 
 /*
  * --------------------------------------------------------------------------
@@ -86,8 +99,27 @@ CALLOUT_START(timer_load_mb86h60, 0, patch_timer_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x30
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r2,     #0x000000ff
+	orr		r2, r2, #0x0000ff00
+	orr		r2, r2, #0x00ff0000
+	orr		r2, r2, #0xff000000
+
+    /* Debug */
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, 'm'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, '_'
+    uart_tx r2, r0, 'l'
+    uart_tx r2, r0, 'o'
+    uart_tx r2, r0, 'a'
+    uart_tx r2, r0, 'd'
+    uart_tx r2, r0, 0x0d
+    uart_tx r2, r0, 0x0a
 
     /*
      *  Stop the timer
@@ -159,8 +191,28 @@ CALLOUT_START(timer_value_mb86h60, 0, patch_timer_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x31
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r2,     #0x000000ff
+	orr		r2, r2, #0x0000ff00
+	orr		r2, r2, #0x00ff0000
+	orr		r2, r2, #0xff000000
+
+    /* Debug */
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, 'm'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, '_'
+    uart_tx r2, r0, 'v'
+    uart_tx r2, r0, 'a'
+    uart_tx r2, r0, 'l'
+    uart_tx r2, r0, 'u'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 0x0d
+    uart_tx r2, r0, 0x0a
 
     /*
      * Latch the current timer value and return qtp->timer_load - value
@@ -192,8 +244,29 @@ CALLOUT_START(timer_reload_mb86h60, 0, patch_timer_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x32
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r2,     #0x000000ff
+	orr		r2, r2, #0x0000ff00
+	orr		r2, r2, #0x00ff0000
+	orr		r2, r2, #0xff000000
+
+    /* Debug */
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, 'm'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, '_'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'l'
+    uart_tx r2, r0, 'o'
+    uart_tx r2, r0, 'a'
+    uart_tx r2, r0, 'd'
+    uart_tx r2, r0, 0x0d
+    uart_tx r2, r0, 0x0a
 
     /*
      * Clear overflow interrupt status

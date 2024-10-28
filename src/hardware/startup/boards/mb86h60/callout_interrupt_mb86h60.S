@@ -61,28 +61,42 @@ interrupt_patch_mb86h60:
     stmdb   sp!, {r4, lr}
     add     r4, r0, r2                  // address of callout routine
 
-    ldr     r0, Lvaddr
-    cmp     r0, #-1
-    bne     1f
-
     /*
      * Map interrupt controller registers
      */
-    mov     r0, #MB86H60_UART_SIZE     // size to map
+    mov     r0, #MB86H60_VIC_SIZE     // size to map
     ldr     r1, [sp, #8]
     ldr     r1, [r1]
     bl      callout_io_map
-    str     r0, Lvaddr
 
-1:
+	/*
+	 * Patch the callout routine
+	 */
+	CALLOUT_PATCH	r4, r0, r1, r2, ip
+
+    /*
+     * Map uart registers
+     */
+    mov     r0, #MB86H60_UART_SIZE      // size of registers
+    ldr     r1, Lpaddr_uart
+    bl      callout_io_map
+
     /*
      * Patch the callout routine
      */
     CALLOUT_PATCH   r4, r0, r1, r2, ip
+
     ldmia   sp!, {r4, pc}
 
-Lvaddr: .word   -1
+Lpaddr_uart: .word   MB86H60_UART0_BASE
 
+.macro uart_tx reg_base, scratch_reg, ch
+0:  ldr     \scratch_reg, [\reg_base, #MB86H60_UART_FR]
+    tst     \scratch_reg, #(MB86H60_UART_FR_TXFF|MB86H60_UART_FR_BUSY)
+    bne     0b
+    mov     \scratch_reg, #\ch
+    str     \scratch_reg, [\reg_base, #MB86H60_UART_DR]
+.endm
 
 /* -----------------------------------------------------------------------
  * Returns interrupt number in r4
@@ -97,8 +111,51 @@ CALLOUT_START(interrupt_id_mb86h60, 0, interrupt_patch_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x34
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r1,     #0x000000ff
+	orr		r1, r1, #0x0000ff00
+	orr		r1, r1, #0x00ff0000
+	orr		r1, r1, #0xff000000
+
+    ldr     r2, [ip, #MB86H60_VIC_IRQSTATUS]
+
+	/* Scan for first set bit (starting with MSb) */
+	mov		r4, #32
+	mov		r3, #1
+3:
+	subs	r4, r4, #1
+	blt		0f			/* r4 has rolled to -1 */
+	tst		r2, r3, lsl r4
+	beq		3b
+
+	/* clear (and disable/mask) the interrupt */
+	mov     r0, #0 /*ldr		r0, [ip, #MB86H60_VIC_INTENCLEAR]*/
+	orr		r0, r0, r3, lsl r4
+	str		r0, [ip, #MB86H60_VIC_INTENCLEAR]
+    
+
+0:
+    /* Debug the interrupt id */
+    uart_tx r1, r0, 'i'
+    uart_tx r1, r0, 'n'
+    uart_tx r1, r0, 't'
+    uart_tx r1, r0, 'e'
+    uart_tx r1, r0, 'r'
+    uart_tx r1, r0, 'r'
+    uart_tx r1, r0, 'u'
+    uart_tx r1, r0, 'p'
+    uart_tx r1, r0, 't'
+    uart_tx r1, r0, '_'
+    uart_tx r1, r0, 'i'
+    uart_tx r1, r0, 'd'
+    uart_tx r1, r0, ':'
+    mov     r0, #0x30
+    add     r0, r0, r4
+    str     r0, [r1, #MB86H60_UART_DR]
+    uart_tx r1, r0, 0x0d
+    uart_tx r1, r0, 0x0a
 
     /*
      * Mask the interrupt
@@ -129,8 +186,38 @@ CALLOUT_START(interrupt_eoi_mb86h60, 0, interrupt_patch_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x35
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r2,     #0x000000ff
+	orr		r2, r2, #0x0000ff00
+	orr		r2, r2, #0x00ff0000
+	orr		r2, r2, #0xff000000
+
+    /* Debug the interrupt number and the interrupt mask count */
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, 'n'
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'u'
+    uart_tx r2, r0, 'p'
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, '_'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'o'
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, ':'
+    mov     r0, #0x30
+    add     r0, r0, r4
+    str     r0, [r2, #MB86H60_UART_DR]
+    uart_tx r2, r0, '/'
+    mov     r0, #0x30
+    add     r0, r0, r7
+    str     r0, [r2, #MB86H60_UART_DR]
+    uart_tx r2, r0, 0x0d
+    uart_tx r2, r0, 0x0a
 
     /*
      * Only unmask interrupt if mask count is zero
@@ -166,8 +253,41 @@ CALLOUT_START(interrupt_mask_mb86h60, 0, interrupt_patch_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x36
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r2,     #0x000000ff
+	orr		r2, r2, #0x0000ff00
+	orr		r2, r2, #0x00ff0000
+	orr		r2, r2, #0xff000000
+
+    /* Debug the interrupt number */
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, 'n'
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'u'
+    uart_tx r2, r0, 'p'
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, '_'
+    uart_tx r2, r0, 'm'
+    uart_tx r2, r0, 'a'
+    uart_tx r2, r0, 's'
+    uart_tx r2, r0, 'k'
+    uart_tx r2, r0, ':'
+    mov     r0, #0x30
+    add     r0, r0, r1
+    str     r0, [r2, #MB86H60_UART_DR]
+    uart_tx r2, r0, '('
+    uart_tx r2, r0, 'T'
+    uart_tx r2, r0, 'O'
+    uart_tx r2, r0, 'D'
+    uart_tx r2, r0, 'O'
+    uart_tx r2, r0, ')'
+    uart_tx r2, r0, 0x0d
+    uart_tx r2, r0, 0x0a
 
     /*
      * Mask the interrupt
@@ -199,12 +319,45 @@ CALLOUT_START(interrupt_unmask_mb86h60, 0, interrupt_patch_mb86h60)
     orr     ip, ip, #0x00ff0000
     orr     ip, ip, #0xff000000
 
-    mov     r0, #0x37
-    str     r0, [ip, #MB86H60_UART_DR]
+   	/*
+	 * Get the uart base address (patched)
+	 */
+	mov		r2,     #0x000000ff
+	orr		r2, r2, #0x0000ff00
+	orr		r2, r2, #0x00ff0000
+	orr		r2, r2, #0xff000000
+
+    /* Debug the interrupt number */
+    uart_tx r2, r0, 'i'
+    uart_tx r2, r0, 'n'
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, 'e'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'r'
+    uart_tx r2, r0, 'u'
+    uart_tx r2, r0, 'p'
+    uart_tx r2, r0, 't'
+    uart_tx r2, r0, '_'
+    uart_tx r2, r0, 'u'
+    uart_tx r2, r0, 'n'
+    uart_tx r2, r0, 'm'
+    uart_tx r2, r0, 'a'
+    uart_tx r2, r0, 's'
+    uart_tx r2, r0, 'k'
+    uart_tx r2, r0, ':'
+    mov     r0, #0x30
+    add     r0, r0, r1
+    str     r0, [r2, #MB86H60_UART_DR]
+    uart_tx r2, r0, 0x0d
+    uart_tx r2, r0, 0x0a
 
     /*
      * Unmask the interrupt
      */
+	ldr		r0, [ip, #MB86H60_VIC_INTENABLE]  // unmask or enable
+	mov		r2, #1
+	orr		r0, r0, r2, lsl r1
+	str		r0, [ip, #MB86H60_VIC_INTENABLE]
 
     mov     r0, #0
     mov     pc, lr
