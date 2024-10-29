@@ -6,30 +6,12 @@
     #PATH=:/proc/boot procnto -vvvvvvv
     #PATH=:/proc/boot:/bin:/usr/bin:/usr/photon/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib:/lib/dll PHOTON_PATH=/usr/photon procnto-v6-instr -vvvv
     #tnto -vvvv
-    #procnto-v6.new -vvvv
-    PATH=:/proc/boot:/bin:/usr/bin:/usr/photon/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib:/lib/dll PHOTON_PATH=/usr/photon procnto-v6.new -vvvv
+    procnto-v6.new -vvvv
 
 }
 [+script] .script = {
-    # Initialise the console
-    procmgr_symlink ../../proc/boot/libc.so.3 /usr/lib/ldqnx.so.2
-
     display_msg Welcome to QNX Neutrino 6.4 on the MB86H60
-
-#[+session] ksh &
-
 }
-
-# Shared libraries:
-# Programs require the runtime linker (ldqnx.so) to be at a fixed location
-
-#libc.so
-#libm.so
-
-#[data=copy]
-#[data=c]
-
-#ksh
 
 ###########################################################################
 ## END OF BUILD SCRIPT

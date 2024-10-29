@@ -32,7 +32,7 @@
 #define MB86H60_CLOCK_RATE      12345679
 #define MB86H60_CLOCK_SCALE     -15
 
-#define TIMER_PRESCALE		(MB86H60_CLOCK_FREQ/1000000)
+#define TIMER_PRESCALE		(0)
 #define TIMER_LOAD_VAL		(~0UL)
 
 extern struct callout_rtn   timer_load_mb86h60;
@@ -48,37 +48,32 @@ static const struct callout_slot	timer_callouts[] = {
 };
 
 static unsigned
-timer_start_mb86h60() 
+timer_start_mb86h60(void) 
 {
     out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_PRE, TIMER_PRESCALE);
     out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW, TIMER_LOAD_VAL);
     out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_HI, 0);
+    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, MB86H60_TIMER_EN_ENABLE);
 
-    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 
-        (MB86H60_TIMER_EN_ENDLESS | MB86H60_TIMER_EN_ENABLE));
-
-    unsigned start = in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
-
-    kprintf("timer_start_mb86h60: start=%u\n", start);
-
-	return start;
+	return in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
 }
 
 static unsigned
 timer_diff_mb86h60(unsigned start)
 {
-	unsigned now = in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
-
-    kprintf("timer_diff_mb86h60: start=%u, now=%u\n", start, now);
+    unsigned diff;    
+    unsigned now = in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
 
     if (start >= now)
     {
-        return (start - now);
+        diff = (start - now);
     }
     else
     {
-        return (start + TIMER_LOAD_VAL - now);
+        diff = (start + TIMER_LOAD_VAL - now);
     }
+
+    return diff;
 }
 
 void
@@ -97,7 +92,7 @@ init_qtime_mb86h60(void)
      * Setup Timer0
      * Stop timer, timer_load will enable it
      */
-    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 0x07);
+    out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 0);
 
 	timer_start = timer_start_mb86h60;
 	timer_diff = timer_diff_mb86h60;

@@ -54,63 +54,24 @@ const static struct startup_intrinfo	intrs[] = {
 };
 
 
-void mb86h60_vic_address()
-{
-    kprintf("mb86h60_vic_address: TODO\n");
-
-}
-
-void mb86h60_vic_vectaddrx()
-{
-    kprintf("mb86h60_vic_vectaddrx: TODO\n");
-
-}
-
-
 void init_intrinfo(void)
 {
 	int i;
 
     kprintf("init_intrinfo: TODO\n");
 
-#if 0
-	*((volatile uint32_t*)0xcf000300) = 0; //FREG_IRQ_CTRL_ARMIRQMASK
-	*((volatile uint32_t*)0xcf000304) = 0; //FREG_IRQ_CTRL_ARMIRQXOR
-#else
-    out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQMASK, 0);
+    out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQMASK, 
+		(1 << 5) /* Timer 0*/
+		);
     out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQXOR, 0);
-#endif
 
 	for (i = 0; i < 32; i++)
 	{
-#if 0
-		((volatile uint32_t*)0xe0000200)[i] = 5; //FREG_VIC_VECTPRIORITYX
-#else
 		out32(mb86h60_vic_base + MB86H60_VIC_VECTPRIORITYX + i*4, 5);
-#endif
 	}
 
-#if 0
-	*((volatile uint32_t*)0xe0000010) = 0xffffffff; //FREG_VIC_INTENABLE
-	*((volatile uint32_t*)0xe000000c) = 0; //FREG_VIC_INTSELECT
-#else
-	out32(mb86h60_vic_base + MB86H60_VIC_INTENABLE, 0xffffffff);
+	out32(mb86h60_vic_base + MB86H60_VIC_INTENABLE, 0);
 	out32(mb86h60_vic_base + MB86H60_VIC_INTSELECT, 0);
-#endif
-
-#if 0
-	*((volatile uint32_t*)0xe0000f00) = a; //FREG_VIC_ADDRESS
-	((volatile uint32_t*)0xe0000100)[index] = func; //FREG_VIC_VECTADDRX
-#else
-#if 0
-	out32(mb86h60_vic_base + MB86H60_VIC_ADDRESS, mb86h60_vic_address);
-	out32(mb86h60_vic_base + MB86H60_VIC_VECTADDRX, mb86h60_vic_vectaddrx);
-#endif
-#endif
-
-#if 1 //ENable Timer0 IRQ
-    out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQMASK, (1 << 5));
-#endif
 
     add_interrupt_array(intrs, sizeof(intrs));
 }

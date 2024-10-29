@@ -228,6 +228,11 @@ CALLOUT_START(interrupt_eoi_mb86h60, 0, interrupt_patch_mb86h60)
     /*
      * unmask interrupt
      */
+	ldr		r0, [ip, #MB86H60_VIC_INTENABLE]  // unmask or enable
+	mov		r3, #1
+	orr		r0, r0, r3, lsl r4
+	str		r0, [ip, #MB86H60_VIC_INTENABLE]
+
 1:
 CALLOUT_END(interrupt_eoi_mb86h60)
 
