@@ -123,7 +123,7 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 
     fprintf(stderr, "create_device: (4)\n");
 
-#if 0	/*
+	/*
 	 * Only setup IRQ handler for non-pcmcia devices.
 	 * Pcmcia devices will have this done later when card is inserted.
 	 */
@@ -132,7 +132,6 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 		ser_stty(dev);
 		ser_attach_intr(dev);
 	}
-#endif
 
 	/*
 	 * Attach the resource manager
@@ -141,5 +140,4 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 	my_ttc(TTC_INIT_ATTACH, &dev->tty, 0);
 
     fprintf(stderr, "create_device: (5)\n");
-
 }

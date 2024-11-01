@@ -61,7 +61,8 @@ void init_intrinfo(void)
     kprintf("init_intrinfo: TODO\n");
 
     out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQMASK, 
-		(1 << 5) /* Timer 0*/
+		(1 << 5)| /* Timer 0*/
+		(1 << 8)  /* UART 0*/
 		);
     out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQXOR, 0);
 

@@ -91,6 +91,8 @@ char uart_init(Uart_Init_Params* pParams, Uart_Module** ppModule)
 			/* wait */
 		}
 
+		pRegs->UART_IMSC = (1 << 4); //RXIM
+
 		for (i = 0; i < 0x10; i++)
 		{
 			/* wait */

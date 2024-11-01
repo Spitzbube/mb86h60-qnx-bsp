@@ -58,14 +58,18 @@ patch_timer_mb86h60:
     /*
      * Map uart registers
      */
+    /*
     mov     r0, #MB86H60_UART_SIZE      // size of registers
     ldr     r1, Lpaddr_uart
     bl      callout_io_map
+    */
 
     /*
      * Patch the callout routine
      */
+    /*
     CALLOUT_PATCH   r4, r0, r1, r2, ip
+    */
 
     ldmia   sp!, {r4, pc}
 
@@ -103,10 +107,12 @@ CALLOUT_START(timer_load_mb86h60, 0, patch_timer_mb86h60)
    	/*
 	 * Get the uart base address (patched)
 	 */
+    /*
 	mov		r2,     #0x000000ff
 	orr		r2, r2, #0x0000ff00
 	orr		r2, r2, #0x00ff0000
 	orr		r2, r2, #0xff000000
+    */
 
     /*
      *  Stop the timer
@@ -125,6 +131,7 @@ CALLOUT_START(timer_load_mb86h60, 0, patch_timer_mb86h60)
     */
 
     /* Debug */
+    /*
     uart_tx r2, r0, 't'
     uart_tx r2, r0, 'i'
     uart_tx r2, r0, 'm'
@@ -136,6 +143,7 @@ CALLOUT_START(timer_load_mb86h60, 0, patch_timer_mb86h60)
     uart_tx r2, r0, 'a'
     uart_tx r2, r0, 'd'
     uart_tx r2, r0, ':'
+    */
 
 /*
     ldr     r1, =0x1999999a
@@ -152,8 +160,10 @@ loop:
     bne     loop
 */
 
+    /*
     uart_tx r2, r0, 0x0d
     uart_tx r2, r0, 0x0a
+    */
 
 
     /*
@@ -184,20 +194,20 @@ loop:
     /*
      * Enable overflow interrupt
      */
-    /*
+    
     ldr     r0, [ip, #MB86H60_TIMER_ENABLE]
     orr     r0, r0, #MB86H60_TIMER_EN_IRQ
     str     r0, [ip, #MB86H60_TIMER_ENABLE]
-    */
+    
 
     /*
      *  Start the timer
      */
-     /*
+    
     ldr     r0, [ip, #MB86H60_TIMER_ENABLE]
     orr     r0, r0, #(MB86H60_TIMER_EN_ENABLE | MB86H60_TIMER_EN_ENDLESS)
     str     r0, [ip, #MB86H60_TIMER_ENABLE]
-    */
+    
 
     mov     pc, lr
 CALLOUT_END(timer_load_mb86h60)
@@ -227,12 +237,15 @@ CALLOUT_START(timer_value_mb86h60, 0, patch_timer_mb86h60)
    	/*
 	 * Get the uart base address (patched)
 	 */
+    /*
 	mov		r2,     #0x000000ff
 	orr		r2, r2, #0x0000ff00
 	orr		r2, r2, #0x00ff0000
 	orr		r2, r2, #0xff000000
+    */
 
     /* Debug */
+    /*
     uart_tx r2, r0, 't'
     uart_tx r2, r0, 'i'
     uart_tx r2, r0, 'm'
@@ -246,6 +259,7 @@ CALLOUT_START(timer_value_mb86h60, 0, patch_timer_mb86h60)
     uart_tx r2, r0, 'e'
     uart_tx r2, r0, 0x0d
     uart_tx r2, r0, 0x0a
+    */
 
     /*
      * Latch the current timer value and return qtp->timer_load - value
@@ -280,12 +294,15 @@ CALLOUT_START(timer_reload_mb86h60, 0, patch_timer_mb86h60)
    	/*
 	 * Get the uart base address (patched)
 	 */
+    /*
 	mov		r2,     #0x000000ff
 	orr		r2, r2, #0x0000ff00
 	orr		r2, r2, #0x00ff0000
 	orr		r2, r2, #0xff000000
+    */
 
     /* Debug */
+    /*
     uart_tx r2, r0, 't'
     uart_tx r2, r0, 'i'
     uart_tx r2, r0, 'm'
@@ -300,6 +317,7 @@ CALLOUT_START(timer_reload_mb86h60, 0, patch_timer_mb86h60)
     uart_tx r2, r0, 'd'
     uart_tx r2, r0, 0x0d
     uart_tx r2, r0, 0x0a
+    */
 
     /*
      * Clear overflow interrupt status

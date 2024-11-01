@@ -23,24 +23,9 @@
 
 
 
-
-#include "externs.h"
-
-int
-main(int argc, char *argv[])
-{
-	ttyctrl.max_devs = 5;
-
-	my_ttc(TTC_INIT_PROC, &ttyctrl, 24);
-
-    if (options(argc, argv) == 0) {
-		fprintf(stderr, "%s: No serial ports found\n", argv[0]);
-		exit(0);
-    }
-
-	my_ttc(TTC_INIT_START, &ttyctrl, 0);
-
-	fprintf(stderr, "%s: return\n", argv[0]);
-
-	return 0;
-}
+void		create_device(TTYINIT_USART *dip, unsigned unit);
+void		ser_stty(DEV_USART *dev);
+void		ser_ctrl(DEV_USART *dev, unsigned flags);
+void		ser_attach_intr(DEV_USART *dev);
+void *		query_default_device(TTYINIT_USART *dip, void *link);
+unsigned	options(int argc, char *argv[]);

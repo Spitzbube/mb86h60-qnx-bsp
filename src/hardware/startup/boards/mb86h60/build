@@ -6,22 +6,67 @@
     #tnto -vvvv
     #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6-instr -vvvv
     PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.new -vvvv
+    #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.openqnx640 -vvvv
 
 }
 [+script] .script = {
     display_msg Welcome to QNX Neutrino 6.4 on the MB86H60
 
-    procmgr_symlink /proc/boot/libc.so.2 /usr/lib/ldqnx.so.2
+    procmgr_symlink /proc/boot/libc.so /usr/lib/ldqnx.so.2
 
-    hello_world
+#    slogger
+    pipe
+
+    display_msg Starting DBGU driver...
+    devc-serdebug -e -F -S -b115200 -c133000000 0x20201000,1
+    waitfor /dev/ser1 4
+    display_msg opening ...
+    reopen /dev/ser1
+    display_msg Serial opened...
+
+    TERM=qansi
+
+#    hello_world
+#    ls /proc/boot/
+#    ls /dev
+#    ls /bin
+#    ls /sbin
+    ksh &
+#    esh &
+#    ldd /proc/boot/esh
+#    ldd /proc/boot/esh_new
+#    ldd /proc/boot/ksh
+#    ldd /proc/boot/hello_world
+#    ldd /proc/boot/ls_new
 }
+
+## Redirect console messages
+[type=link] /bin/sh=/proc/boot/ksh
+[type=link] /dev/console=/dev/ser1
+[type=link] /tmp=/dev/shmem
+[type=link] /var/log=/tmp
+[type=link] /usr/tmp=/tmp
 
 # Shared libraries:
 # Programs require the runtime linker (ldqnx.so) to be at a fixed location
 
 libc.so
 
+[data=copy]
+[data=c]
+
+devc-serdebug
+
+#ldd
 hello_world
+ls
+ksh
+#esh
+#slogger
+#pipe
+#esh_new
+waitfor
+pipe
 
 ###########################################################################
 ## END OF BUILD SCRIPT

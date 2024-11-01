@@ -72,28 +72,19 @@ options(int argc, char *argv[])
 		},
 	};
 
-	fprintf(stderr, "options: (1)\n");
-
 	/*
 	 * Initialize the devinit to raw mode
 	 */
-	ttc(TTC_INIT_RAW, &devinit, 0);
-
-	fprintf(stderr, "options: (2)\n");
+	my_ttc(TTC_INIT_RAW, &devinit, 0);
 
 	unit = 1;
 
-#if 1
 	while (optind < argc) {
 		/*
 		 * Process dash options.
 		 */
-		while ((opt = getopt(argc, argv, IO_CHAR_SERIAL_OPTIONS /*"c:u:"*/)) != -1) {
-	
-			fprintf(stderr, "options: (3)\n");
-
-			switch (ttc(TTC_SET_OPTION, &devinit, opt)) {
-#if 0
+		while ((opt = getopt(argc, argv, IO_CHAR_SERIAL_OPTIONS "c:u:")) != -1) {
+			switch (my_ttc(TTC_SET_OPTION, &devinit, opt)) {
 			case 'c':
 				devinit.tty.clk = strtoul(optarg, &optarg, 0);
 				break;
@@ -101,18 +92,9 @@ options(int argc, char *argv[])
 			case 'u':
 				unit = strtoul(optarg, NULL, 0);
 				break;
-#else
-			default:
-				fprintf(stderr, "options: (3a)\n");
-				break;
-#endif
 			}
 		}
 
-		fprintf(stderr, "options: (4)\n");
-		break;
-
-#if 1
 		/*
 		 * Process ports and interrupts.
 		 */
@@ -129,9 +111,7 @@ options(int argc, char *argv[])
 			}
 			++optind;
 		}
-#endif
 	}
-#endif
 
 #if 0
 	if (numports == 0) {

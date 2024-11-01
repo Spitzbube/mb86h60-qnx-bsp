@@ -121,7 +121,6 @@ extern int io_closeocb();
 int	my_ttc(int type/*r6*/, void *ptr/*r5*/, int arg/*r4*/)
 {
     int r4;
-    dispatch_context_t* r4_;
 
     switch (type)
     {
@@ -237,48 +236,62 @@ int	my_ttc(int type/*r6*/, void *ptr/*r5*/, int arg/*r4*/)
 
         case TTC_INIT_START: //2
             //loc_bb4
-            printf("TTC_INIT_START: TODO\n");
-//            r4 = ttc(type, ptr, arg);
-            r4_ = dispatch_context_alloc(((TTYCTRL*)ptr)->dpp);
-            if (r4_ == 0)
             {
-                //0x00000bc4
-                slogf(6, 3, "io-char: Unable to allocate resmgr context");
-                fwrite("Could not allocate resmgr context.\n", 1, 35, stderr);
-                exit(1);
-            }
-            //loc_bf0
 #if 1
-            printf("ttyctrl.flags = 0x%08x\n", ttyctrl.flags);
-#endif
-            if ((ttyctrl.flags & 0x02) == 0)
-            {
-                //0x00000c00
-                procmgr_daemon(0, 6);
-            }
-            //loc_c0c
-            ((TTYCTRL*)ptr)->timerid = TimerCreate(0, &((TTYCTRL*)ptr)->timer);
-
-#if 1
-            printf("before dispatch loop: %p\n", r4_);
-#endif
-
-            while (1)
-            {
-                r4_ = dispatch_block(r4_);
-#if 0
-                printf("dispatch_block: %p\n", r4_);
-#endif
+                dispatch_context_t* r4_ = dispatch_context_alloc(((TTYCTRL*)ptr)->dpp);
                 if (r4_ == 0)
                 {
-                    exit(0);
+                    //0x00000bc4
+                    slogf(6, 3, "io-char: Unable to allocate resmgr context");
+                    fwrite("Could not allocate resmgr context.\n", 1, 35, stderr);
+                    exit(1);
                 }
+                //loc_bf0
+#if 0
+                printf("ttyctrl.flags = 0x%08x\n", ttyctrl.flags);
+#endif
+                if ((ttyctrl.flags & 0x02) == 0)
+                {
+                    //0x00000c00
+                    procmgr_daemon(0, 6);
+                }
+                //loc_c0c
+                ((TTYCTRL*)ptr)->timerid = TimerCreate(0, &((TTYCTRL*)ptr)->timer);
 
-                dispatch_handler(r4_);
+#if 1
+                printf("before dispatch loop: %p\n", r4_);
+#endif
+
+                while (1)
+                {
+                    r4_ = dispatch_block(r4_);
+#if 0
+                    printf("dispatch_block: %p\n", r4_);
+#endif
+                    if (r4_ == 0)
+                    {
+                        exit(0);
+                    }
+
+                    dispatch_handler(r4_);
+                }                
             }
+#else
+            r4 = ttc(type, ptr, arg);
+#endif
+            break;
+
+        case TTC_INIT_RAW: //3
+            r4 = ttc(type, ptr, arg);
+            //->loc_1030
             break;
 
         case TTC_INIT_ATTACH: //5
+            r4 = ttc(type, ptr, arg);
+            //->loc_1030
+            break;
+
+        case TTC_SET_OPTION: //6
             r4 = ttc(type, ptr, arg);
             //->loc_1030
             break;
@@ -324,6 +337,8 @@ int	my_ttc(int type/*r6*/, void *ptr/*r5*/, int arg/*r4*/)
                     strcat(r7_, basename(r6));
                 }
                 //loc_cc0
+
+                //TODO!!!
             }
 #else
             r4 = ttc(type, ptr, arg);

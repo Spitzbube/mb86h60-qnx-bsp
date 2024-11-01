@@ -18,6 +18,8 @@ typedef struct
 	volatile unsigned int FREG_UART_FBRD; //0x28
 	volatile unsigned int FREG_UART_LCRH; //0x2c
 	volatile unsigned int FREG_UART_CR; //0x30
+	int fill_0x34; //0x34
+	volatile unsigned int UART_IMSC; //0x38
 
 } Uart_Regs;
 

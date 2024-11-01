@@ -64,3 +64,4 @@ typedef struct ttyinit_usart {
 
 EXT TTYCTRL				ttyctrl;
 
+#include "proto.h"
