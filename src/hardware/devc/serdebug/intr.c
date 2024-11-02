@@ -34,34 +34,28 @@ static inline int tx_interrupt(DEV_USART *dev)
 	return tto(&dev->tty, TTO_DATA, 0);
 }
 
-static inline int rx_interrupt(DEV_USART *dev)
+#endif
+
+
+static inline int do_interrupt(DEV_USART *dev, int id)
 {
 	int	 status = 0;
 	uintptr_t	base = dev->base;
 	unsigned    key = 0;
+	unsigned	mask = in32(base + PL011_MIS);
 
-	while (!(in32(base + BCM2835_UART0_FR) & BCM2835_DBGU_IE_SR_RXEMTY ))
+	if (mask & (PL011_MIS_RXMIS | PL011_MIS_RTMIS))
 	{
-		key = in32(base + BCM2835_UART0_DR);
-		status |= tti(&dev->tty, key);
+		out32(base + PL011_ICR, PL011_ICR_RXIC | PL011_ICR_RTIC);
+
+		while (!(in32(base + PL011_FR) & PL011_FR_RXFE))
+		{
+			key = in32(base + PL011_DR);
+			status |= tti(&dev->tty, key);
+		}
 	}
-	out32(base+ BCM2835_UART0_ICR, 0x7FF);
 
 	return status;
-}
-
-#endif
-
-static inline int do_interrupt(DEV_USART *dev, int id)
-{
-	int	sts;
-#if 0
-	sts = rx_interrupt(dev);
-#else
-    sts = 0;
-    fprintf(stderr, "do_interrupt\n");
-#endif
-	return sts;
 }
 
 
@@ -88,15 +82,8 @@ ser_attach_intr(DEV_USART *dev)
 {
 	uintptr_t	base = dev->base;
 
-	dev->intr = 8; //BCM2835_PHYSIRQ_UART0;
-
-#if 0
-	out32(base+BCM2835_UART0_IMSC, (1<<1) | (1<<4)| (1<<6) |
-			                      (1<<7) | (1<<8) | (1<<9) | (1<<10));
-#endif
+	out32(base + PL011_IMSC, PL011_IMSC_RTIM | PL011_IMSC_RXIM);
 
 	dev->iid = InterruptAttach(dev->intr, ser_intr, dev, 0, 0);
-
-    fprintf(stderr, "ser_attach_intr\n");
 }
 

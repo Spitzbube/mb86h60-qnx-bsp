@@ -60,8 +60,6 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 {
     DEV_USART	*dev;
 
-    fprintf(stderr, "create_device: (1)\n");
-
 	/*
 	 * Get a device entry and the input/output buffers for it.
 	 */
@@ -88,23 +86,19 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 	dev->intr        = dip->tty.intr;
 	dev->clk         = dip->tty.clk;
 
-#if 0
 	/*
 	 * Map device registers
 	 */
-	dev->base = mmap_device_io(BCM2835_UART_SIZE, BCM2835_UART0_BASE);
+	dev->base = mmap_device_io(MB86H60_UART_SIZE, dip->tty.port);
 	if (dev->base == (uintptr_t)MAP_FAILED) {
 		perror("USART : MAP_FAILED\n");
 		exit(1);
 	}
-#endif
 
 	/*
 	 * Initialize termios cc codes to an ANSI terminal.
 	 */
 	my_ttc(TTC_INIT_CC, &dev->tty, 0);
-
-    fprintf(stderr, "create_device: (2)\n");
 
 	/* 
 	 * Initialize the device's name.
@@ -114,19 +108,10 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 	unit = SET_NAME_NUMBER(unit) | NUMBER_DEV_FROM_USER;
 	my_ttc(TTC_INIT_TTYNAME, &dev->tty, unit);
 
-    fprintf(stderr, "create_device: (3)\n");
-
 	/*
 	 * Initialize power management structures before attaching ISR
 	 */
 	my_ttc(TTC_INIT_POWER, &dev->tty, 0);
-
-    fprintf(stderr, "create_device: (4)\n");
-
-	/*
-	 * Only setup IRQ handler for non-pcmcia devices.
-	 * Pcmcia devices will have this done later when card is inserted.
-	 */
 
 	if (dip->tty.port != 0 && dev->intr != -1) {
 		ser_stty(dev);
@@ -139,5 +124,4 @@ create_device(TTYINIT_USART *dip, unsigned unit)
 //    sleep(1);// test timer
 	my_ttc(TTC_INIT_ATTACH, &dev->tty, 0);
 
-    fprintf(stderr, "create_device: (5)\n");
 }

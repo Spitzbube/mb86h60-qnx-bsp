@@ -54,9 +54,9 @@ options(int argc, char *argv[])
 	unsigned	unit;
 	static TTYINIT_USART devinit = {
 		{
-			0x20201000 ,	// port
+			MB86H60_UART0_BASE,	// port
 			0,			// port_shift
-			6, //0x18,			// intr
+			MB86H60_INTR_UART0,			// intr
 			115200,		// baud
 			2048,		// isize
 			2048,		// osize
@@ -100,7 +100,6 @@ options(int argc, char *argv[])
 		 */
 		while (optind < argc && *(optarg = argv[optind]) != '-') {
 			devinit.tty.port = strtoul(optarg, &optarg, 16);
-			devinit.tty.port = 1; //BCM2835_UART0_BASE;
 			if (*optarg == ',') {
 				devinit.tty.intr = strtoul(optarg + 1, &optarg, 0);
 			}
@@ -112,29 +111,6 @@ options(int argc, char *argv[])
 			++optind;
 		}
 	}
-
-#if 0
-	if (numports == 0) {
-		void *link = NULL;
-		while (1) {
-			link = query_default_device(&devinit, link);
-			if (link == NULL)
-				break;
-			create_device(&devinit, unit++);
-			++numports;
-		}
-	}
-#else
-
-	fprintf(stderr, "options: (5): numports=%d\n", numports);
-
-	if (numports == 0) {
-		if (devinit.tty.port != 0 && devinit.tty.intr != -1) {
-			create_device(&devinit, unit++);
-			++numports;
-		}
-	}
-#endif
 
 	return numports;
 }

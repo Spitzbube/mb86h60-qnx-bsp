@@ -19,11 +19,17 @@
 #include <sys/io-char.h>
 
 
+extern int tte(message_context_t *ctp, int code, unsigned flags, void *handle);
+
+
 #if 1
+
 int my_tte(message_context_t *ctp, int code, unsigned flags, void *handle)
 {
-    fprintf(stderr, "tte: TODO!!!\n");
+//    fprintf(stderr, "my_tte: TODO!!!\n");
 
+    return tte(ctp, code, flags, handle);
 }
+
 #endif
 

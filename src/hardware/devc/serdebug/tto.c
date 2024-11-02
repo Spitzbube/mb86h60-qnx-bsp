@@ -55,20 +55,17 @@ tto(TTYDEV *ttydev, int action, int arg1)
 
 	while ((bup->cnt > 0 ))
 	{
-#if 0
-		while ( in32(base + BCM2835_UART0_FR) & BCM2835_DBGU_IE_SR_TXRDY )
+		while ( in32(base + PL011_FR) & 
+			(PL011_FR_TXFF | PL011_FR_BUSY) )
 		{}
-#endif
+
 		dev_lock(&dev->tty);
 		c = tto_getchar(&dev->tty);
 		dev_unlock(&dev->tty);
 		dev->tty.un.s.tx_tmr = 3;		/* Timeout 3 */
-#if 0
-		out32(base + BCM2835_UART0_DR, c);
-#else
-//			fprintf(stderr, "c: 0x%02x(%c)\n", c, c);
-		fprintf(stderr, "%c", c);
-#endif
+
+		out32(base + PL011_DR, c);
+
 		/*
 			* Clear the OSW_PAGED_OVERRIDE flag as we only want
 			* one character to be transmitted in this case.

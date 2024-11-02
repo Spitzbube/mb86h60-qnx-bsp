@@ -258,7 +258,7 @@ int	my_ttc(int type/*r6*/, void *ptr/*r5*/, int arg/*r4*/)
                 //loc_c0c
                 ((TTYCTRL*)ptr)->timerid = TimerCreate(0, &((TTYCTRL*)ptr)->timer);
 
-#if 1
+#if 0
                 printf("before dispatch loop: %p\n", r4_);
 #endif
 
@@ -360,7 +360,9 @@ int	my_ttc(int type/*r6*/, void *ptr/*r5*/, int arg/*r4*/)
             break;
     }
 
+#if 0
     printf("ttc type = 0x%08x, res = 0x%08x\n", type, r4);
+#endif
 
     return r4;
 }

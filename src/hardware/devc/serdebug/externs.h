@@ -46,6 +46,8 @@
 #include <atomic.h>
 #include <hw/inout.h>
 #include <sys/io-char.h>
+#include <arm/mb86h60.h>
+#include <arm/pl011.h>
 
 typedef struct dev_usart {
 	TTYDEV		tty;

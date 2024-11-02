@@ -5,8 +5,8 @@
 
     #tnto -vvvv
     #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6-instr -vvvv
-    PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.new -vvvv
-    #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.openqnx640 -vvvv
+    #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.new -vvvv
+    PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.openqnx640 -vvvv
 
 }
 [+script] .script = {
@@ -14,11 +14,13 @@
 
     procmgr_symlink /proc/boot/libc.so /usr/lib/ldqnx.so.2
 
+    uname -a
+
 #    slogger
     pipe
 
-    display_msg Starting DBGU driver...
-    devc-serdebug -e -F -S -b115200 -c133000000 0x20201000,1
+    display_msg Starting UART0 driver...
+    devc-serdebug -e -F -S -b115200 -c133000000 0xc2000000,8
     waitfor /dev/ser1 4
     display_msg opening ...
     reopen /dev/ser1
@@ -57,7 +59,7 @@ libc.so
 
 devc-serdebug
 
-#ldd
+ldd
 hello_world
 ls
 ksh
@@ -67,6 +69,11 @@ ksh
 #esh_new
 waitfor
 pipe
+ps
+use
+top
+uname
+
 
 ###########################################################################
 ## END OF BUILD SCRIPT
