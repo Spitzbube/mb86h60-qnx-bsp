@@ -1,6 +1,12 @@
 
 int Data_11be40; //11be40
 
+int Data_11c6d0; //11c6d0
+
+int _iou_ex; //0x0011f3a4 
+
+int Data_1212c4; //1212c4
+int usb_enum_priority = 0; //0x00121574
 int usb_coid = 0; //0x00121578
 int usb_priority = 0; //0x0012157c
 int usb_chid = 0; //0x00121580
