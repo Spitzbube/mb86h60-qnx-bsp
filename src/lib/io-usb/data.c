@@ -1,7 +1,12 @@
 
+#include <sys/iofunc.h>
+#include <sys/resmgr.h>
+
 int Data_11be40; //11be40
 
 int Data_11c6d0; //11c6d0
+
+int Data_11ddf4; //11ddf4
 
 int _iou_ex; //0x0011f3a4 
 

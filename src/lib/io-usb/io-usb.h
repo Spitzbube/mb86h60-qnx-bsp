@@ -2,7 +2,8 @@
 
 struct io_usb_dll_entry_t
 {
-    int fill_0[2]; //0
+    char* Data_0; //0
+    int Data_4; //4
     int (*init)(); //8
     int (*shutdown)(); //12
     void* controller_methods; //16

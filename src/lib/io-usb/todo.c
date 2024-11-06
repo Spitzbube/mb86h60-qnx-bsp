@@ -1,6 +1,8 @@
 
 #include <stdio.h>
-
+#include <sys/dispatch.h>
+#include <sys/iofunc.h>
+#include "externs.h"
 
 
 int USBDRIV_Main(int a, int b)
@@ -38,20 +40,6 @@ void udi_memory_info()
 }
 
 
-void usbdi_init_server_globals()
-{
-    fprintf(stderr, "usbdi_init_server_globals\n");
-
-}
-
-
-void register_dll_entry()
-{
-    fprintf(stderr, "register_dll_entry\n");
-
-}
-
-
 void usb_port_monitor_start()
 {
     fprintf(stderr, "usb_port_monitor_start\n");
@@ -71,5 +59,53 @@ void usbdi_timeout_tick()
     fprintf(stderr, "usbdi_timeout_tick\n");
 
 }
+
+
+int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
+                      RESMGR_HANDLE_T *handle, void *extra)
+{
+    fprintf(stderr, "usbdi_resmgr_open\n");
+
+}
+
+
+int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
+                      RESMGR_HANDLE_T *handle,
+                      io_mount_extra_t *extra)
+{
+    fprintf(stderr, "usbdi_io_mount\n");
+
+}
+
+
+void usbdi_memchunk_init()
+{
+    fprintf(stderr, "usbdi_memchunk_init\n");
+
+}
+
+
+iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
+                     iofunc_attr_t *attr)
+{
+    fprintf(stderr, "usbdi_ocb_calloc\n");
+
+}
+
+
+void usbdi_ocb_free(iofunc_ocb_t *ocb)
+{
+    fprintf(stderr, "usbdi_ocb_free\n");
+
+}
+
+
+int usbdi_timeout_init(struct USB_Timer* a)
+{
+    fprintf(stderr, "usbdi_timeout_init\n");
+
+}
+
+
 
 

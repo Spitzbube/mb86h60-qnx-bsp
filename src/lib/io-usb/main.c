@@ -29,36 +29,82 @@
 #include <signal.h>
 #include <errno.h>
 #include <dlfcn.h>
+#include <libgen.h>
 #include <sys/neutrino.h>
 #include <sys/slog.h>
+#include <sys/dispatch.h>
+#include <sys/iofunc.h>
 #include <pthread.h>
 
 #include "externs.h"
 
+extern void* io_usb_dlopen(char*, int);
+extern void* io_usb_dlsym(void*, char*);
+extern int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
+                      RESMGR_HANDLE_T *handle, void *extra);
+extern int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
+                      RESMGR_HANDLE_T *handle,
+                      io_mount_extra_t *extra);
+extern iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
+                     iofunc_attr_t *attr);
+extern void usbdi_ocb_free(iofunc_ocb_t *ocb);
+
+iofunc_funcs_t ResmgrOCBFuncs = //0x11950c
+{
+    5,
+    usbdi_ocb_calloc,
+    usbdi_ocb_free
+};
+
+extern int Data_11c6d0; //11c6d0
+extern int Data_11ddf4; //11ddf4
+extern int _iou_ex; //0x0011f3a4 
+resmgr_io_funcs_t ResmgrIOFuncs = //0x11f404
+{
+    26,
+    //TODO!!!
+};
+resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
+{
+    8,
+    usbdi_resmgr_open,
+    0, 0, 0, 0, 0, 0,
+    usbdi_io_mount
+};
+
 struct
 {
+#if 0
     int fill_0[4]; //0
+#else
+    pthread_mutex_t Data_0; //0
+#endif
+    int Data_8; //8
+    int Data_0xc; //0xc
     int Data_0x10; //0x10
-    int fill_0x14[11]; //0x14
+    int fill_0x14[2]; //0x14
+    dispatch_t* dpp; //0x1c
+    void* Data_0x20; //0x20
+    int Data_0x24; //0x24
+    void* Data_0x28; //0x28
+    int Data_0x2c; //0x2c
+    int Data_0x30; //0x30
+    int Data_0x34; //0x34
+    int fill_0x38[2]; //0x38
     int Data_0x40; //0x40
-    int fill_0x44[45]; //0x44
-    uint16_t wData_0xf8; //0xf8
-    uint16_t wData_0xfa; //0xfa
-    uint16_t wData_0xfc; //0xfc
-    uint16_t wData_0xfe; //0xfe
-    int fill_0x100[30]; //0x100
+    int fill_0x44[2]; //0x44
+    iofunc_mount_t Data_0x4c; //0x4c
+    iofunc_attr_t iofunc_attr; //0x64
+    dev_t Data_0xb8; //0xb8
+    resmgr_attr_t resmgr_attr; //0xbc
+    thread_pool_attr_t Data_0xdc;
+    pthread_attr_t Data_0x120; //0x120
+    //TODO
     struct UsbdiGlobals_Inner_0x178* Data_0x178; //0x178
     int fill_0x17c; //0x17c
     int Data_0x180; //0x180
-} UsbdiGlobals;
+} UsbdiGlobals; //0x001212b0
 
-
-extern void* io_usb_dlopen(char*, int);
-extern void* io_usb_dlsym(void*, char*);
-
-
-extern int Data_11c6d0; //11c6d0
-extern int _iou_ex; //0x0011f3a4 
 extern int Data_1212c4; //1212c4
 extern int usb_enum_priority; //0x00121574
 extern int usb_coid; //0x00121578
@@ -66,20 +112,12 @@ extern int usb_priority; //0x0012157c
 extern int usb_chid; //0x00121580
 extern int usb_dflt_timeout; //0x00121584
 extern char* usb_prefix; //0x0012158c
-struct 
-{
-    int Data_0; //0
-    int Data_4; //4
-    int Data_8; //8
-    uint16_t wData_0xc; //12
-    uint16_t wData_0xe; //14
-    //???
-} usb_timer; //121590
+struct USB_Timer usb_timer; //121590
 extern int usb_verbosity; //0x001215a0
 
 
 /* 0x00104f44 - todo */
-int io_usb_dll_load(void** phDll/*r8*/, char* r5, char* r4, volatile unsigned int** sl)
+struct UsbdiGlobals_Inner_0x178* io_usb_dll_load(void** phDll/*r8*/, char* r5, char* r4, volatile unsigned int** sl)
 {
 #if 0
     fprintf(stderr, "io_usb_dll_load\n");
@@ -218,6 +256,45 @@ loc_105128:
 }
 
 
+/* 0x00105148 - todo */
+int register_dll_entry(struct UsbdiGlobals_Inner_0x178* r4)
+{
+#if 0
+    fprintf(stderr, "register_dll_entry\n");
+#endif
+
+    char sp_0x14[260];
+
+    char* r6 = strdup(usb_prefix);
+
+    sprintf(&sp_0x14[0], "%s/%s", dirname(r6), r4->pDllEntry->Data_0);
+
+    r4->Data_0x10 = resmgr_attach(UsbdiGlobals.dpp, //dispatch_t *dpp
+        &UsbdiGlobals.resmgr_attr, //resmgr_attr_t *attr
+        &sp_0x14[0], //path
+        0x0b, //enum _file_type file_type
+        0x200, //flags
+        &ResmgrCFuncs, //resmgr_connect_funcs_t *connect_funcs
+        0, //resmgr_io_funcs_t *io_funcs
+        r4 //RESMGR_HANDLE_T *handle
+        );
+
+    if (r4->Data_0x10 == -1)
+    {
+        fprintf(stderr, "resmgr_attach unable to register %s \n", 
+            r4->pDllEntry->Data_0);
+
+        free(r6);
+
+        return -1;
+    }
+
+    free(r6);
+
+    return 0;
+}
+
+
 /* 105214 - todo */
 static void* usb_event_handler(void* p)
 {
@@ -272,10 +349,10 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
     void* hDll; //sp_0x28
 
     UsbdiGlobals.Data_0x180 = 3;
-    UsbdiGlobals.wData_0xf8 = 1;
-    UsbdiGlobals.wData_0xfc = 4;
-    UsbdiGlobals.wData_0xfa = 1;
-    UsbdiGlobals.wData_0xfe = 8;
+    UsbdiGlobals.Data_0xdc.lo_water = 1; //wData_0xf8 = 1;
+    UsbdiGlobals.Data_0xdc.hi_water = 4; //wData_0xfc = 4;
+    UsbdiGlobals.Data_0xdc.increment = 1; //wData_0xfa = 1;
+    UsbdiGlobals.Data_0xdc.maximum = 8; //wData_0xfe = 8;
     UsbdiGlobals.Data_0x40 = -1;
 
     usb_prefix = 0;
@@ -346,18 +423,7 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
                 case 'd':
                     //loc_10580c: Hc DLL to load and options to pass to the DLL.
                     {
-                        struct 
-                        {
-                            int fill_0; //0
-                            struct 
-                            {
-                                int fill_0; //0
-                                int Data_4; //4
-                                //???
-                            }* Data_4; //4
-                            char* Data_8; //8
-                            //???
-                        }* r6;
+                        struct UsbdiGlobals_Inner_0x178* r6;
                         
                         r6 = io_usb_dll_load(&hDll, "devu", optarg, &sp_0x30);
                         if (r6 != 0)
@@ -374,7 +440,7 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
                                 r6->Data_8 = strdup(argv[optind]);
                             }
                             //loc_105864
-                            CTRL_RegisterControllerType(r6, r6->Data_4->Data_4, r6->Data_8);
+                            CTRL_RegisterControllerType(r6, r6->pDllEntry->Data_4, r6->Data_8);
 
                             atomic_sub(sp_0x30, 1);
                         }
@@ -415,12 +481,12 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
 
                 case 'h':
                     //loc_105958: Hi water mark for thread pool (4).
-                    UsbdiGlobals.wData_0xfc = atoi(optarg);
+                    UsbdiGlobals.Data_0xdc.hi_water = atoi(optarg);
                     break;
 
                 case 'm':
                     //loc_105970: Maximum number of threads in the thread pool (8).
-                    UsbdiGlobals.wData_0xfe = atoi(optarg);
+                    UsbdiGlobals.Data_0xdc.maximum = atoi(optarg);
                     break;
 
                 case 'n':
@@ -488,9 +554,10 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
         usb_prefix = "/dev/io-usb/io-usb";
     }
 
-    if (usbdi_init_server_globals(usb_prefix, &usb_timer) != 0)
+    int r2 = usbdi_init_server_globals(usb_prefix, &usb_timer);
+    if (r2 != 0)
     {
-        fprintf(stderr, "usbdi_init_server_globals %d\n");
+        fprintf(stderr, "usbdi_init_server_globals %d\n", r2);
         exit(1);
     }
     //loc_105bc8
@@ -570,5 +637,180 @@ void* io_usb_dlopen(char* r5, int r8)
     return r6;
 }
 
+
+static int nonblockevent(message_context_t *ctp, int code, unsigned flags, void *handle);
+
+
+/* 0x00115dec - todo */
+int usbdi_init_server_globals(char* r5, struct USB_Timer* r6)
+{
+#if 0
+    fprintf(stderr, "usbdi_init_server_globals\n");
+#endif
+
+    int r4;
+    ino64_t inode; //sp_0x98; //TODO
+    resmgr_attr_t sp_0x78;
+    struct stat sp_0x30;
+    pthread_mutexattr_t sp_0x10;
+
+    if (stat(r5, &sp_0x30) != -1)
+    {
+        fprintf(stderr, "io-usb already attached to %s\n", r5);
+        //->loc_1160f8
+        r4 = 16;
+        return r4;
+    }
+    //loc_115e2c
+    pthread_mutexattr_init(&sp_0x10);
+    pthread_mutexattr_setrecursive(&sp_0x10, 2);
+    r4 = pthread_mutex_init(&UsbdiGlobals.Data_0, &sp_0x10);
+
+    if (r4 != 0)
+    {
+        if (r4 == 16)
+        {
+            r4 = 0;
+        }
+        return r4;
+    }
+    //loc_115e68
+    r4 = usbdi_memchunk_init(&Data_11ddf4, 8, &UsbdiGlobals.Data_8, 0);
+    if (r4 != 0)
+    {
+        return r4;
+    }
+
+    r4 = usbdi_memchunk_init(&Data_11ddf4, 8, &UsbdiGlobals.Data_0xc, 1);
+    if (r4 != 0)
+    {
+        return r4;
+    }
+
+    UsbdiGlobals.Data_0x24 = 0;
+    UsbdiGlobals.Data_0x28 = &UsbdiGlobals.Data_0x24;
+
+    iofunc_attr_init(&UsbdiGlobals.iofunc_attr, 0x21a4, 0, 0);
+
+    UsbdiGlobals.Data_0x4c.flags = 0x100;
+    UsbdiGlobals.Data_0x4c.conf = 3;
+    UsbdiGlobals.Data_0x4c.blocksize = 1;
+    UsbdiGlobals.Data_0x4c.funcs = &ResmgrOCBFuncs;
+    UsbdiGlobals.iofunc_attr.mount = &UsbdiGlobals.Data_0x4c;
+
+    UsbdiGlobals.dpp = dispatch_create();
+
+    if (UsbdiGlobals.dpp == 0)
+    {
+        r4 = errno;
+        return r4;
+    }
+    //loc_115f14
+#if 1
+    memset(&sp_0x78, 0, sizeof(sp_0x78));
+#else
+    sp_0x78.flags = 0;
+    sp_0x78.other_func = 0;
+    sp_0x78.reserved[0] = 0;
+    sp_0x78.reserved[1] = 0;
+    sp_0x78.reserved[2] = 0;
+    sp_0x78.reserved[3] = 0;
+#endif
+
+    sp_0x78.nparts_max = 0x41;
+    sp_0x78.msg_max_size = 0x2214;
+
+    resmgr_attach(UsbdiGlobals.dpp,
+        &sp_0x78,
+        0,
+        0x0b,
+        0x100,
+        &ResmgrCFuncs,
+        0,
+        0);
+
+    UsbdiGlobals.resmgr_attr.nparts_max = 0x41;
+
+    UsbdiGlobals.Data_0xdc.handle = UsbdiGlobals.dpp;
+    UsbdiGlobals.Data_0xdc.context_alloc = dispatch_context_alloc;
+    UsbdiGlobals.Data_0xdc.context_free = dispatch_context_free;
+    UsbdiGlobals.Data_0xdc.block_func = dispatch_block;
+    UsbdiGlobals.Data_0xdc.handler_func = dispatch_handler;
+    UsbdiGlobals.Data_0xdc.tid_name = "usb_resmgr";
+    UsbdiGlobals.Data_0xdc.attr = &UsbdiGlobals.Data_0x120;
+
+    pthread_attr_init(&UsbdiGlobals.Data_0x120);
+    pthread_attr_setdetachstate(&UsbdiGlobals.Data_0x120, 1);
+    pthread_attr_setstacksize(&UsbdiGlobals.Data_0x120, 0x4000);
+
+    UsbdiGlobals.Data_0x30 = resmgr_attach(UsbdiGlobals.dpp,
+        &UsbdiGlobals.resmgr_attr,
+        r5,
+        0x0b,
+        0x300,
+        &ResmgrCFuncs,
+        &ResmgrIOFuncs,
+        &UsbdiGlobals.iofunc_attr);
+
+    if (UsbdiGlobals.Data_0x30 == -1)
+    {
+        r4 = errno;
+        return r4;
+    }
+    //loc_116030
+    resmgr_devino(UsbdiGlobals.Data_0x30, &UsbdiGlobals.Data_0x4c.dev, &inode);
+
+    UsbdiGlobals.Data_0xb8 = UsbdiGlobals.Data_0x4c.dev;
+    UsbdiGlobals.iofunc_attr.inode = inode; //TODO: only 32bit
+
+    UsbdiGlobals.Data_0x2c = message_connect(UsbdiGlobals.dpp, 0x200);
+
+    if (UsbdiGlobals.Data_0x2c == -1)
+    {
+        r4 = errno;
+        return r4;
+    }
+    //loc_116078
+    r4 = usbdi_timeout_init(r6);
+    if (r4 != 0)
+    {
+        return r4;
+    }
+
+    UsbdiGlobals.Data_0x34 = pulse_attach(UsbdiGlobals.dpp, 
+        2, 0, nonblockevent, 0);
+
+    if (UsbdiGlobals.Data_0x34 == -1)
+    {
+        r4 = errno;
+        return r4;
+    }
+    //loc_1160bc
+    UsbdiGlobals.Data_0x20 = thread_pool_create(&UsbdiGlobals.Data_0xdc, 0);
+    
+    if (UsbdiGlobals.Data_0x20 == 0)
+    {
+        r4 = errno;
+        return r4;
+    }
+    //loc_1160e4
+    if (thread_pool_start(UsbdiGlobals.Data_0x20) == -1)
+    {
+        r4 = errno;
+        return r4;
+    }
+    //loc_1160f8
+    return 0;
+}
+
+
+/* 116120 - todo */
+static int nonblockevent(message_context_t *ctp, int code, unsigned flags, void *handle)
+{
+#if 1
+    fprintf(stderr, "nonblockevent\n");
+#endif
+
+}
 
 
