@@ -48,6 +48,26 @@ extern int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
 extern iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
                      iofunc_attr_t *attr);
 extern void usbdi_ocb_free(iofunc_ocb_t *ocb);
+extern int usbdi_resmgr_close();
+extern int usbdi_resmgr_stat();
+extern int usbdi_resmgr_devctl();
+extern int usbdi_resmgr_unblock();
+extern int usbdi_resmgr_pathconf();
+extern int usbdi_resmgr_chmod();
+extern int usbdi_resmgr_chown();
+extern int usbdi_resmgr_utime();
+extern int usbdi_resmgr_msg();
+extern int udi_memory_info(uint32_t*);
+extern void hub_start_driver(int argc, char* const argv[]);
+extern void udi_start_driver(int argc, char* const argv[]);
+static void* usb_port_change_handler(void*);
+extern void udi_transfer_done();
+extern void udi_insertion();
+extern void udi_removal();
+extern int USBDRIV_Main(int argc, char* const argv[]);
+extern struct ArrayClass* CLASS_RegisterDriver(struct Struct_10acec*);
+
+
 
 iofunc_funcs_t ResmgrOCBFuncs = //0x11950c
 {
@@ -62,7 +82,21 @@ extern int _iou_ex; //0x0011f3a4
 resmgr_io_funcs_t ResmgrIOFuncs = //0x11f404
 {
     26,
-    //TODO!!!
+    0, //read
+    0, //write
+    usbdi_resmgr_close,
+    usbdi_resmgr_stat,
+    0,
+    usbdi_resmgr_devctl,
+    usbdi_resmgr_unblock,
+    usbdi_resmgr_pathconf,
+    0,
+    usbdi_resmgr_chmod,
+    usbdi_resmgr_chown,
+    usbdi_resmgr_utime,
+    0, 0, 0, 0, 0, 0,
+    usbdi_resmgr_msg,
+    0, 0, 0, 0, 0, 0, 0
 };
 resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
 {
@@ -71,6 +105,11 @@ resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
     0, 0, 0, 0, 0, 0,
     usbdi_io_mount
 };
+
+extern struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c
+extern int ausb_controllers[]; //0x001201c0
+extern pthread_mutex_t usb_mmutex; //0x120210
+extern int Data_12021c; //12021c
 
 struct
 {
@@ -82,7 +121,8 @@ struct
     int Data_8; //8
     int Data_0xc; //0xc
     int Data_0x10; //0x10
-    int fill_0x14[2]; //0x14
+    uint32_t Data_0x14; //0x14 = 1212c4
+    int fill_0x18; //0x18
     dispatch_t* dpp; //0x1c
     void* Data_0x20; //0x20
     int Data_0x24; //0x24
@@ -105,7 +145,6 @@ struct
     int Data_0x180; //0x180
 } UsbdiGlobals; //0x001212b0
 
-extern int Data_1212c4; //1212c4
 extern int usb_enum_priority; //0x00121574
 extern int usb_coid; //0x00121578
 extern int usb_priority; //0x0012157c
@@ -114,6 +153,190 @@ extern int usb_dflt_timeout; //0x00121584
 extern char* usb_prefix; //0x0012158c
 struct USB_Timer usb_timer; //121590
 extern int usb_verbosity; //0x001215a0
+extern struct UdiCtrl UdiCtrl; //0x001215a4
+extern pthread_rwlock_t usb_rwlock; //0x00127834
+
+
+
+
+/* 0x001034f0 - complete */
+struct USB_Controller* CTRL_HCLookup(uint32_t a)
+{
+#if 0
+    fprintf(stderr, "CTRL_HCLookup: TODO\n");
+#endif
+
+    if ((a < 20) && (ausb_controllers[a] != 0))
+    {
+        return &usb_controllers[a];
+    }
+
+    return 0;
+}
+
+
+/* 0x00103d34 - todo */
+int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
+        int sp_0x28, char* c)
+{
+    fprintf(stderr, "CTRL_RegisterControllerType\n");
+
+#if 0
+    struct 
+    {
+        uint16_t fill_0; //0
+        uint16_t wData_2; //2
+        int fill_4[4]; //4
+        uint8_t bData_0x14; //0x14
+        uint8_t bData_0x15; //0x15
+        uint8_t bData_0x16; //0x16
+        uint8_t bData_0x17; //0x17
+        int fill_0x18[6]; //0x18
+        uint8_t bData_0x30; //0x30
+        uint8_t bData_0x31; //0x31
+        uint8_t bData_0x32; //0x32
+        uint8_t bData_0x33; //0x33
+        uint8_t bData_0x34; //0x34
+        uint8_t bData_0x35; //0x35
+        uint8_t bData_0x36; //0x36
+        uint8_t bData_0x37; //0x37
+        int fill_0x38[12]; //0x38
+        uint8_t bData_0x68; //0x68
+        uint8_t bData_0x69; //0x69
+        uint8_t bData_0x6a; //0x6a
+        uint8_t bData_0x6b; //0x6b
+        uint8_t bData_0x6c; //0x6c
+        uint8_t bData_0x6d; //0x6d
+        uint8_t bData_0x6e; //0x6e
+        uint8_t bData_0x6f; //0x6f
+        int fill_0x70[6]; //0x70
+        uint8_t bData_0x88; //0x88
+        uint8_t bData_0x89; //0x89
+        uint8_t bData_0x8a; //0x8a
+        uint8_t bData_0x8b; //0x8b
+        uint8_t bData_0x8c; //0x8c
+        uint8_t bData_0x8d; //0x8d
+        uint8_t bData_0x8e; //0x8e
+        uint8_t bData_0x8f; //0x8f
+        int fill_0x90[2]; //0x90
+        uint8_t bData_0x98; //0x98
+        uint8_t bData_0x99; //0x99
+        uint8_t bData_0x9a; //0x9a
+        uint8_t bData_0x9b; //0x9b
+        int fill_0x9c[3]; //0x9c
+        uint8_t bData_0xa8; //0xa8
+        uint8_t bData_0xa9; //0xa9
+        uint8_t bData_0xaa; //0xaa
+        uint8_t bData_0xab; //0xab
+        int fill_0xac[17]; //0xac
+        //0xf0???
+    }* r4;
+
+    uint8_t sp_0xb0[8];
+    uint8_t sp_0xac[4];
+    int sp_0xa8;
+    int sp_0xa4;
+    int sp_0xa0 = 0;
+    struct
+    {
+        int fill_0[4]; //0
+        //16
+    } sp_0x90;
+
+    sp_0x20->Data_0x20 = 10;
+
+    if (CTRL_ProcessArgs(sp_0x20, c) != 0)
+    {
+        return -1;
+    }
+
+    r4 = calloc(1, 0xf0);
+
+    //sp_0x18 = sp_0x20;
+    //r6 = 0;
+    //sp_0x24 = 0;
+    //sp_0x1c = 0;
+    //fp = 0;
+    //r8 = 0;
+    //sp_0x2c = 0xffffea9f = -0x1561
+    while (sp_0x20->Data_0x20 != 0)
+    {
+        //loc_103dac
+        //sp_0xa4 = 0x15;
+        Data_12021c = 0; //fp
+
+        memset(r4, 0xff, 0xf0);
+        memset(&sp_0x90, 0xff, 16);
+
+        if (CTRL_IsPCIDevice(sp_0x20->Data_0x4c/*r5*/, &sp_0xa8) != 0)
+        {
+            //0x00103e00
+
+            //TODO!!!
+
+            //->loc_104314
+        }
+        else
+        {
+            //loc_1041e4
+            CTRL_GetOptions(sp_0x20->Data_0x4c/*r5*/, 
+                &sp_0xa8, &sp_0xb0[0], &sp_0xac[0],
+                &sp_0xa4, &sp_0xa0, &r4->wData_2,
+                r4, &sp_0x90);
+
+            r4->bData_0x68 = sp_0xb0[0];
+            r4->bData_0x69 = sp_0xb0[1];
+            r4->bData_0x6a = sp_0xb0[2];
+            r4->bData_0x6b = sp_0xb0[3];
+            r4->bData_0x6c = sp_0xb0[4];
+            r4->bData_0x6d = sp_0xb0[5];
+            r4->bData_0x6e = sp_0xb0[6];
+            r4->bData_0x6f = sp_0xb0[7];
+
+            r4->bData_0x88 = sp_0xb0[0];
+            r4->bData_0x89 = sp_0xb0[1];
+            r4->bData_0x8a = sp_0xb0[2];
+            r4->bData_0x8b = sp_0xb0[3];
+            r4->bData_0x8c = sp_0xb0[4];
+            r4->bData_0x8d = sp_0xb0[5];
+            r4->bData_0x8e = sp_0xb0[6];
+            r4->bData_0x8f = sp_0xb0[7];
+
+            r4->bData_0x98 = 0;
+            r4->bData_0x99 = 0x10;
+            r4->bData_0x9a = 0;
+            r4->bData_0x9b = 0;
+
+            r4->bData_0x14 = sp_0xac[0];
+            r4->bData_0x15 = sp_0xac[1];
+            r4->bData_0x16 = sp_0xac[2];
+            r4->bData_0x17 = sp_0xac[3];
+
+            r4->bData_0x30 = sp_0xa0 & 0xff;
+            r4->bData_0x31 = (sp_0xa0 >> 8) & 0xff;
+            r4->bData_0x32 = (sp_0xa0 >> 16) & 0xff;
+            r4->bData_0x33 = (sp_0xa0 >> 24) & 0xff;
+
+            r4->bData_0x34 = 0;
+            r4->bData_0x35 = 0;
+            r4->bData_0x36 = 0;
+            r4->bData_0x37 = 0;
+        }
+        //loc_104314
+        if (Data_12021c != 0)
+        {
+            //loc_104338
+            int r7 = CTRL_GetHCEntry();
+        }
+
+        //TODO
+    }
+    //loc_104534
+    free(r4);
+#endif
+
+    return 0;    
+}
 
 
 /* 0x00104f44 - todo */
@@ -416,7 +639,7 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
                     break;
 
                 case 't':
-                    //loc_10571c
+                    //loc_10571c: Set type memory name (default non, using sysram)
                     //TODO!!!
                     break;
 
@@ -527,7 +750,7 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
         }
     }
     //0x00105a9c
-    udi_memory_info(&Data_1212c4);
+    udi_memory_info(&UsbdiGlobals.Data_0x14);
 
     usb_timer.Data_0 = 4;
     usb_timer.Data_4 = usb_coid;
@@ -584,6 +807,99 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
 }
 
 
+/* 0x00105d70 - todo */
+void udi_start_driver(int argc, char* const argv[])
+{
+    fprintf(stderr, "udi_start_driver\n");
+
+#if 0
+    struct Struct_10acec sp4;
+    int opt;
+
+    while ((opt = getopt(argc, argv, "v")) != -1)
+    {
+        //loc_105d94
+        if (opt == 'v')
+        {
+            UdiCtrl.Data_4++;
+        }
+    }
+
+    sp4.Data_0 = 0;
+    sp4.Data_4 = 0;
+    sp4.Data_8 = 0;
+    sp4.Data_0x14 = 0;
+    sp4.Data_0x18 = udi_transfer_done;
+    sp4.Data_0x1c = udi_insertion;
+    sp4.Data_0x20 = udi_removal;
+
+    UdiCtrl.Data_8 = CLASS_RegisterDriver(&sp4);
+#endif
+}
+
+
+
+/* 0x00105ea8 - complete */
+int udi_memory_info(uint32_t* a)
+{
+#if 0
+    fprintf(stderr, "udi_memory_info\n");
+#endif
+
+    struct USB_Controller* p = CTRL_HCLookup(0);
+    if (p == NULL)
+    {
+        return 19;
+    }
+
+    *a |= (p->Data_0x6c >> 31);
+
+    return 0;
+}
+
+typedef void (*USB_Bind)(int argc, char* const argv[]);
+static const USB_Bind usb_bind_list[] = //0x0011c674
+{
+    hub_start_driver,
+    udi_start_driver,
+    0
+};
+
+
+/* 0x00109e48 - todo */
+int USBDRIV_Main(int argc, char* const argv[])
+{
+#if 0
+    fprintf(stderr, "USBDRIV_Main: TODO\n");
+#endif
+
+    if (pthread_mutex_init(&usb_mmutex, 0) == -1)
+    {
+        fwrite("HW_Init:  Unable to initialize mutex\n", 1, 0x25, stderr);
+
+        return -1;
+    }
+
+
+    const USB_Bind* bind = &usb_bind_list[0];
+    while ((*bind) != 0)
+    {
+        (*bind)(argc, argv);
+        bind++;
+    }
+
+    if (INIT_HCDClassInterface() != 0)
+    {
+
+        fwrite("Error Initializing HCD/Class Interface\n", 1, 0x27, stderr);
+
+        return -1;
+    }
+
+    return 0;
+}
+
+
 /* 0x00109f7c - todo */
 int io_usb_dlclose(void* handle)
 {
@@ -635,6 +951,89 @@ void* io_usb_dlopen(char* r5, int r8)
     }
     //loc_10a108
     return r6;
+}
+
+
+/* 0x0010a6c0 - todo */
+static void* usb_port_change_handler(void* a)
+{
+    fprintf(stderr, "usb_port_change_handler\n");
+
+}
+
+
+#if 0
+static int usb_port_monitor_init()
+{
+    pthread_attr_t fp_0x50;
+    struct sched_param fp_0x78;
+
+    pthread_attr_init(&fp_0x50);
+    pthread_attr_setschedpolicy(&fp_0x50, 2);
+    fp_0x78.sched_priority = usb_enum_priority;
+    pthread_attr_setschedparam(&fp_0x50, &fp_0x78);
+    pthread_attr_setinheritsched(&fp_0x50, 2);
+    pthread_attr_setdetachstate(&fp_0x50, 1);
+    pthread_attr_setstacksize(&fp_0x50, 0x4000);
+
+    if (pthread_create(0, &fp_0x50, usb_port_change_handler, 0) != 0)
+    {
+        fwrite("Unable to create thread\n", 1, 0x18, stderr);
+        return 1;
+    }
+
+    return 0;
+}
+#endif
+
+
+/* 0x00110884 - todo */
+int INIT_HCDClassInterface()
+{
+#if 1
+    fprintf(stderr, "INIT_HCDClassInterface\n");
+#endif
+
+    int r3;
+#if 1
+    pthread_attr_t fp_0x50;
+    struct sched_param fp_0x78;
+#endif
+
+    if (pthread_rwlock_init(&usb_rwlock, 0) == -1)
+    {
+        fwrite("INIT_ScanUSBController:  Unable to initialize rwlock\n", 1, 0x35, stderr);
+        r3 = 1;
+        return r3;
+    }
+    //loc_1108d0
+#if 1
+    pthread_attr_init(&fp_0x50);
+    pthread_attr_setschedpolicy(&fp_0x50, 2);
+    fp_0x78.sched_priority = usb_enum_priority;
+    pthread_attr_setschedparam(&fp_0x50, &fp_0x78);
+    pthread_attr_setinheritsched(&fp_0x50, 2);
+    pthread_attr_setdetachstate(&fp_0x50, 1);
+    pthread_attr_setstacksize(&fp_0x50, 0x4000);
+
+#if 0
+    r3 = pthread_create(0, &fp_0x50, usb_port_change_handler, 0);
+    if (r3 != 0)
+    {
+        fwrite("Unable to create thread\n", 1, 0x18, stderr);
+        r3 = 1;
+    }
+    else
+#endif
+    {
+        //loc_110990
+        r3 = 0;
+    }
+#else
+    return usb_port_monitor_init;
+#endif
+
+    return r3;
 }
 
 

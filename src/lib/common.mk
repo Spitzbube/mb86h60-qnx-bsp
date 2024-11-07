@@ -27,6 +27,8 @@ include $(QCONFIG)
 NAME=my-$(SECTION)
 EXTRA_SILENT_VARIANTS+=$(subst -, ,$(SECTION))
 
+PUBLIC_INCVPATH += $(SECTION_ROOT)/public
+
 USEFILE=$(SECTION_ROOT)/options.c
 
 define PINFO
