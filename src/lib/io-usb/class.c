@@ -50,11 +50,13 @@ int INIT_HCDClassInterface()
     pthread_attr_setdetachstate(&fp_0x50, 1);
     pthread_attr_setstacksize(&fp_0x50, 0x4000);
 
+#if 0
     if (pthread_create(0, &fp_0x50, usb_port_enum_handler, 0) != 0)
     {
         fwrite("Unable to create thread\n", 1, 0x18, stderr);
         return 1;
     }
+#endif
 
     return 0;
 }

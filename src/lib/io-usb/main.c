@@ -32,8 +32,8 @@ extern int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
 extern iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
                      iofunc_attr_t *attr);
 extern void usbdi_ocb_free(iofunc_ocb_t *ocb);
-extern int usbdi_resmgr_close();
-extern int usbdi_resmgr_stat();
+extern int usbdi_resmgr_close(resmgr_context_t *ctp, void *reserved, iofunc_ocb_t *ocb);
+extern int usbdi_resmgr_stat(resmgr_context_t *ctp, io_stat_t *msg, iofunc_ocb_t *ocb);
 extern int usbdi_resmgr_devctl();
 extern int usbdi_resmgr_unblock();
 extern int usbdi_resmgr_pathconf();
@@ -55,17 +55,10 @@ extern void stop_controllers();
 extern void usb_port_monitor_start();
 
 
-iofunc_funcs_t ResmgrOCBFuncs = //0x11950c
-{
-    5,
-    usbdi_ocb_calloc,
-    usbdi_ocb_free
-};
-
 extern int Data_11c6d0; //11c6d0
 extern int Data_11ddf4; //11ddf4
 extern int _iou_ex; //0x0011f3a4 
-resmgr_io_funcs_t ResmgrIOFuncs = //0x11f404
+const resmgr_io_funcs_t ResmgrIOFuncs = //0x11f404
 {
     26,
     0, //read
@@ -84,7 +77,16 @@ resmgr_io_funcs_t ResmgrIOFuncs = //0x11f404
     usbdi_resmgr_msg,
     0, 0, 0, 0, 0, 0, 0
 };
-resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
+
+const iofunc_funcs_t ResmgrOCBFuncs = //0x0011f470
+{
+    5,
+    usbdi_ocb_calloc,
+    usbdi_ocb_free,
+    0, 0, 0
+};
+
+const resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
 {
     8,
     usbdi_resmgr_open,
@@ -93,7 +95,7 @@ resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
 };
 
 extern struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c
-extern int ausb_controllers[]; //0x001201c0
+extern struct USB_Controller* ausb_controllers[]; //0x001201c0
 extern pthread_mutex_t usb_mmutex; //0x120210
 extern int Data_12021c; //12021c
 extern int usb_coid; //0x00121578
@@ -124,16 +126,286 @@ struct USB_Controller* CTRL_HCLookup(uint32_t a)
 }
 
 
+/* 0x0010356c - complete */
+struct USB_Controller* CTRL_GetHCEntry()
+{
+#if 0
+    fprintf(stderr, "CTRL_GetHCEntry\n");
+#endif
+
+    int i;
+    struct USB_Controller* pController = NULL;
+
+    for (i = 0; i < 20; i++)
+    {
+        if (ausb_controllers[i] == 0)
+        {
+            pController = &usb_controllers[i];
+
+            memset(pController, 0, sizeof(struct USB_Controller));
+
+            pController->Data_8 = i;
+
+            ausb_controllers[i] = pController;
+
+            pController->Data_0x7c = calloc(1, 0xd70);
+            if (pController->Data_0x7c == 0)
+            {
+                pController = NULL;
+                break;
+            }
+
+            pController->Data_0x78 = calloc(1, 0x50);
+            if (pController->Data_0x78 == 0)
+            {
+                free(pController->Data_0x78);
+                pController = NULL;
+                break;
+            }
+
+            break;
+        }
+    }
+
+    return pController;
+}
+
+
+char* const io_usb_opts[] = 
+{
+    "ioport",
+    "irq",
+    "pindex",
+    "priority",
+    "bmstr",
+    "vid",
+    "did",
+    "ports",
+    NULL
+};
+
+
+/* 0x00103620 - todo */
+int CTRL_GetOptions(char* a, 
+    int32_t* sp4,
+    unsigned long long* sp8, 
+    uint32_t* sp_0xc,
+    int32_t* sp_0x50,
+    uint32_t* sp_0x54,
+    uint16_t* sp_0x58,
+    uint16_t* sp_0x5c,
+    char r5[] /*sp_0x60*/)
+{
+#if 0
+    fprintf(stderr, "CTRL_GetOptions\n");
+#endif
+
+    char* sp_0x24;
+    char* sp_0x20;
+    char* sp_0x1c;
+    char* sp_0x10;
+
+    if (a != 0)
+    {
+        sp_0x20 = sp_0x10 = strdup(a);
+        //->loc_103888
+        while ((sp_0x20 != 0) && (sp_0x20[0] != 0))
+        {
+            //loc_10366c
+            switch (getsubopt(&sp_0x20, io_usb_opts, &sp_0x24))
+            {
+                case 0: //"ioport"
+                    //0x001036a8
+                    if (sp_0x24 != 0)
+                    {
+                        *sp8 = strtoull(sp_0x24, &sp_0x1c, 0);
+
+                        if (sp_0x1c[0] != 0)
+                        {
+                            slogf(12, 2, "io-usb - error parsing ioport, expected value, got \"%s\"", sp_0x24);
+                        }
+                    }
+                    break;
+
+                case 1: //"irq"
+                    //0x001036f4
+                    if (sp_0x24 != 0)
+                    {
+                        *sp_0xc = strtoul(sp_0x24, 0, 0);
+
+                    }
+                    break;
+
+                case 2: //"pindex"
+                    //0x00103718
+                    if (sp_0x24 != 0)
+                    {
+                        *sp4 = strtol(sp_0x24, 0, 0);
+
+                    }
+                    break;
+
+                case 3: //"priority"
+                    //0x0010373c
+                    if (sp_0x24 != 0)
+                    {
+                        *sp_0x50 = strtol(sp_0x24, 0, 0);
+                    }
+                    break;
+
+                case 4: //"bmstr"
+                    //0x00103760
+                    if (sp_0x24 != 0)
+                    {
+                        *sp_0x54 = strtoul(sp_0x24, 0, 0);
+                    }
+                    break;
+
+                case 5: //"vid"
+                    //0x00103784
+                    if (sp_0x24 != 0)
+                    {
+                        *sp_0x58 = strtoul(sp_0x24, 0, 0);
+                    }
+                    break;                
+
+                case 6: //"did"
+                    //0x001037a8
+                    if (sp_0x24 != 0)
+                    {
+                        *sp_0x5c = strtoul(sp_0x24, 0, 0);
+                    }
+                    break;                
+
+                case 7: //"ports"
+                    //0x001037cc
+                    if (sp_0x24 != 0)
+                    {
+                        char* r0 = strtok(sp_0x24, ":");
+                        if (r0 == 0)
+                        {
+                            slogf(12, 2, "io-usb: no ports specified?");
+                        }
+                        else
+                        {
+                            //loc_1037fc
+                            r5[0] = atoi(r0);
+
+                            int r4;
+                            int r3;
+                            int r2;
+
+                            for (r4 = 1; r4 < 16; /*r4++*/)
+                            {
+                                //loc_103814
+                                r0 = strtok(0, ":");
+                                if (r0 == 0)
+                                {
+                                    //->loc_103888
+                                    break;
+                                }
+
+                                r3 = atoi(r0);
+
+                                int found = 0;
+                                for (r2 = 0; r2 < r4; r2++)
+                                {
+                                    //loc_10384c
+                                    if (r3 == r5[r2])
+                                    {
+                                        //loc_103858
+                                        slogf(12, 2, "io-usb: port %d already specified, ignoring..", r3);
+                                        //->loc_103814
+                                        found = 1;
+                                        break;
+                                    }
+                                    //loc_10386c
+                                }
+                                //loc_103878
+                                if (!found)
+                                {
+                                    r5[r4] = r3;
+                                    r4++;
+                                }
+                            }              
+                            //loc_103888          
+                        }
+                    }
+                    break;                
+
+                default:
+                    //loc_103888
+                    break;
+            }
+        }
+        //loc_1038a0
+        free(sp_0x10);
+    }
+    //loc_1038a8
+    return 0;
+}
+
+
+/* 0x001038dc - complete */
+int CTRL_ProcessArgs(struct UsbdiGlobals_Inner_0x178* sp4, char* r5)
+{
+#if 0
+    fprintf(stderr, "CTRL_ProcessArgs\n");
+#endif
+
+    int i;
+
+    if ((r5 != 0) && (r5[0] != 0))
+    {
+        for (i = 0; (i < 10) && (r5 != 0); i++)
+        {
+            //loc_103924
+            char* r4;
+            
+            if (((r4 = strstr(r5, "ioport")) == 0) &&
+                ((r4 = strstr(r5, "pindex")) == 0))
+            {
+                //->loc_1039e8
+                break;
+            }
+            //loc_10394c
+            char* r8 = r4 + 1;
+
+            if (((r5 = strstr(r8, "ioport")) != 0) ||
+                ((r5 = strstr(r8, "pindex")) != 0))
+            {
+                //loc_103978
+                r5[-1] = 0;
+            }
+            //loc_10397c
+            if ((r4[0] == 'i') && (strstr(r4, "irq") == 0))
+            {
+                fwrite("Must specify irq with ioport option", 1, 0x23, stderr);
+
+                return -1;
+            }
+            //loc_1039c0
+            sp4->Data_0x4c[i] = r4;
+        }
+        //loc_1039e8
+        sp4->Data_0x20 = i;
+    }
+    //loc_1039f8
+    return 0;
+}
+
+
 /* 0x00103d34 - todo */
 int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
         int sp_0x28, char* c)
 {
-    fprintf(stderr, "CTRL_RegisterControllerType\n");
-
 #if 0
+    fprintf(stderr, "CTRL_RegisterControllerType\n");
+#endif
+
     struct 
     {
-        uint16_t fill_0; //0
+        uint16_t wData_0; //0
         uint16_t wData_2; //2
         int fill_4[4]; //4
         uint8_t bData_0x14; //0x14
@@ -150,23 +422,9 @@ int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
         uint8_t bData_0x36; //0x36
         uint8_t bData_0x37; //0x37
         int fill_0x38[12]; //0x38
-        uint8_t bData_0x68; //0x68
-        uint8_t bData_0x69; //0x69
-        uint8_t bData_0x6a; //0x6a
-        uint8_t bData_0x6b; //0x6b
-        uint8_t bData_0x6c; //0x6c
-        uint8_t bData_0x6d; //0x6d
-        uint8_t bData_0x6e; //0x6e
-        uint8_t bData_0x6f; //0x6f
+        unsigned long long Data_0x68; //0x68
         int fill_0x70[6]; //0x70
-        uint8_t bData_0x88; //0x88
-        uint8_t bData_0x89; //0x89
-        uint8_t bData_0x8a; //0x8a
-        uint8_t bData_0x8b; //0x8b
-        uint8_t bData_0x8c; //0x8c
-        uint8_t bData_0x8d; //0x8d
-        uint8_t bData_0x8e; //0x8e
-        uint8_t bData_0x8f; //0x8f
+        unsigned long long Data_0x88; //0x88
         int fill_0x90[2]; //0x90
         uint8_t bData_0x98; //0x98
         uint8_t bData_0x99; //0x99
@@ -181,16 +439,12 @@ int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
         //0xf0???
     }* r4;
 
-    uint8_t sp_0xb0[8];
+    unsigned long long sp_0xb0;
     uint8_t sp_0xac[4];
     int sp_0xa8;
     int sp_0xa4;
-    int sp_0xa0 = 0;
-    struct
-    {
-        int fill_0[4]; //0
-        //16
-    } sp_0x90;
+    uint32_t sp_0xa0 = 0;
+    char sp_0x90[16];
 
     sp_0x20->Data_0x20 = 10;
 
@@ -208,16 +462,21 @@ int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
     //fp = 0;
     //r8 = 0;
     //sp_0x2c = 0xffffea9f = -0x1561
-    while (sp_0x20->Data_0x20 != 0)
+
+    int sp_0x1c;
+
+    for (sp_0x1c = 0; sp_0x1c < sp_0x20->Data_0x20; sp_0x1c++)
     {
         //loc_103dac
-        //sp_0xa4 = 0x15;
+        sp_0xa4 = 0x15;
         Data_12021c = 0; //fp
 
         memset(r4, 0xff, 0xf0);
-        memset(&sp_0x90, 0xff, 16);
+        memset(&sp_0x90[0], 0xff, 16);
 
-        if (CTRL_IsPCIDevice(sp_0x20->Data_0x4c/*r5*/, &sp_0xa8) != 0)
+        char* r5 = sp_0x20->Data_0x4c[sp_0x1c];
+
+        if (CTRL_IsPCIDevice(r5, &sp_0xa8) != 0)
         {
             //0x00103e00
 
@@ -228,33 +487,39 @@ int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
         else
         {
             //loc_1041e4
+#if 0
+int CTRL_GetOptions(char* a, 
+    int32_t* sp4,
+    unsigned long long* sp8, 
+    uint32_t* sp_0xc,
+    int32_t* sp_0x50,
+    uint32_t* sp_0x54,
+    uint16_t* sp_0x58,
+    uint16_t* sp_0x5c,
+    char r5[] /*sp_0x60*/)
+#endif            
             CTRL_GetOptions(sp_0x20->Data_0x4c/*r5*/, 
-                &sp_0xa8, &sp_0xb0[0], &sp_0xac[0],
-                &sp_0xa4, &sp_0xa0, &r4->wData_2,
-                r4, &sp_0x90);
+                &sp_0xa8, 
+                &sp_0xb0, 
+                &sp_0xac[0],
+                &sp_0xa4, 
+                &sp_0xa0, 
+                &r4->wData_2,
+                &r4->wData_0, 
+                &sp_0x90[0]);
 
-            r4->bData_0x68 = sp_0xb0[0];
-            r4->bData_0x69 = sp_0xb0[1];
-            r4->bData_0x6a = sp_0xb0[2];
-            r4->bData_0x6b = sp_0xb0[3];
-            r4->bData_0x6c = sp_0xb0[4];
-            r4->bData_0x6d = sp_0xb0[5];
-            r4->bData_0x6e = sp_0xb0[6];
-            r4->bData_0x6f = sp_0xb0[7];
-
-            r4->bData_0x88 = sp_0xb0[0];
-            r4->bData_0x89 = sp_0xb0[1];
-            r4->bData_0x8a = sp_0xb0[2];
-            r4->bData_0x8b = sp_0xb0[3];
-            r4->bData_0x8c = sp_0xb0[4];
-            r4->bData_0x8d = sp_0xb0[5];
-            r4->bData_0x8e = sp_0xb0[6];
-            r4->bData_0x8f = sp_0xb0[7];
+            r4->Data_0x68 = sp_0xb0;
+            r4->Data_0x88 = sp_0xb0;
 
             r4->bData_0x98 = 0;
             r4->bData_0x99 = 0x10;
             r4->bData_0x9a = 0;
             r4->bData_0x9b = 0;
+
+            r4->bData_0xa8 = 0;
+            r4->bData_0xa9 = 0x10;
+            r4->bData_0xaa = 0;
+            r4->bData_0xab = 0;
 
             r4->bData_0x14 = sp_0xac[0];
             r4->bData_0x15 = sp_0xac[1];
@@ -272,17 +537,78 @@ int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
             r4->bData_0x37 = 0;
         }
         //loc_104314
-        if (Data_12021c != 0)
+        if ((Data_12021c != 0) || 
+            (/*sp_0x18*/sp_0x20->Data_0x4c[sp_0x1c] != 0))
         {
             //loc_104338
-            int r7 = CTRL_GetHCEntry();
-        }
+            struct USB_Controller* r7 = CTRL_GetHCEntry();
+            if (r7 == NULL)
+            {
+                free(r4);
 
-        //TODO
-    }
+                return -1;
+            }
+            //loc_104354
+            r7->Data_0x18 = Data_12021c;
+            r7->Data_0x80 = sp_0x20;
+            r7->Data_4 = r4;
+            r7->Data_0x70 = 0;
+
+            CTRL_StripArgs(/*sp_0x18*/sp_0x20->Data_0x4c[sp_0x1c]);
+
+            if (CTRL_InitializeController(sp_0x20, r7, 
+                /*sp_0x18*/sp_0x20->Data_0x4c[sp_0x1c],
+                sp_0xa4) != 0)
+            {
+                if (r7->Data_0x18 != 0)
+                {
+                    pci_detach_device(Data_12021c);
+                }
+                //loc_1043bc
+                CTRL_FreeHCEntry(r7->Data_8);
+
+                return -1;
+            }
+            //loc_1043cc
+            if (sp_0x90[0] != 0xff)
+            {
+                //loc_104470
+                int r4;
+
+                for (r4 = 0; r4 < 16; r4++)
+                {
+                    //loc_1043e4
+
+
+                    //loc_104470
+                } //for (r4 = 0; r4 < 16; r4++)
+                //0x0010447c                
+
+                //->loc_1044f0
+            } //if (sp_0x90[0] != 0xff)
+            else
+            {
+                //loc_1044a4
+                int r4;
+
+                for (r4 = 0; r4 < 16; r4++)
+                {
+                    //loc_1044ac
+                    Data_120220[r7->Data_8 + r4].bData_4[0] = r4;
+
+                    pthread_mutex_init(&Data_120220[r4].Data_0x18, 0);
+                }
+            }
+            //loc_1044f0
+            sp_0x20->Data_0x24[sp_0x1c] = r7;
+
+            r4 = calloc(1, 0xf0);
+        }
+        //loc_104508
+        //sp_0x18 += 4;
+    } //for (sp_0x1c = 0; sp_0x1c < sp_0x20->Data_0x20; sp_0x1c++)
     //loc_104534
     free(r4);
-#endif
 
     return 0;    
 }
@@ -428,7 +754,7 @@ loc_105128:
 }
 
 
-/* 0x00105148 - todo */
+/* 0x00105148 - complete */
 int register_dll_entry(struct UsbdiGlobals_Inner_0x178* r4)
 {
 #if 0
@@ -508,6 +834,57 @@ static void* usb_event_handler(void* p)
     }
 
     return 0;
+}
+
+
+/* 0x001052f0 - todo */
+void stop_controllers(void)
+{
+#if 0
+    fprintf(stderr, "stop_controllers\n");
+#endif
+
+    int i;
+
+    UsbdiGlobals.Data_0x17c = 1;
+
+    delay(101);
+
+    if (pthread_rwlock_wrlock(&usb_rwlock) != 0)
+    {
+        usb_slogf(12, 2, 1, "%s: error acquiring wrlock",
+            "stop_controllers");
+    }
+
+    struct UsbdiGlobals_Inner_0x178* r6 = UsbdiGlobals.Data_0x178;
+    while (r6 != 0)
+    {
+        for (i = 0; i < 10; i++)
+        {
+            if (r6->Data_0x24[i] != 0)
+            {
+                if (r6->Data_0x24[i]->Data_0x88->Data_8 != 0)
+                {
+                    (r6->Data_0x24[i]->Data_0x88->Data_8)();
+
+                    if (r6->Data_0x24[i]->Data_0x88->Data_0x18 != 0)
+                    {
+                        InterruptDetach(r6->Data_0x24[i]->Data_0x20);
+                    }
+
+                    pci_detach_device(r6->Data_0x24[i]->Data_0x18);
+                }
+            }
+        }
+
+        r6 = r6->Data_0x78;
+    }
+
+    if (pthread_rwlock_unlock(&usb_rwlock) != 0)
+    {
+        usb_slogf(12, 2, 1, "%s:  error releasing wrlock",
+            "stop_controllers");
+    }
 }
 
 
@@ -928,6 +1305,167 @@ void* io_usb_dlopen(char* r5, int r8)
     //loc_10a108
     return r6;
 }
+
+
+/* 0x001153c8 - todo */
+void* usbdi_memchunk_malloc(int a, int b)
+{
+#if 0
+    if (b == 0)
+    {
+        return a + 16;
+    }
+#else
+    fprintf(stderr, "usbdi_memchunk_malloc: %d\n", b);
+
+    return malloc(b);
+#endif
+}
+
+
+
+/* 0x001155a4 - todo */
+void* usbdi_memchunk_calloc(int a, int b, int c)
+{
+    int r5 = b * c;
+
+    void* r4 = usbdi_memchunk_malloc(a, r5);
+    if (r4 != NULL)
+    {
+        memset(r4, 0, r5);
+    }
+
+    return r4;
+}
+
+
+
+/* 0x00115610 - complete */
+iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
+                     iofunc_attr_t *attr)
+{
+#if 1
+    fprintf(stderr, "usbdi_ocb_calloc: sizeof(iofunc_ocb_t)=%d / %d TODO!!!\n",
+        sizeof(iofunc_ocb_t), 28);
+#endif
+
+    void* r4 = usbdi_memchunk_calloc(UsbdiGlobals.Data_0xc, 1, 
+                    /*sizeof(iofunc_ocb_t)*/28);
+
+    if (r4 == 0)
+    {
+        errno = 23;
+    }
+
+    return r4;
+}
+
+
+
+/* 0x00115b70 - complete */
+int _iofunc_callout(int (*func)(), 
+        resmgr_context_t *ctp, io_stat_t *msg, iofunc_ocb_t *ocb)
+{
+#if 0
+    fprintf(stderr, "_iofunc_callout\n");
+#endif
+
+    int res = iofunc_attr_lock(ocb->attr);
+    if (res == 0)
+    {
+        res = (func)(ctp, msg, ocb);
+
+        iofunc_attr_unlock(ocb->attr);
+    }
+
+    return res;
+}
+
+
+
+/* 0x00115c80 - complete */
+int usbdi_resmgr_stat(resmgr_context_t *ctp, io_stat_t *msg, iofunc_ocb_t *ocb)
+{
+#if 1
+    fprintf(stderr, "usbdi_resmgr_stat\n");
+#endif
+
+    return _iofunc_callout(iofunc_stat_default, ctp, msg, ocb);
+}
+
+
+/* 0x00115ce8 - todo */
+int usbdi_resmgr_close(resmgr_context_t *ctp, void *reserved, iofunc_ocb_t *ocb)
+{
+#if 1
+    fprintf(stderr, "usbdi_resmgr_close\n");
+#endif
+
+    iofunc_attr_t* r5 = ocb->attr;
+
+    iofunc_attr_lock(r5);
+
+    iofunc_ocb_detach(ctp, ocb);
+
+    if (ocb->reserved != 0) /* offset_of(reserved) ist: 0x14, soll: 0x18*/
+    {
+        usbdi_client_destroy(ocb->reserved);
+    }
+
+    usbdi_ocb_free(ocb);
+    iofunc_attr_unlock(r5);
+
+    return 0;
+}
+
+
+
+/* 0x00115d34 - todo */
+int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
+                      RESMGR_HANDLE_T *handle, void *extra)
+{
+#if 1
+    fprintf(stderr, "usbdi_resmgr_open\n");
+#endif
+
+    int r4;
+    iofunc_ocb_t* ocb;
+
+    if (msg->connect.extra_type != 0)
+    {
+        return 0x59;
+    }
+
+    r4 = iofunc_attr_lock(&UsbdiGlobals.iofunc_attr);
+    if (r4 == 0)
+    {
+        r4 = iofunc_open(ctp, msg, &UsbdiGlobals.iofunc_attr, 0, 0);
+        if (r4 == 0)
+        {
+            ocb = usbdi_ocb_calloc(ctp, &UsbdiGlobals.iofunc_attr);
+            if (ocb != NULL)
+            {
+                r4 = iofunc_ocb_attach(ctp, msg, ocb, 
+                        &UsbdiGlobals.iofunc_attr, &ResmgrIOFuncs);
+
+                if (r4 == 0)
+                {
+                    iofunc_attr_unlock(&UsbdiGlobals.iofunc_attr);
+
+                    return r4;
+                }
+
+                usbdi_ocb_free(ocb);
+            }
+
+        }
+
+        iofunc_attr_unlock(&UsbdiGlobals.iofunc_attr);
+    }
+
+    return r4;
+}
+
 
 
 static int nonblockevent(message_context_t *ctp, int code, unsigned flags, void *handle);

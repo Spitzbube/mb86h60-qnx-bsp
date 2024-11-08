@@ -19,16 +19,24 @@ void sub_10a498()
 }
 
 
-int CTRL_GetHCEntry()
+void CTRL_FreeHCEntry(int a)
 {
-    fprintf(stderr, "CTRL_GetHCEntry\n");
+    fprintf(stderr, "CTRL_FreeHCEntry\n");
 
 }
 
 
-void CTRL_GetOptions()
+int CTRL_InitializeController()
 {
-    fprintf(stderr, "CTRL_GetOptions\n");
+    fprintf(stderr, "CTRL_InitializeController\n");
+
+    return 0;
+}
+
+
+void CTRL_StripArgs(char* a)
+{
+    fprintf(stderr, "CTRL_StripArgs\n");
 
 }
 
@@ -41,33 +49,9 @@ int CTRL_IsPCIDevice()
 }
 
 
-int CTRL_ProcessArgs()
-{
-    fprintf(stderr, "CTRL_ProcessArgs\n");
-
-
-    return 0;
-}
-
-
-void stop_controllers(void)
-{
-    fprintf(stderr, "stop_controllers\n");
-
-}
-
-
 void usbdi_timeout_tick()
 {
     fprintf(stderr, "usbdi_timeout_tick\n");
-
-}
-
-
-int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
-                      RESMGR_HANDLE_T *handle, void *extra)
-{
-    fprintf(stderr, "usbdi_resmgr_open\n");
 
 }
 
@@ -89,17 +73,16 @@ int usbdi_memchunk_init()
 }
 
 
-iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
-                     iofunc_attr_t *attr)
+void usbdi_ocb_free(iofunc_ocb_t *ocb)
 {
-    fprintf(stderr, "usbdi_ocb_calloc\n");
+    fprintf(stderr, "usbdi_ocb_free\n");
 
 }
 
 
-void usbdi_ocb_free(iofunc_ocb_t *ocb)
+void usbdi_client_destroy()
 {
-    fprintf(stderr, "usbdi_ocb_free\n");
+    fprintf(stderr, "usbdi_client_destroy\n");
 
 }
 
@@ -109,19 +92,6 @@ int usbdi_timeout_init(struct USB_Timer* a)
     fprintf(stderr, "usbdi_timeout_init\n");
 
     return 0;
-}
-
-int usbdi_resmgr_close()
-{
-    fprintf(stderr, "usbdi_resmgr_close\n");
-
-}
-
-
-int usbdi_resmgr_stat()
-{
-    fprintf(stderr, "usbdi_resmgr_stat\n");
-
 }
 
 

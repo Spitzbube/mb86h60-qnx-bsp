@@ -11,9 +11,10 @@ int Data_11ddf4; //11ddf4
 int _iou_ex; //0x0011f3a4 
 
 struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c
-int ausb_controllers[20]; //0x001201c0
+struct USB_Controller* ausb_controllers[20]; //0x001201c0
 pthread_mutex_t usb_mmutex; //0x120210
 int Data_12021c; //12021c
+struct Struct_120220 Data_120220[16]; //0x120220
 struct UsbdiGlobals UsbdiGlobals; //0x001212b0
 int usb_enum_priority = 0; //0x00121574
 int usb_coid = 0; //0x00121578

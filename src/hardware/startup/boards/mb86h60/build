@@ -19,12 +19,82 @@
 #    slogger
     pipe
 
+    #######################################################################
+    ## SERIAL driver
+    #######################################################################
     display_msg Starting UART0 driver...
     devc-serdebug -e -F -S -b115200 -c133000000 0xc2000000,8
     waitfor /dev/ser1 4
     display_msg opening ...
     reopen /dev/ser1
     display_msg Serial opened...
+
+    #######################################################################
+    ## USB OTG Host Controller driver
+    #######################################################################
+    display_msg Starting USB OTG Host driver...
+    my-io-usb  -vvvvv -d mb86h60-mg
+    #io-usb -vvv -d dm816x-mg ioport=0x47401c00,irq=19
+    #io-usb -d ehci-mx28 ioport=0x80080100,irq=93
+    waitfor /dev/io-usb/io-usb 4
+    display_msg USB device node available
+    #devb-umass cam pnp
+
+
+    #######################################################################
+    ## USB OTG port (operating in device mode)...
+    ## The commands below will configure the i.MX6 OTG port as a Mass Storage Device
+    #######################################################################
+   
+    ###### Example of CDC-ACM (serial) device #####
+
+    # Step 1 - Start USB device stack
+    #io-usb-dcd -dusbser-am335x-musbmhdrc ioport=0x47401400,irq=18,nodma,force_device_mode,inherit_cfg
+    #waitfor /dev/io-usb-dcd/io-usb 4
+    #waitfor /dev/io-usb-dcd/devu-usbser-am335x-musbmhdrc.so 4
+
+    # Step 2 - Start USB CDC-ACM function driver and enable USB soft connect
+    #devc-serusb_dcd -e -v -F -s -d iface_list=0,unit=1
+    #waitfor /dev/serusb1
+    #ulink_ctrl -l 1
+
+    ##### Example of Mass Storage device #####
+    # Step 1 - Create a ram disk
+    #devb-ram ram capacity=16384,nodinit,cache=512k disk name=hd@10
+    #waitfor /dev/hd10
+    #fdisk /dev/hd10 add -t 6
+    #mount -e /dev/hd10
+    #waitfor /dev/hd10t6
+    #mkdosfs /dev/hd10t6
+
+    # Step 2 - Start device stack
+    #io-usb-dcd -dusbumass-am335x-musbmhdrc ioport=0x47401400,irq=18,nodma,force_device_mode,inherit_cfg
+    #waitfor /dev/io-usb-dcd/io-usb 4
+    #waitfor /dev/io-usb-dcd/devu-usbumass-am335x-musbmhdrc.so 4
+       
+    # Step 3 - Start Mass Storage function driver and enable USB soft connect
+    #devu-umass_client-block -l lun=0,devno=1,iface=0,fname=/dev/hd10
+    #ulink_ctrl -l 1
+
+    ##### Example of NCM device (Ethernet over USB) #####
+    # Step 1 - Start USB device stack
+    #io-usb-dcd -dusbncm-am335x-musbmhdrc ioport=0x47401400,irq=18,nodma,force_device_mode,inherit_cfg
+    #waitfor /dev/io-usb-dcd/io-usb 4
+    #waitfor /dev/io-usb-dcd/devu-usbncm-am335x-musbmhdrc.so 4
+
+    # Step 2 - Start USB NCM function driver
+    # For best performance attach the usbdnet driver to an existing io-pkt stack. Alternatively multiple
+    # io-pkt stacks can be used (see SDP documentation for more details). 
+    #mount -Tio-pkt -o mac=123456789abc,protocol=ncm devnp-usbdnet.so
+    #ulink_ctrl -l1
+
+    # Step 3 - Assign IP address to ncm interface using DHCP OR any static IP.
+    #if_up -p ncm0
+    
+    #ifconfig ncm0 192.168.10.100
+    # OR
+    #dhcp.client -i ncm0 -A0 &
+    
 
     TERM=qansi
 
@@ -69,11 +139,15 @@ ksh
 #esh_new
 waitfor
 pipe
-ps
+#ps
 use
 top
 uname
-
+cat
+#io-usb
+#devu-ehci-mx28.so
+my-io-usb
+devu-mb86h60-mg.so
 
 ###########################################################################
 ## END OF BUILD SCRIPT
