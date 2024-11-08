@@ -1,6 +1,4 @@
 
-#include <sys/iofunc.h>
-#include <sys/resmgr.h>
 #include "externs.h"
 
 
@@ -16,8 +14,7 @@ struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c
 int ausb_controllers[20]; //0x001201c0
 pthread_mutex_t usb_mmutex; //0x120210
 int Data_12021c; //12021c
-
-int Data_1212c4; //1212c4
+struct UsbdiGlobals UsbdiGlobals; //0x001212b0
 int usb_enum_priority = 0; //0x00121574
 int usb_coid = 0; //0x00121578
 int usb_priority = 0; //0x0012157c
@@ -26,5 +23,7 @@ int usb_dflt_timeout = 0; //0x00121584
 int usb_prefix = 0; //0x0012158c
 int usb_verbosity = 0; //0x001215a0
 struct UdiCtrl UdiCtrl; //0x001215a4
+int Data_1273b0; //1273b0
+int Data_127814; //127814
 pthread_rwlock_t usb_rwlock; //0x00127834
 

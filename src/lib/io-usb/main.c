@@ -20,22 +20,6 @@
  */
 
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <atomic.h>
-#include <signal.h>
-#include <errno.h>
-#include <dlfcn.h>
-#include <libgen.h>
-#include <sys/neutrino.h>
-#include <sys/slog.h>
-#include <sys/dispatch.h>
-#include <sys/iofunc.h>
-#include <pthread.h>
-
 #include "externs.h"
 
 extern void* io_usb_dlopen(char*, int);
@@ -60,13 +44,15 @@ extern int usbdi_resmgr_msg();
 extern int udi_memory_info(uint32_t*);
 extern void hub_start_driver(int argc, char* const argv[]);
 extern void udi_start_driver(int argc, char* const argv[]);
-static void* usb_port_change_handler(void*);
+static void* sub_10a6c0(void*);
 extern void udi_transfer_done();
 extern void udi_insertion();
 extern void udi_removal();
 extern int USBDRIV_Main(int argc, char* const argv[]);
 extern struct ArrayClass* CLASS_RegisterDriver(struct Struct_10acec*);
-
+extern int INIT_HCDClassInterface();
+extern void stop_controllers();
+extern void usb_port_monitor_start();
 
 
 iofunc_funcs_t ResmgrOCBFuncs = //0x11950c
@@ -110,42 +96,6 @@ extern struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c
 extern int ausb_controllers[]; //0x001201c0
 extern pthread_mutex_t usb_mmutex; //0x120210
 extern int Data_12021c; //12021c
-
-struct
-{
-#if 0
-    int fill_0[4]; //0
-#else
-    pthread_mutex_t Data_0; //0
-#endif
-    int Data_8; //8
-    int Data_0xc; //0xc
-    int Data_0x10; //0x10
-    uint32_t Data_0x14; //0x14 = 1212c4
-    int fill_0x18; //0x18
-    dispatch_t* dpp; //0x1c
-    void* Data_0x20; //0x20
-    int Data_0x24; //0x24
-    void* Data_0x28; //0x28
-    int Data_0x2c; //0x2c
-    int Data_0x30; //0x30
-    int Data_0x34; //0x34
-    int fill_0x38[2]; //0x38
-    int Data_0x40; //0x40
-    int fill_0x44[2]; //0x44
-    iofunc_mount_t Data_0x4c; //0x4c
-    iofunc_attr_t iofunc_attr; //0x64
-    dev_t Data_0xb8; //0xb8
-    resmgr_attr_t resmgr_attr; //0xbc
-    thread_pool_attr_t Data_0xdc;
-    pthread_attr_t Data_0x120; //0x120
-    //TODO
-    struct UsbdiGlobals_Inner_0x178* Data_0x178; //0x178
-    int fill_0x17c; //0x17c
-    int Data_0x180; //0x180
-} UsbdiGlobals; //0x001212b0
-
-extern int usb_enum_priority; //0x00121574
 extern int usb_coid; //0x00121578
 extern int usb_priority; //0x0012157c
 extern int usb_chid; //0x00121580
@@ -154,7 +104,6 @@ extern char* usb_prefix; //0x0012158c
 struct USB_Timer usb_timer; //121590
 extern int usb_verbosity; //0x001215a0
 extern struct UdiCtrl UdiCtrl; //0x001215a4
-extern pthread_rwlock_t usb_rwlock; //0x00127834
 
 
 
@@ -562,6 +511,33 @@ static void* usb_event_handler(void* p)
 }
 
 
+/* 0x00105414 - complete */
+void usb_signal_handler(void)
+{
+#if 0
+    fprintf(stderr, "usb_signal_handler\n");
+#endif
+
+    siginfo_t info;
+    sigset_t set;
+
+    pthread_setname_np(0, "signal_handler");
+
+    sigfillset(&set);
+    sigdelset(&set, 0x0f);
+    sigprocmask(0, &set, 0);
+    sigemptyset(&set);
+    sigaddset(&set, 0x0f);
+
+    while (SignalWaitinfo(&set, &info) == -1)
+    {
+        /* loc_10546c */
+    }
+
+    stop_controllers();
+}
+
+
 /* 0x0010548c - todo */
 int main(int argc/*r4*/, char *argv[]/*fp*/)
 {
@@ -951,89 +927,6 @@ void* io_usb_dlopen(char* r5, int r8)
     }
     //loc_10a108
     return r6;
-}
-
-
-/* 0x0010a6c0 - todo */
-static void* usb_port_change_handler(void* a)
-{
-    fprintf(stderr, "usb_port_change_handler\n");
-
-}
-
-
-#if 0
-static int usb_port_monitor_init()
-{
-    pthread_attr_t fp_0x50;
-    struct sched_param fp_0x78;
-
-    pthread_attr_init(&fp_0x50);
-    pthread_attr_setschedpolicy(&fp_0x50, 2);
-    fp_0x78.sched_priority = usb_enum_priority;
-    pthread_attr_setschedparam(&fp_0x50, &fp_0x78);
-    pthread_attr_setinheritsched(&fp_0x50, 2);
-    pthread_attr_setdetachstate(&fp_0x50, 1);
-    pthread_attr_setstacksize(&fp_0x50, 0x4000);
-
-    if (pthread_create(0, &fp_0x50, usb_port_change_handler, 0) != 0)
-    {
-        fwrite("Unable to create thread\n", 1, 0x18, stderr);
-        return 1;
-    }
-
-    return 0;
-}
-#endif
-
-
-/* 0x00110884 - todo */
-int INIT_HCDClassInterface()
-{
-#if 1
-    fprintf(stderr, "INIT_HCDClassInterface\n");
-#endif
-
-    int r3;
-#if 1
-    pthread_attr_t fp_0x50;
-    struct sched_param fp_0x78;
-#endif
-
-    if (pthread_rwlock_init(&usb_rwlock, 0) == -1)
-    {
-        fwrite("INIT_ScanUSBController:  Unable to initialize rwlock\n", 1, 0x35, stderr);
-        r3 = 1;
-        return r3;
-    }
-    //loc_1108d0
-#if 1
-    pthread_attr_init(&fp_0x50);
-    pthread_attr_setschedpolicy(&fp_0x50, 2);
-    fp_0x78.sched_priority = usb_enum_priority;
-    pthread_attr_setschedparam(&fp_0x50, &fp_0x78);
-    pthread_attr_setinheritsched(&fp_0x50, 2);
-    pthread_attr_setdetachstate(&fp_0x50, 1);
-    pthread_attr_setstacksize(&fp_0x50, 0x4000);
-
-#if 0
-    r3 = pthread_create(0, &fp_0x50, usb_port_change_handler, 0);
-    if (r3 != 0)
-    {
-        fwrite("Unable to create thread\n", 1, 0x18, stderr);
-        r3 = 1;
-    }
-    else
-#endif
-    {
-        //loc_110990
-        r3 = 0;
-    }
-#else
-    return usb_port_monitor_init;
-#endif
-
-    return r3;
 }
 
 

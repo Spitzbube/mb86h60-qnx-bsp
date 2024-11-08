@@ -12,6 +12,13 @@ void usb_slogf()
 }
 
 
+void sub_10a498()
+{
+    fprintf(stderr, "sub_10a498\n");
+
+}
+
+
 int CTRL_GetHCEntry()
 {
     fprintf(stderr, "CTRL_GetHCEntry\n");
@@ -46,20 +53,6 @@ int CTRL_ProcessArgs()
 void stop_controllers(void)
 {
     fprintf(stderr, "stop_controllers\n");
-
-}
-
-
-void usb_port_monitor_start()
-{
-    fprintf(stderr, "usb_port_monitor_start\n");
-
-}
-
-
-void usb_signal_handler()
-{
-    fprintf(stderr, "usb_signal_handler\n");
 
 }
 
