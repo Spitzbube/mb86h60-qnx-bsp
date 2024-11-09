@@ -24,15 +24,15 @@
 
 extern void* io_usb_dlopen(char*, int);
 extern void* io_usb_dlsym(void*, char*);
-extern int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
-                      RESMGR_HANDLE_T *handle, void *extra);
 extern int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
                       RESMGR_HANDLE_T *handle,
                       io_mount_extra_t *extra);
-extern iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
+extern IOFUNC_OCB_T* usbdi_ocb_calloc(resmgr_context_t *ctp,
                      iofunc_attr_t *attr);
-extern void usbdi_ocb_free(iofunc_ocb_t *ocb);
-extern int usbdi_resmgr_close(resmgr_context_t *ctp, void *reserved, iofunc_ocb_t *ocb);
+extern void usbdi_ocb_free(IOFUNC_OCB_T *ocb);
+extern int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
+                      RESMGR_HANDLE_T *handle, void *extra);
+extern int usbdi_resmgr_close(resmgr_context_t *ctp, void *reserved, IOFUNC_OCB_T *ocb);
 extern int usbdi_resmgr_stat(resmgr_context_t *ctp, io_stat_t *msg, iofunc_ocb_t *ocb);
 extern int usbdi_resmgr_devctl();
 extern int usbdi_resmgr_unblock();
@@ -1341,16 +1341,16 @@ void* usbdi_memchunk_calloc(int a, int b, int c)
 
 
 /* 0x00115610 - complete */
-iofunc_ocb_t* usbdi_ocb_calloc(resmgr_context_t *ctp,
+IOFUNC_OCB_T* usbdi_ocb_calloc(resmgr_context_t *ctp,
                      iofunc_attr_t *attr)
 {
 #if 1
     fprintf(stderr, "usbdi_ocb_calloc: sizeof(iofunc_ocb_t)=%d / %d TODO!!!\n",
-        sizeof(iofunc_ocb_t), 28);
+        sizeof(IOFUNC_OCB_T), 28);
 #endif
 
-    void* r4 = usbdi_memchunk_calloc(UsbdiGlobals.Data_0xc, 1, 
-                    /*sizeof(iofunc_ocb_t)*/28);
+    IOFUNC_OCB_T* r4 = usbdi_memchunk_calloc(UsbdiGlobals.Data_0xc, 1, 
+                    sizeof(*r4)/*28*/);
 
     if (r4 == 0)
     {
@@ -1395,21 +1395,21 @@ int usbdi_resmgr_stat(resmgr_context_t *ctp, io_stat_t *msg, iofunc_ocb_t *ocb)
 
 
 /* 0x00115ce8 - todo */
-int usbdi_resmgr_close(resmgr_context_t *ctp, void *reserved, iofunc_ocb_t *ocb)
+int usbdi_resmgr_close(resmgr_context_t *ctp, void *reserved, IOFUNC_OCB_T *ocb)
 {
 #if 1
     fprintf(stderr, "usbdi_resmgr_close\n");
 #endif
 
-    iofunc_attr_t* r5 = ocb->attr;
+    iofunc_attr_t* r5 = ocb->hdr.attr;
 
     iofunc_attr_lock(r5);
 
-    iofunc_ocb_detach(ctp, ocb);
+    iofunc_ocb_detach(ctp, &ocb->hdr);
 
-    if (ocb->reserved != 0) /* offset_of(reserved) ist: 0x14, soll: 0x18*/
+    if (ocb->Data_0x18 != 0)
     {
-        usbdi_client_destroy(ocb->reserved);
+        usbdi_client_destroy(ocb->Data_0x18);
     }
 
     usbdi_ocb_free(ocb);
@@ -1429,7 +1429,7 @@ int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
 #endif
 
     int r4;
-    iofunc_ocb_t* ocb;
+    IOFUNC_OCB_T* ocb;
 
     if (msg->connect.extra_type != 0)
     {
@@ -1445,7 +1445,7 @@ int usbdi_resmgr_open(resmgr_context_t *ctp, io_open_t *msg,
             ocb = usbdi_ocb_calloc(ctp, &UsbdiGlobals.iofunc_attr);
             if (ocb != NULL)
             {
-                r4 = iofunc_ocb_attach(ctp, msg, ocb, 
+                r4 = iofunc_ocb_attach(ctp, msg, &ocb->hdr, 
                         &UsbdiGlobals.iofunc_attr, &ResmgrIOFuncs);
 
                 if (r4 == 0)

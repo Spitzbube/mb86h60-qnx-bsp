@@ -11,13 +11,27 @@
 #include <libgen.h>
 #include <sys/neutrino.h>
 #include <sys/slog.h>
-#include <sys/dispatch.h>
-#include <sys/iofunc.h>
-#include <sys/iofunc.h>
-#include <sys/resmgr.h>
+//#include <sys/resmgr.h>
 #include <pthread.h>
 
 #include "io-usb.h"
+
+
+/* Define our overrides before including <sys/iofunc.h> */
+struct ocb;
+#define IOFUNC_OCB_T struct ocb
+#include <sys/iofunc.h>
+#include <sys/dispatch.h>
+
+
+// This is our own ocb block
+struct ocb
+{
+    iofunc_ocb_t hdr; /* must always be first */
+    int Data_0x18; //0x18
+    //0x1c = 28
+};
+
 
 struct UsbdiGlobals_Inner_0x178
 {
