@@ -26,14 +26,6 @@ void CTRL_FreeHCEntry(int a)
 }
 
 
-int CTRL_InitializeController()
-{
-    fprintf(stderr, "CTRL_InitializeController\n");
-
-    return 0;
-}
-
-
 void CTRL_StripArgs(char* a)
 {
     fprintf(stderr, "CTRL_StripArgs\n");
