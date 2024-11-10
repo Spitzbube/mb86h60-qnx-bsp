@@ -53,9 +53,7 @@ extern int INIT_HCDClassInterface();
 extern void stop_controllers();
 extern void usb_port_monitor_start();
 extern int CTRL_IsPCIDevice();
-extern void usbdi_client_destroy();
 extern int usbdi_timeout_init(struct USB_Timer*);
-extern int usbdi_memchunk_init();
 extern int usbdi_init_server_globals(char*, struct USB_Timer*);
 extern void usbdi_timeout_tick();
 extern void usb_slogf();
@@ -394,7 +392,7 @@ int CTRL_ProcessArgs(struct UsbdiGlobals_Inner_0x178* sp4, char* r5)
                 return -1;
             }
             //loc_1039c0
-            sp4->Data_0x4c[i] = r4;
+            sp4->args[i] = r4;
         }
         //loc_1039e8
         sp4->Data_0x20 = i;
@@ -555,7 +553,7 @@ int CTRL_RegisterControllerType(struct UsbdiGlobals_Inner_0x178* sp_0x20,
         memset(r4, 0xff, 0xf0);
         memset(&sp_0x90[0], 0xff, 16);
 
-        char* r5 = sp_0x20->Data_0x4c[sp_0x1c];
+        char* r5 = sp_0x20->args[sp_0x1c];
 
         if (CTRL_IsPCIDevice(r5, &sp_0xa8) != 0)
         {
@@ -579,7 +577,7 @@ int CTRL_GetOptions(char* a,
     uint16_t* sp_0x5c,
     char r5[] /*sp_0x60*/)
 #endif            
-            CTRL_GetOptions(sp_0x20->Data_0x4c/*r5*/, 
+            CTRL_GetOptions(sp_0x20->args/*r5*/, 
                 &sp_0xa8, 
                 &sp_0xb0, 
                 &sp_0xac[0],
@@ -619,7 +617,7 @@ int CTRL_GetOptions(char* a,
         }
         //loc_104314
         if ((Data_12021c != 0) || 
-            (/*sp_0x18*/sp_0x20->Data_0x4c[sp_0x1c] != 0))
+            (/*sp_0x18*/sp_0x20->args[sp_0x1c] != 0))
         {
             //loc_104338
             struct USB_Controller* r7 = CTRL_GetHCEntry();
@@ -635,10 +633,11 @@ int CTRL_GetOptions(char* a,
             r7->Data_4 = r4;
             r7->Data_0x70 = 0;
 
-            CTRL_StripArgs(/*sp_0x18*/sp_0x20->Data_0x4c[sp_0x1c]);
+            CTRL_StripArgs(/*sp_0x18*/sp_0x20->args[sp_0x1c]);
 
-            if (CTRL_InitializeController(sp_0x20, r7, 
-                /*sp_0x18*/sp_0x20->Data_0x4c[sp_0x1c],
+            if (CTRL_InitializeController(sp_0x20, 
+                r7, 
+                /*sp_0x18*/sp_0x20->args[sp_0x1c],
                 sp_0xa4) != 0)
             {
                 if (r7->Data_0x18 != 0)

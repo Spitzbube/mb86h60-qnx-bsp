@@ -33,10 +33,10 @@
     ## USB OTG Host Controller driver
     #######################################################################
     display_msg Starting USB OTG Host driver...
-    my-io-usb  -vvvvv -d mb86h60-mg
+    my-io-usb  -vvvvv -d mb86h60-mg ioport=0xc7000800,irq=21
     #io-usb -vvv -d dm816x-mg ioport=0x47401c00,irq=19
     #io-usb -d ehci-mx28 ioport=0x80080100,irq=93
-    waitfor /dev/io-usb/io-usb 4
+    #waitfor /dev/io-usb/io-usb 4
     display_msg USB device node available
     #devb-umass cam pnp
 

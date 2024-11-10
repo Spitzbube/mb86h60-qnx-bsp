@@ -55,13 +55,6 @@ int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
 }
 
 
-void usbdi_client_destroy()
-{
-    fprintf(stderr, "usbdi_client_destroy\n");
-
-}
-
-
 int usbdi_timeout_init(struct USB_Timer* a)
 {
     fprintf(stderr, "usbdi_timeout_init\n");
