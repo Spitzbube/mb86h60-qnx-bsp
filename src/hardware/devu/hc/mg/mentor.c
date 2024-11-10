@@ -22,6 +22,37 @@ void* dma_regs = NULL;
 #endif
 
 
+struct Struct_0xa0;
+struct Struct_0x94
+{
+    struct Struct_0xa0* Data_0; //0
+};
+
+struct Struct_0xa0
+{
+    int fill_0[11]; //0
+    struct Struct_0x94 Data_0x2c; //0x2c
+    int fill_0x30[5]; //0x30
+    //0x44
+};
+
+
+struct Struct_0xa4
+{
+    struct Struct_0xa4* Data_0; //0
+    struct Struct_0xa4* Data_4; //4
+    int Data_8; //8
+    int* Data_0xc; //12
+    int Data_0x10; //0x10 = 16
+    int fill_0x14[6]; //0x14 = 20
+    int Data_0x2c; //0x2c
+    int fill_0x30[2]; //0x30
+    int Data_0x38; //0x38
+    int fill_0x3c; //0x3c
+    //0x40 = 64
+};
+    
+
 struct Mentor_Controller
 {
     struct USB_Controller* Data_0; //0
@@ -44,17 +75,24 @@ struct Mentor_Controller
     int Data_0x58; //0x58
     int fill_0x5c[4]; //0x5c
     int Data_0x6c; //0x6c
-    int Data_0x70; //0x70
-    int Data_0x74; //0x74
+    uint32_t Data_0x70; //0x70
+    uint32_t Data_0x74; //0x74
     int Data_0x78; //0x78
     int Data_0x7c; //0x7c
-    int fill_0x80[11]; //0x80
-    int Data_0xac; //0xac
-    int Data_0xb0; //0xb0
-    int Data_0xb4; //0xb4
-    int Data_0xb8; //0xb8
-    int Data_0xbc; //0xbc
-    int Data_0xc0; //0xc0
+    int fill_0x80[4]; //0x80
+    struct Struct_0x94 Data_0x90; //0x90
+    struct Struct_0x94* Data_0x94; //0x94
+    int Data_0x98; //0x98
+    int* Data_0x9c; //0x9c
+    struct Struct_0xa0* Data_0xa0; //0xa0
+    struct Struct_0xa4* Data_0xa4; //0xa4
+    struct Struct_0xa4* Data_0xa8; //0xa8
+    struct Struct_0xa4* Data_0xac; //0xac
+    struct Struct_0xa4* Data_0xb0; //0xb0
+    struct Struct_0xa4* Data_0xb4; //0xb4
+    struct Struct_0xa4* Data_0xb8; //0xb8
+    struct Struct_0xa4* Data_0xbc; //0xbc
+    struct Struct_0xa4* Data_0xc0; //0xc0
     void* Data_0xc4; //0xc4
     void* Data_0xc8; //0xc8
     int fill_0xc8[8]; //0xc8
@@ -138,31 +176,159 @@ int mentor_controller_shutdown()
 }
 
 
-int MENTOR_AllocateTD(struct Mentor_Controller* a)
+/* 0x00005f98 - todo */
+int MENTOR_AllocateTD(struct Mentor_Controller* r4)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_AllocateTD: TODO!!!\n");
 #endif
 
+    uint32_t i;
+    struct Struct_0xa0* r5;
+
+    r4->Data_0x90.Data_0 = NULL;
+    r4->Data_0x94 = &r4->Data_0x90;
+
+    r4->Data_0x98 = 0;
+    r4->Data_0x9c = &r4->Data_0x98;
+
+    r5 = calloc(1, (r4->Data_0x74 + 1) * sizeof(struct Struct_0xa0));
+    if (r5 == NULL)
+    {
+        return 12;
+    }
+
+    r4->Data_0xa0 = r5;
+
+    memset(r5, 0, (r4->Data_0x74 + 1) * sizeof(struct Struct_0xa0));
+
+    for (i = 0; i < r4->Data_0x74; i++)
+    {
+        r5->Data_0x2c.Data_0 = NULL;
+        r4->Data_0x94->Data_0 = r5;
+        r4->Data_0x94 = &r5->Data_0x2c;
+        r5++;
+    }
+
     return 0;
 }
 
 
-int MENTOR_AllocateED(struct Mentor_Controller* a)
+/* 0x00006050 - todo */
+int MENTOR_AllocateED(struct Mentor_Controller* r5)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_AllocateED: TODO!!!\n");
 #endif
 
+    uint32_t i;
+    struct Struct_0xa4* r4;
+    
+    r4 = calloc(1, (r5->Data_0x70 + 1) * sizeof(struct Struct_0xa4));
+    if (r4 == NULL)
+    {
+        return 12;
+    }
+
+    r5->Data_0xa4 = r4;
+
+    memset(r4, 0, (r5->Data_0x70 + 1) * sizeof(struct Struct_0xa4));
+
+    r4->Data_8 = 0;
+    r4->Data_0xc = &r4->Data_8;
+    r4->Data_0x10 = 0;
+    r5->Data_0xa8 = r4;
+
+    for (i = 0; i < r5->Data_0x70; i++)
+    {
+        r4->Data_0x2c = -1;
+        r4->Data_0 = r4 + 1;
+        r4->Data_0->Data_4 = r4;
+        r4->Data_0->Data_8 = 0;
+        r4->Data_0->Data_0xc = &r4->Data_0->Data_8;
+        r4->Data_0->Data_0x10 = 0;
+
+        r4++;
+    }
+
+    r4->Data_0 = r5->Data_0xa8;
+    r5->Data_0xa8->Data_4 = r4;
+
     return 0;
 }
 
 
-int MENTOR_BuildEDList(struct Mentor_Controller* a, int* b)
+
+/* 0x00005340 - todo */
+struct Struct_0xa4* MENTOR_GetEDPool(struct Mentor_Controller* a)
 {
-#if 1
+#if 0
+    fprintf(stderr, "MENTOR_GetEDPool: TODO!!!\n");
+#endif
+
+    struct Struct_0xa4* r4;
+    struct Struct_0xa4* r6 = a->Data_0xa8;
+
+    if (pthread_mutex_lock(&a->Data_4) != 0)
+    {
+        fprintf(stderr, "mutex error\n"/*TODO*/);
+    }
+    //loc_538c
+    r4 = r6->Data_0;
+    if (r4 == r6)
+    {
+        if (pthread_mutex_unlock(&a->Data_4) == 0)
+        {
+            r4 = 0;
+            //->loc_5428
+        }
+        else
+        {
+            fprintf(stderr, "mutex error\n"/*TODO*/);
+            r4 = 0;
+            //->loc_5428
+        }
+    }
+    else
+    {
+        //loc_53d4
+        r6->Data_0 = r4->Data_0;
+        r4->Data_0->Data_4 = r6;
+        r4->Data_0x10 |= 0x80000000;
+        r4->Data_0x38 = 0;
+
+        if (pthread_mutex_unlock(&a->Data_4) != 0)
+        {
+            fprintf(stderr, "mutex error\n"/*TODO*/);
+        }
+    }
+    //loc_5428
+    return r4;
+}
+
+
+
+/* 0x0000544c - todo */
+int MENTOR_BuildEDList(struct Mentor_Controller* a, struct Struct_0xa4** b)
+{
+#if 0
     fprintf(stderr, "MENTOR_BuildEDList: TODO!!!\n");
 #endif
+
+    struct Struct_0xa4* r3;
+    
+    r3 = MENTOR_GetEDPool(a);
+    if (r3 == NULL)
+    {
+        return 12;
+    }
+
+    *b = r3;
+    r3->Data_0x10 |= 0x40000008;
+    r3->Data_8 = 0;
+    r3->Data_0xc = &r3->Data_8;
+    r3->Data_4 = r3;
+    r3->Data_0 = r3;
 
     return 0;
 
