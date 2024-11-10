@@ -1,7 +1,5 @@
 
-#include <stdio.h>
-#include <sys/dispatch.h>
-#include <sys/iofunc.h>
+
 #include "externs.h"
 
 
@@ -53,21 +51,6 @@ int usbdi_io_mount(resmgr_context_t *ctp, io_mount_t *msg,
                       io_mount_extra_t *extra)
 {
     fprintf(stderr, "usbdi_io_mount\n");
-
-}
-
-
-int usbdi_memchunk_init()
-{
-    fprintf(stderr, "usbdi_memchunk_init\n");
-
-    return 0;
-}
-
-
-void usbdi_ocb_free(iofunc_ocb_t *ocb)
-{
-    fprintf(stderr, "usbdi_ocb_free\n");
 
 }
 
