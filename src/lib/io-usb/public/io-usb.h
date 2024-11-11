@@ -21,7 +21,6 @@ struct USB_Controller_Inner4
     uint8_t bData_0x37; //0x37
     int fill_0x38[12]; //0x38
     unsigned long long Data_0x68; //0x68
-    uint8_t Data_0x68_[8]; //0x68
     int fill_0x70[6]; //0x70
     unsigned long long Data_0x88; //0x88
     int fill_0x90[2]; //0x90

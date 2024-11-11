@@ -62,7 +62,9 @@ void init_intrinfo(void)
 
     out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQMASK, 
 		(1 << MB86H60_INTR_TIMER0)|
-		(1 << MB86H60_INTR_UART0) 
+		(1 << MB86H60_INTR_UART0)|
+		(1 << MB86H60_INTR_DMA)|
+		(1 << MB86H60_INTR_USB) 
 		);
     out32(mb86h60_irq_ctrl_arm_base + MB86H60_IRQ_CTRL_IRQXOR, 0);
 

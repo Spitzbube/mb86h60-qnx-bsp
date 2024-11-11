@@ -27,8 +27,8 @@ include $(QCONFIG)
 NAME=devc-$(SECTION)
 EXTRA_SILENT_VARIANTS+=$(subst -, ,$(SECTION))
 
-EXTRA_INCVPATH+=$(INSTALL_ROOT_nto)/usr/include/xilinx
-EXTRA_LIBVPATH+=$(INSTALL_ROOT_nto)/usr/lib/xilinx
+#EXTRA_INCVPATH+=$(INSTALL_ROOT_nto)/usr/include/xilinx
+#EXTRA_LIBVPATH+=$(INSTALL_ROOT_nto)/usr/lib/xilinx
 
 
 LIBS+=io-char pm #ps #drvr

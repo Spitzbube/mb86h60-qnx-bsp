@@ -10,16 +10,14 @@
 #include <sys/neutrino.h>
 #include <sys/netmgr.h>
 #include <pthread.h>
+#include <arm/mb86h60.h>
+#include "mu_hdrdf.h"
 
 
 struct Mentor_Controller;
 #define USB_CONTROLLER_PRIV_T struct Mentor_Controller
 #include "io-usb.h"
 
-
-#ifdef MB86H60
-void* dma_regs = NULL;
-#endif
 
 
 struct Struct_0xa0;
@@ -68,18 +66,24 @@ struct Mentor_Controller
     pthread_t Data_0x3c; //0x3c
     int Data_0x40; //0x40
     int Data_0x44; //0x44
-    int fill_0x48; //0x48
+    int Data_0x48; //0x48
     int Data_0x4c; //0x4c
     int Data_0x50; //0x50
     int fill_0x54; //0x54
     int Data_0x58; //0x58
-    int fill_0x5c[4]; //0x5c
+    int Data_0x5c; //0x5c
+    int Data_0x60; //0x60
+    int Data_0x64; //0x64
+    uint16_t wData_0x68; //00x68
+    uint16_t wData_0x6a; //0x6a
     int Data_0x6c; //0x6c
     uint32_t Data_0x70; //0x70
     uint32_t Data_0x74; //0x74
     int Data_0x78; //0x78
     int Data_0x7c; //0x7c
-    int fill_0x80[4]; //0x80
+    int fill_0x80[2]; //0x80
+    int Data_0x88; //0x88
+    int fill_0x8c; //0x8c
     struct Struct_0x94 Data_0x90; //0x90
     struct Struct_0x94* Data_0x94; //0x94
     int Data_0x98; //0x98
@@ -95,9 +99,96 @@ struct Mentor_Controller
     struct Struct_0xa4* Data_0xc0; //0xc0
     void* Data_0xc4; //0xc4
     void* Data_0xc8; //0xc8
-    int fill_0xc8[8]; //0xc8
+    int fill_0xc8[7]; //0xc8
+    void* Data_0xe4; //0xe4
     //0xe8
 };
+
+
+
+#ifdef MB86H60
+
+void* dma_regs = NULL;
+uint32_t dma_dwUsbMode = 0;
+
+
+void dma_SetUsbIntMask(struct Mentor_Controller* c, int a)
+{
+    ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_INT_MASK/sizeof(uint32_t)] = a;
+}
+
+uint32_t dma_GetUsbIntStatus(struct Mentor_Controller* c)
+{
+    return ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_INT_STATUS/sizeof(uint32_t)];
+}
+
+void dma_SetUsbIntClear(struct Mentor_Controller* c, int a)
+{
+    ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_INT_CLEAR/sizeof(uint32_t)] = a;
+}
+
+void dma_SetUsbMode_LengthInput(struct Mentor_Controller* c, int a)
+{
+	int mask = MB86H60_DMA_USB_MODE_LENGTH_INPUT;
+	a = (a << 1) & mask;
+
+	dma_dwUsbMode = (dma_dwUsbMode & ~mask) | a;
+
+    ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_MODE/sizeof(uint32_t)] = dma_dwUsbMode;
+}
+
+
+uint8_t MGC_Read8(struct Mentor_Controller* c, uint16_t offset)
+{
+    uint8_t data;
+	dma_SetUsbMode_LengthInput(c, 0);
+    data = ((volatile uint32_t*)(c->Data_0x14))[offset];
+    return data;
+}
+
+
+uint16_t MGC_Read16(struct Mentor_Controller* c, uint16_t offset)
+{
+    uint16_t data;
+	dma_SetUsbMode_LengthInput(c, 1);
+    data = ((volatile uint32_t*)(c->Data_0x14))[offset];
+    return data;
+}
+
+
+uint32_t MGC_Read32(struct Mentor_Controller* c, uint16_t offset)
+{
+    uint32_t data;
+	dma_SetUsbMode_LengthInput(c, 2);
+    data = ((volatile uint32_t*)(c->Data_0x14))[offset];
+    return data;
+}
+
+
+void MGC_Write8(struct Mentor_Controller* c, uint16_t offset, uint8_t data)
+{
+	dma_SetUsbMode_LengthInput(c, 0);
+    ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
+}
+
+
+void MGC_Write16(struct Mentor_Controller* c, uint16_t offset, uint16_t data)
+{
+	dma_SetUsbMode_LengthInput(c, 1);
+    ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
+}
+
+
+void MGC_Write32(struct Mentor_Controller* c, uint16_t offset, uint32_t data)
+{
+	dma_SetUsbMode_LengthInput(c, 2);
+    ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
+}
+
+
+#endif
+
+
 
 #ifdef MB86H60
 
@@ -105,9 +196,7 @@ void mb86h60_debug_regs(struct Mentor_Controller* r4)
 {
     int i;
 
-    ((volatile uint32_t*)(dma_regs))[0x14/4] = 1 << 1; //dma_dwUsbMode;
-    int hwvers = ((volatile uint32_t*)(r4->Data_0x14))[0x6c];
-    fprintf(stderr, "hwvers=0x%x\n", hwvers);
+    fprintf(stderr, "hwvers=0x%x\n", MGC_Read16(r4, 0x6c));
 
 #if 0
     ((volatile uint32_t*)(dma_regs))[0x14/4] = 0 << 1; //dma_dwUsbMode;
@@ -118,6 +207,7 @@ void mb86h60_debug_regs(struct Mentor_Controller* r4)
     }
 #endif
 
+#if 0
     ((volatile uint32_t*)(r4->Data_0x14))[0x0f] = 0;
     ((volatile uint32_t*)(r4->Data_0x14))[0x60] = 0;
     int devctl = ((volatile uint32_t*)(r4->Data_0x14))[0x60];
@@ -129,7 +219,7 @@ void mb86h60_debug_regs(struct Mentor_Controller* r4)
         int ep_size = ((volatile uint32_t*)(r4->Data_0x14))[0x1f];
         fprintf(stderr, "ep_size[%d]=0x%x\n", i, ep_size);
     }
-
+#endif
 }
 
 #endif //MB86H60
@@ -142,10 +232,130 @@ void mentor_slogf(/*struct Mentor_Controller* a, int b, int c, int d,
 }
 
 
+/*  - todo */
+const struct sigevent * mentor_interrupt_handler(void* a, int b)
+{
+//    fprintf(stderr, "mentor_interrupt_handler: TODO\n");
+
+    struct Mentor_Controller *r4 = a;
+
+#ifdef MB86H60
+    int status = dma_GetUsbIntStatus(r4);
+    
+    dma_SetUsbIntClear(r4, 1);
+#endif
+
+#if 0
+    if (r4->Data_0x98 == 0)
+    {
+        return NULL;
+    }
+#endif
+
+    return &r4->Data_0x5c;
+}
+
+
+/* 0x00007f88 - todo */
 static void* mentor_interrupt_thread(void* a)
 {
     fprintf(stderr, "mentor_interrupt_thread: TODO\n");
 
+    struct USB_Controller* r7 = a;
+    struct Mentor_Controller* r4 = r7->Data_0x84;
+
+    if (ThreadCtl(1, 0) == -1)
+    {
+        mentor_slogf(r4, 12, 2, 1, "%s - %s: Unable to obtain I/O privity.",
+            "devu-dm816x-mg.so", "mentor_interrupt_thread");
+        return -1;
+    }
+    //loc_8000
+    r4->Data_0x5c = 4;
+    r4->Data_0x60 = r4->Data_0x44;
+    r4->wData_0x6a = getprio(0);
+    r4->Data_0x64 = 0;
+    r4->wData_0x68 = 1;
+
+#if 0 //TODO!!!
+    while ((r4->Data_0x50 & 0x10) == 0)
+    {
+        //loc_803c
+        delay(1);
+    }
+#endif
+    //loc_8050
+#ifdef MB86H60
+    r4->Data_0x48 = MB86H60_INTR_USB; //r7->Data_4->bData_0x14;
+#else
+    r4->Data_0x48 = r7->Data_4->bData_0x14...;
+#endif
+
+    r4->Data_0x4c = InterruptAttach(r4->Data_0x48, mentor_interrupt_handler, r4, 0xe8, 8);
+    if (r4->Data_0x4c == -1)
+    {
+        mentor_slogf(r4, 12, 2, 1, "%s - %s: InterruptAttach failed.",
+            "devu-dm816x-mg.so", "mentor_interrupt_thread");
+
+        return -1;
+    }
+    //loc_80e0
+    while (1)
+    {
+        //loc_8100
+        struct 
+        {
+            int fill_0[4]; //0
+            //16
+        } fp_0x30;
+
+        if (MsgReceivePulse(r4->Data_0x40, &fp_0x30, 16, 0) == -1)
+        {
+            //->loc_8154
+            InterruptDetach(r4->Data_0x4c);
+            break;
+        }
+
+        fprintf(stderr, "mentor_interrupt_thread: msg handling: TODO!!!\n");
+    }
+
+    return NULL;
+}
+
+
+int mentor_init_fifo_config(struct Mentor_Controller* r0, int b)
+{
+#if 1
+    fprintf(stderr, "mentor_init_fifo_config: TODO\n");
+#endif
+
+}
+
+
+/* 0x000045cc - complete */
+int mentor_fifo_init(struct Mentor_Controller* cntrl, int b)
+{
+#if 0
+    fprintf(stderr, "mentor_fifo_init: TODO\n");
+#endif
+
+#ifdef MB86H60
+    MGC_SelectEnd(cntrl, 0);
+    MGC_Write8(cntrl, MGC_O_HDRC_RXFIFOSZ, 3);
+    MGC_Write16(cntrl, MGC_O_HDRC_RXFIFOADD, 0);
+    MGC_Write8(cntrl, MGC_O_HDRC_TXFIFOSZ, 3);
+    MGC_Write16(cntrl, MGC_O_HDRC_TXFIFOADD, 0);
+#else
+    ((volatile uint8_t*)(cntrl->Data_0x14))[0x0e] = 0;
+    ((volatile uint8_t*)(cntrl->Data_0x14))[0x63] = 0x03; //RXFIFOSZ
+    ((volatile uint16_t*)(cntrl->Data_0x14))[0x66/2] = 0; //RXFIFOADD
+    ((volatile uint8_t*)(cntrl->Data_0x14))[0x62] = 0x03; //TXFIFOSZ
+    ((volatile uint16_t*)(cntrl->Data_0x14))[0x64/2] = 0; //TXFIFOADD
+#endif
+
+    mentor_init_fifo_config(cntrl, b);
+
+    return 0;
 }
 
 
@@ -335,11 +545,99 @@ int MENTOR_BuildEDList(struct Mentor_Controller* a, struct Struct_0xa4** b)
 }
 
 
-int mentor_board_specific_init1(struct Mentor_Controller* a)
+/* 0x00002e08 - todo */
+int mentor_board_specific_init1(struct Mentor_Controller* r6)
 {
 #if 1
     fprintf(stderr, "mentor_board_specific_init1: TODO!!!\n");
 #endif
+
+    struct
+    {
+        int Data_0; //0
+        void* Data_4; //4
+        int fill_8; //8
+        uint8_t bData_0xc; //0xc
+        int Data_0x10; //0x10
+        int fill_0x14[3]; //0x14
+        //0x20
+    }* r5;
+
+    int sl;
+
+    struct USB_Controller* r4 = r6->Data_0;
+
+    r6->Data_0x38 = 0x400;
+    r6->Data_0x18 = 0x10;
+    r6->Data_0x50 |= 0x200;
+    r6->Data_0xe4 = r5 = calloc(1, 0x20);
+
+    if (r5 == NULL)
+    {
+        mentor_slogf(r6, 12, 2, 0, "mentor_board_specific_init1: calloc error1\n"/*TODO*/);
+        sl = 12;
+        //->loc_35fc
+        return sl;
+    }
+    //loc_2e90
+#ifndef MB86H60
+    r5->Data_4 = mmap_device_memory(NULL, 0x8000, 0xb00, 0x10001, 
+                    0x47400000); //MB86H60: TODO!!!
+    if (r5->Data_4 == -1)
+    {
+        mentor_slogf(r6, 12, 2, 0, "mentor_board_specific_init1: mmap_device_memory error1\n"/*TODO*/);
+        sl = 12;
+        //->loc_35f4
+        free(r5);
+        return sl;
+    }
+    //loc_2ef0
+    r5->Data_0 = r4->Data_4->Data_0x68 - 0x47400400 + r5->Data_4;
+
+    if (r4->Data_4->Data_0x68 == 0x47401c00)
+    {
+        r5->bData_0xc = 1;
+    }
+    else
+    {
+        //loc_2f78
+        r5->bData_0xc = 0;
+    }
+    //loc_2f80
+    ((volatile uint32_t*)(r5->Data_0))[0x14/4] = 1;
+
+    while (((volatile uint32_t*)(r5->Data_0))[0x14/4] & 1)
+    {
+        //loc_2fa8
+        delay(1);
+    }
+    //loc_2fc4
+    ((volatile uint32_t*)(r5->Data_0))[0xe8/4] = 0;
+    ((volatile uint32_t*)(r5->Data_0))[0xe0/4] = 2;
+    ((volatile uint32_t*)(r5->Data_0))[0x70/4] = 0;
+    ((volatile uint32_t*)(r5->Data_0))[0x74/4] = 0;
+    ((volatile uint32_t*)(r5->Data_0))[0x14/4] &= ~0x10;
+    ((volatile uint32_t*)(r5->Data_0))[0xd0/4] = 0;
+#endif
+
+    mentor_fifo_init(r6, r6->Data_0x88);
+
+    if ((r6->Data_0x50 & 1) == 0)
+    {
+        sl = 0;
+        //->loc_35fc
+        return sl;
+    }
+    //0x00003030
+    r5->Data_0x10 = 0x11;
+
+//    r4 = r6->Data_0xe4;
+
+    mentor_slogf(r6, 12, 2, 3, "devu-dm816x-mg.so: init dma");
+
+    fprintf(stderr, "mentor_board_specific_init1: init dma: TODO!!!\n");
+
+    //TODO!!!
 
     return 0;
 
@@ -526,10 +824,10 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     //loc_6518
 #ifdef MB86H60
     dma_regs = mmap_device_memory(NULL/*void * addr*/,
-                           0x800/*size_t len*/,
+                           MB86H60_DMA_SIZE/*size_t len*/,
                            0xb00/*int prot*/,
                            0x10001/*int flags*/,
-                            0xc7000000);
+                            MB86H60_DMA_BASE);
 
 #endif
 
@@ -537,12 +835,12 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                            0x2000/*size_t len*/,
                            0xb00/*int prot*/,
                            0x10001/*int flags*/,
-#if 0
+#ifndef MB86H60
 //                           *(uint64_t*)(char*)&(r7->Data_4->Data_0x68)/*uint64_t physical*/);
                             //UNALIGNED_RET64(r7->Data_4->Data_0x68_));
                             //ENDIAN_BE64(*((uint64_t*)(r7->Data_4->Data_0x68_))));
 #else
-                            0xc7000800);
+                            MB86H60_USB_BASE);
 #endif
     if (r4->Data_0x14 == -1)
     {
@@ -652,10 +950,15 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                                             mb86h60_debug_regs(r4);
 #endif
 
+#ifdef MB86H60
+                                            MGC_Write8(r4, MGC_O_HDRC_TESTMODE, 0);
+                                            MGC_Write8(r4, MGC_O_HDRC_DEVCTL, 0);
+#else
                                             ((volatile uint8_t*)(r4->Data_0x14))[0x0f] = 0;
                                             ((volatile uint8_t*)(r4->Data_0x14))[0x60] = 0;
                                             ((volatile uint32_t*)(r4->Data_0x14))[0x414/4] = 0;
                                             ((volatile uint32_t*)(r4->Data_0x14))[0x404/4] = 0x1008;
+#endif
 
                                             res = mentor_board_specific_init2(r4);
                                             if (res != 0)
@@ -688,8 +991,17 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                                                         //loc_6950
                                                         r4->Data_0x50 |= 0x10;
 
+#ifdef MB86H60
+                                                        MGC_Write8(r4, MGC_O_HDRC_POWER,
+                                                            MGC_M_POWER_SOFTCONN|MGC_M_POWER_HSENAB);
+                                                        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
+
+                                                        MGC_Write8(r4, MGC_O_HDRC_INTRUSBE, 0xff);
+                                                        dma_SetUsbIntMask(r4, (1 << 0));
+#else
                                                         ((volatile uint8_t*)(r4->Data_0x14))[0x01] = 0x60;
                                                         ((volatile uint8_t*)(r4->Data_0x14))[0x60] = 0x01;
+#endif
 
                                                         return 0;
                                                     }
