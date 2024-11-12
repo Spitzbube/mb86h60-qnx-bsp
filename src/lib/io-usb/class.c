@@ -91,15 +91,85 @@ int sub_10db1c()
 }
 
 
+/* 113ed0 - todo */
+int sub_113ed0(struct USB_Controller* a, int b)
+{
+#if 1
+    fprintf(stderr, "sub_113ed0: %d: TODO!!!\n", b);
+#endif
+
+    return 0;
+}
+
+
+
+/* 110b74 - todo */
+void sub_110b74(int fp_0x28)
+{
+#if 1
+    fprintf(stderr, "sub_110b74: %d: TODO!!!\n", fp_0x28);
+#endif
+
+    struct USB_Controller* fp_0x10;
+    uint8_t* fp_0x14;
+    uint32_t fp_0x18;
+    uint32_t fp_0x1c;
+    int fp_0x20 = 0;
+    int fp_0x24;
+
+    fp_0x14 = &Data_120220[fp_0x28].bData_4[0];
+    fp_0x10 = &usb_controllers[fp_0x28];
+
+    (fp_0x10->controller_methods->check_port_status)(fp_0x10, &fp_0x24);
+
+    for (fp_0x18 = 0; fp_0x18 < 16; fp_0x18++)
+    {
+        //loc_110bf0
+        fp_0x1c = fp_0x14[fp_0x18];
+
+        if (fp_0x1c < 16)
+        {
+            if ((sub_113ed0(fp_0x10, fp_0x1c) != 0) ||
+                (uint8_t)((fp_0x24 >> fp_0x1c) & 1))
+            {
+                //loc_110c44
+
+                //TODO!!!
+            
+            }
+            //loc_110dfc
+        }
+        //loc_110df8
+
+        //loc_110dfc
+    }
+}
+
 
 
 /* 10a51c - todo */
-void sub_10a51c(int a)
+int sub_10a51c(int a)
 {
 #if 1
     fprintf(stderr, "sub_10a51c: %d: TODO!!!\n", a);
 #endif
 
+    struct USB_Controller* ctrl;
+    uint32_t i;
+
+    for (i = 0; i < 20; i++)
+    {
+        //sub_10a51c
+        ctrl = CTRL_HCLookup(i);
+
+        if ((ctrl != NULL) &&
+            ((ctrl->Data_0x6c & 0x100) == a))
+        {
+            sub_110b74(i);
+        }
+    }
+
+    return 0;
 }
 
 
@@ -193,9 +263,9 @@ static void* usb_port_enum_handler(void* a)
 #endif
 
     fp_0x2c.it_value.tv_sec = 0;
-    fp_0x2c.it_value.tv_nsec = 100000000;
+    fp_0x2c.it_value.tv_nsec = 100; //100000000;
     fp_0x2c.it_interval.tv_sec = 0;
-    fp_0x2c.it_interval.tv_nsec = 100000000;
+    fp_0x2c.it_interval.tv_nsec = 100; //100000000;
 
     timer_settime(fp_0x1c, 0, &fp_0x2c, 0);
 
@@ -204,7 +274,13 @@ static void* usb_port_enum_handler(void* a)
     while (1)
     {
         //loc_10a924
+#if 0
+        fprintf(stderr, "usb_port_enum_handler: before MsgReceivev\n");
+#endif
         int fp_0x10 = MsgReceivev(Data_1273b0, &fp_0x54, 1, 0);
+#if 1
+        fprintf(stderr, "usb_port_enum_handler: after MsgReceivev\n");
+#endif
         if (fp_0x10 == -1)
         {
             continue;
@@ -234,19 +310,19 @@ static void* usb_port_enum_handler(void* a)
             {
                 case 2:
                     //loc_10aa28
-                    sub_10a51c(0x100);
+                    sub_10a51c(0x100); //usb_check_rport_change???
                     //->loc_10aca0
                     break;
                     
                 case 1:
                     //loc_10aa34
-                    sub_10a51c(0x00);
+                    sub_10a51c(0x00); //usb_check_rport_change???
                     //->loc_10aca0
                     break;
 
                 case 3:
                     //loc_10aa40
-                    sub_10a5a4();
+                    sub_10a5a4(); //usb_check_eport_change???
                     //->loc_10aca0
                     break;
                     

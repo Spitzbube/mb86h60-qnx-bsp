@@ -344,6 +344,9 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
 
     if (int_usb != 0)
     {
+#if 0
+        r4->Data_0x6c = int_usb;
+#else
         if ((int_usb & (1 << 4)/*Conn???*/) != 0)
         {
             r4->Data_0x6c = (r4->Data_0x6c | 0x02) & ~0x04;
@@ -356,6 +359,7 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
         {
             r4->Data_0x6c &= ~(0x02 | 0x04);
         }
+#endif
     }
     //loc_5a90
     mentor_clr_ext_int(r4);
@@ -1131,6 +1135,17 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                                                         MGC_Write8(r4, MGC_O_HDRC_POWER,
                                                             MGC_M_POWER_SOFTCONN|MGC_M_POWER_HSENAB);
                                                         MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
+#if 0
+                                                        while (1)
+                                                        {
+                                                            uint8_t devctl = MGC_Read8(r4, MGC_O_HDRC_DEVCTL);
+                                                            fprintf(stderr, "devctl = 0x%02x\n", devctl);
+                                                            if (devctl == 0x5d)
+                                                            {
+                                                                break;
+                                                            }
+                                                        }
+#endif
 #else
                                                         ((volatile uint8_t*)(r4->Data_0x14))[0x01] = 0x60;
                                                         ((volatile uint8_t*)(r4->Data_0x14))[0x60] = 0x01;
@@ -1175,6 +1190,115 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
 }
 
 
+void mentor_ulpi_write()
+{
+    fprintf(stderr, "mentor_ulpi_write: TODO!!!\n");
+
+}
+
+
+void mentor_board_specific_reset()
+{
+    fprintf(stderr, "mentor_board_specific_reset: TODO!!!\n");
+
+}
+
+
+/* 0x00006b1c - todo */
+int mentor_check_port_status(struct USB_Controller* a, int* b)
+{
+    struct Mentor_Controller* r4 = a->Data_0x84;
+
+#if 1
+    fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x, MGC_O_HDRC_DEVCTL=0x%02x TODO!!!\n",
+        r4->Data_0x6c, MGC_Read8(r4, MGC_O_HDRC_DEVCTL));
+#endif
+
+    if (r4->Data_0x6c & 0x04)
+    {
+        *b = 0;
+    }
+    else
+    {
+        *b = 1;
+
+        r4->Data_0x6c |= 0x04;
+
+        if ((r4->Data_0x6c & 0x02) == 0)
+        {
+#ifdef MB86H60
+            if ((MGC_Read8(r4, MGC_O_HDRC_DEVCTL) & MGC_M_DEVCTL_SESSION) == 0)
+            {
+                uint8_t r3 = MGC_Read8(r4, MGC_O_HDRC_DEVCTL);
+#else
+            if ((((volatile uint8_t*)(r4->Data_0x14))[0x60] & (1 << 0)/*Session?*/) == 0)
+            {
+                uint8_t r3 = ((volatile uint8_t*)(r4->Data_0x14))[0x60];
+#endif
+
+                mentor_slogf(r4, 12, 2, 1, "%s - %s: Session off %x, trying to recover ...",
+                    "devu-dm816x-mg.so", "mentor_check_port_status", r3);
+
+#if 0 //TODO!!!
+                delay(10);
+#endif
+
+                if (r4->Data_0x50 & 0x100)
+                {
+                    mentor_ulpi_write(r4, 0x05, 0x20);
+
+#if 0 //TODO!!!
+                    delay(5);
+#endif
+                    //->loc_6bf4
+                }
+                else
+                {
+                    //loc_6bec
+                    mentor_board_specific_reset(r4);
+                }
+                //loc_6bf4
+#ifdef MB86H60
+                MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
+#else
+                ((volatile uint8_t*)(r4->Data_0x14))[0x60] = 1;
+#endif
+
+#if 0 //TODO
+                delay(1);
+#endif
+
+#ifdef MB86H60
+                if ((MGC_Read8(r4, MGC_O_HDRC_DEVCTL) & MGC_M_DEVCTL_SESSION) == 0)
+                {
+                    uint8_t r3 = MGC_Read8(r4, MGC_O_HDRC_DEVCTL);
+#else
+                if ((((volatile uint8_t*)(r4->Data_0x14))[0x60] & (1 << 0)/*Session?*/) == 0)
+                {
+                    //0x00006c18
+                    uint8_t r3 = ((volatile uint8_t*)(r4->Data_0x14))[0x60];
+#endif
+
+                    mentor_slogf(r4, 12, 2, 1, "%s - %s: Session recover failed %x",
+                        "devu-dm816x-mg.so", "mentor_check_port_status", r3);
+                    //->loc_6c9c
+                }
+                else
+                {
+                    //loc_6c60
+                    mentor_slogf(r4, 12, 2, 1, "%s - %s: Session recover sucessful",
+                        "devu-dm816x-mg.so", "mentor_check_port_status");
+                }
+            } //if ((((volatile uint8_t*)(r4->Data_0x14))[0x60] & (1 << 0)/*Session?*/) == 0)
+            //loc_6c9c
+        } //if ((r4->Data_0x6c & 0x02) == 0)
+        //loc_6c9c
+    }
+    //loc_6c9c
+    return 0;
+}
+
+
 static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
 
 struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
@@ -1198,12 +1322,12 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
     9,
     mentor_controller_init,
     mentor_controller_shutdown,
-#if 0 //TODO
-    mentor_set_bus_state,
+    0, //mentor_set_bus_state,
     0, 0, 0,
-    mentor_set_port_feature,
-    mentor_clear_port_feature,
+    0, //mentor_set_port_feature,
+    0, //mentor_clear_port_feature,
     mentor_check_port_status,
+#if 0 //TODO
     mentor_check_device_connected,
     mentor_get_root_device_speed,
     mentor_get_timer_from_controller,

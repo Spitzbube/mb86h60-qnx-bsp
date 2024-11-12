@@ -80,6 +80,9 @@ struct io_usb_controller_methods_t
     int fill_0x10; //16
     int fill_0x14; //20
     int Data_0x18; //0x18 = 24
+    int fill_0x1c; //28
+    int fill_0x20; //32
+    int (*check_port_status)(struct USB_Controller*, int*); //0x24 = 36
     //TODO!!!
     //???
 };

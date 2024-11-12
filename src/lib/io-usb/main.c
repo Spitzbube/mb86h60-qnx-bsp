@@ -1279,9 +1279,10 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
 /* 0x00105d70 - todo */
 void udi_start_driver(int argc, char* const argv[])
 {
-    fprintf(stderr, "udi_start_driver\n");
-
 #if 0
+    fprintf(stderr, "udi_start_driver\n");
+#endif
+
     struct Struct_10acec sp4;
     int opt;
 
@@ -1303,7 +1304,6 @@ void udi_start_driver(int argc, char* const argv[])
     sp4.Data_0x20 = udi_removal;
 
     UdiCtrl.Data_8 = CLASS_RegisterDriver(&sp4);
-#endif
 }
 
 

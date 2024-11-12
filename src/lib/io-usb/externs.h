@@ -165,6 +165,7 @@ struct Struct_120220
 
 
 
+extern struct USB_Controller usb_controllers[]; //0x0011f590 +0x14*0x8c
 extern void* Data_12021c; //12021c
 extern struct Struct_120220 Data_120220[]; //0x120220
 extern struct UsbdiGlobals UsbdiGlobals; //0x001212b0
