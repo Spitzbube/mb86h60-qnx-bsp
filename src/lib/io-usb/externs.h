@@ -155,7 +155,7 @@ struct Struct_120220
 #else
     struct 
     {
-        int fill_0; //0
+        int Data_0; //0
         pthread_mutex_t Data_4; //4
         //12???
     } Data_0x14[16]; //0x14

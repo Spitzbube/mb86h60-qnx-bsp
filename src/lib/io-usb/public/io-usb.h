@@ -82,7 +82,7 @@ struct io_usb_controller_methods_t
     int Data_0x18; //0x18 = 24
     int fill_0x1c; //28
     int fill_0x20; //32
-    int (*check_port_status)(struct USB_Controller*, int*); //0x24 = 36
+    int (*check_port_status)(struct USB_Controller*, uint32_t*); //0x24 = 36
     //TODO!!!
     //???
 };

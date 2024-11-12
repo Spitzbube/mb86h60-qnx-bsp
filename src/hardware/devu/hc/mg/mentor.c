@@ -116,6 +116,8 @@ struct Mentor_Controller
 
 #ifdef MB86H60
 
+volatile uint8_t bUsbIntStatus;
+
 void* dma_regs = NULL;
 uint32_t dma_dwUsbMode = 0;
 
@@ -344,9 +346,15 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
 
     if (int_usb != 0)
     {
-#if 0
-        r4->Data_0x6c = int_usb;
-#else
+#ifdef MB86H60
+#if 1
+        bUsbIntStatus = int_usb;
+#endif
+        if ((int_usb & (1 << 6)/*Sess Req*/) != 0)
+        {
+//            MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
+        }
+#endif
         if ((int_usb & (1 << 4)/*Conn???*/) != 0)
         {
             r4->Data_0x6c = (r4->Data_0x6c | 0x02) & ~0x04;
@@ -359,7 +367,6 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
         {
             r4->Data_0x6c &= ~(0x02 | 0x04);
         }
-#endif
     }
     //loc_5a90
     mentor_clr_ext_int(r4);
@@ -1134,7 +1141,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
 #ifdef MB86H60
                                                         MGC_Write8(r4, MGC_O_HDRC_POWER,
                                                             MGC_M_POWER_SOFTCONN|MGC_M_POWER_HSENAB);
-                                                        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
+//                                                        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
 #if 0
                                                         while (1)
                                                         {
@@ -1205,13 +1212,23 @@ void mentor_board_specific_reset()
 
 
 /* 0x00006b1c - todo */
-int mentor_check_port_status(struct USB_Controller* a, int* b)
+int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 {
     struct Mentor_Controller* r4 = a->Data_0x84;
 
 #if 1
-    fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x, MGC_O_HDRC_DEVCTL=0x%02x TODO!!!\n",
-        r4->Data_0x6c, MGC_Read8(r4, MGC_O_HDRC_DEVCTL));
+    fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x TODO!!!\n", r4->Data_0x6c);
+
+    uint8_t devctl = MGC_Read8(r4, MGC_O_HDRC_DEVCTL);
+
+    fprintf(stderr, "mentor_check_port_status: MGC_O_HDRC_DEVCTL=0x%02x\n", devctl);
+
+    if ((bUsbIntStatus & (1 << 6)/*Sess Req*/) != 0)
+    {
+        devctl |= MGC_M_DEVCTL_SESSION;
+
+        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, devctl);
+    }
 #endif
 
     if (r4->Data_0x6c & 0x04)

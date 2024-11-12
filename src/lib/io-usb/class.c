@@ -92,15 +92,55 @@ int sub_10db1c()
 
 
 /* 113ed0 - todo */
-int sub_113ed0(struct USB_Controller* a, int b)
+int sub_113ed0(struct USB_Controller* fp_0x18, int fp_0x1c)
+{
+#if 0
+    fprintf(stderr, "sub_113ed0: %d: TODO!!!\n", fp_0x1c);
+#endif
+
+    int fp_0x10;
+
+    pthread_mutex_lock(&Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_4);
+
+    fp_0x10 = Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_0 & 1;
+
+    Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_0 &= ~1;
+
+    pthread_mutex_unlock(&Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_4);
+
+    return fp_0x10;
+}
+
+
+/* 110b48 - todo */
+void sub_110b48(int a, int b)
 {
 #if 1
-    fprintf(stderr, "sub_113ed0: %d: TODO!!!\n", b);
+    fprintf(stderr, "sub_110b48: TODO!!!\n");
+#endif
+
+}
+
+
+/* 106124 - todo */
+void sub_106124(int a, int b, int c, int d, int e)
+{
+#if 1
+    fprintf(stderr, "sub_106124: TODO!!!\n");
+#endif
+
+}
+
+
+/* 1109a0 - todo */
+int sub_1109a0(int a, int b)
+{
+#if 1
+    fprintf(stderr, "sub_1109a0: TODO!!!\n");
 #endif
 
     return 0;
 }
-
 
 
 /* 110b74 - todo */
@@ -115,7 +155,7 @@ void sub_110b74(int fp_0x28)
     uint32_t fp_0x18;
     uint32_t fp_0x1c;
     int fp_0x20 = 0;
-    int fp_0x24;
+    uint32_t fp_0x24;
 
     fp_0x14 = &Data_120220[fp_0x28].bData_4[0];
     fp_0x10 = &usb_controllers[fp_0x28];
@@ -130,17 +170,37 @@ void sub_110b74(int fp_0x28)
         if (fp_0x1c < 16)
         {
             if ((sub_113ed0(fp_0x10, fp_0x1c) != 0) ||
-                (uint8_t)((fp_0x24 >> fp_0x1c) & 1))
+                ((fp_0x24 >> fp_0x1c) & 1))
             {
                 //loc_110c44
+                sub_110b48(fp_0x28, fp_0x1c);
 
-                //TODO!!!
-            
+                if (Data_120220[fp_0x28].Data_0x14[fp_0x1c].Data_0 & 0x02)
+                {
+                    //0x00110c98
+                    sub_106124(fp_0x28, 0, 0, fp_0x1c, 0);
+
+                    Data_120220[fp_0x28].Data_0x14[fp_0x1c].Data_0 &= ~0x02;
+                }
+                //loc_110d30
+                fp_0x20 = sub_1109a0(fp_0x28, fp_0x1c);
+
+                if (fp_0x20 != 0)
+                {
+                    if (fp_0x20 != 0x13)
+                    {
+                        //0x00110d5c
+                        sub_106124(fp_0x28, 0, 0, fp_0x1c, 1);
+
+                        Data_120220[fp_0x28].Data_0x14[fp_0x1c].Data_0 |= 0x02;
+                    }
+                    //loc_110dfc
+                }
+                //loc_110dfc
             }
             //loc_110dfc
-        }
+        } //if (fp_0x1c < 16)
         //loc_110df8
-
         //loc_110dfc
     }
 }
