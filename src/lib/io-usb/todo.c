@@ -10,13 +10,6 @@ void usb_slogf()
 }
 
 
-void sub_10a498()
-{
-    fprintf(stderr, "sub_10a498\n");
-
-}
-
-
 void CTRL_FreeHCEntry(int a)
 {
     fprintf(stderr, "CTRL_FreeHCEntry\n");

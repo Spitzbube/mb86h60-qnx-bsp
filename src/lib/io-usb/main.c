@@ -1050,6 +1050,7 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
     usb_priority = 0x15;
     usb_verbosity = 0;
     usb_dflt_timeout = 10;
+    usb_enum_priority = 10;
 
     sigfillset(&sp_0xa8);
     pthread_sigmask(0, &sp_0xa8, 0);

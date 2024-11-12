@@ -7,6 +7,26 @@ struct ArrayClass  ArrayClass[8]; //0x00127230
 static void* usb_port_enum_handler(void*);
 
 
+/* 0x0010a498 - complete */
+int usb_port_monitor_wait_init_complete(void)
+{
+#if 0
+    fprintf(stderr, "usb_port_monitor_wait_init_complete\n");
+#endif
+
+    pthread_sleepon_lock();
+
+    while ((UsbdiGlobals.Data_0x10 & (1 << 31)) == 0)
+    {
+        pthread_sleepon_wait(&UsbdiGlobals.Data_0x10);
+    }
+
+    pthread_sleepon_unlock();
+
+    return 0;
+}
+
+
 /* 0x0010a4d8 - complete */
 int usb_port_monitor_start()
 {
@@ -16,7 +36,7 @@ int usb_port_monitor_start()
 
     pthread_sleepon_lock();
 
-    UsbdiGlobals.Data_0x10 |= 0x80000000;
+    UsbdiGlobals.Data_0x10 |= (1 << 31);
 
     pthread_sleepon_signal(&UsbdiGlobals.Data_0x10);
 
@@ -50,16 +70,49 @@ int INIT_HCDClassInterface()
     pthread_attr_setdetachstate(&fp_0x50, 1);
     pthread_attr_setstacksize(&fp_0x50, 0x4000);
 
-#if 0
-    if (pthread_create(0, &fp_0x50, usb_port_enum_handler, 0) != 0)
+    if (pthread_create(NULL, &fp_0x50, usb_port_enum_handler, NULL) != 0)
     {
         fwrite("Unable to create thread\n", 1, 0x18, stderr);
         return 1;
     }
+
+    return 0;
+}
+
+
+/* 10db1c - todo */
+int sub_10db1c()
+{
+#if 1
+    fprintf(stderr, "sub_10db1c: TODO!!!\n");
 #endif
 
     return 0;
 }
+
+
+
+
+/* 10a51c - todo */
+void sub_10a51c(int a)
+{
+#if 1
+    fprintf(stderr, "sub_10a51c: %d: TODO!!!\n", a);
+#endif
+
+}
+
+
+
+/* 10a5a4 - todo */
+void sub_10a5a4()
+{
+#if 1
+    fprintf(stderr, "sub_10a5a4: TODO!!!\n");
+#endif
+
+}
+
 
 
 /* 0x0010a6c0 - todo */
@@ -70,9 +123,34 @@ static void* usb_port_enum_handler(void* a)
 #endif
 
     int r3;
+    struct USB_Controller* fp_0x14;
+    struct Inner8* fp_0x18;
     timer_t fp_0x1c;
     struct itimerspec fp_0x2c;
     struct sigevent fp_0x3c;
+    struct
+    {
+        int fill_0; //0
+        uint8_t bData_4; //4
+        struct Inner8
+        {
+            int Data_0; //0
+            int fill_4[2]; //4
+            uint8_t fill_0xc;
+            uint8_t bData_0xd; //0xd
+            int Data_0x10; //0x10
+            int fill_0x14[29]; //0x14
+            int Data_0x88; //0x88
+            int fill_0x8c[2]; //0x8c
+            pthread_mutex_t Data_0x94; //0x94
+            pthread_cond_t Data_0x9c; //0x9c
+            int Data_0xa4; //0xa4
+            int Data_0xa8; //0xa8
+            //???
+        }* Data_8; //8 
+        int fill_0xc; //12
+        //16???
+    } fp_0x4c;
     iov_t fp_0x54;
 
     if (pthread_setname_np(0, "port_enum_hdl") != 0)
@@ -106,9 +184,13 @@ static void* usb_port_enum_handler(void* a)
             strerror(errno), errno);
     }
     //loc_10a8bc
-    sub_10a498();
+    usb_port_monitor_wait_init_complete();
 
+#if 1
+    fprintf(stderr, "usb_port_enum_handler: after usb_port_monitor_wait_init_complete: TODO\n");
+#else
     delay(20);
+#endif
 
     fp_0x2c.it_value.tv_sec = 0;
     fp_0x2c.it_value.tv_nsec = 100000000;
@@ -116,6 +198,8 @@ static void* usb_port_enum_handler(void* a)
     fp_0x2c.it_interval.tv_nsec = 100000000;
 
     timer_settime(fp_0x1c, 0, &fp_0x2c, 0);
+
+    SETIOV(&fp_0x54, &fp_0x4c, 16);
 
     while (1)
     {
@@ -132,10 +216,124 @@ static void* usb_port_enum_handler(void* a)
                 "CLASS_ThreadHandler");
         }
         //loc_10a9a4
-        //TODO!!!
-        
-        fprintf(stderr, "usb_port_enum_handler: loc_10a9a4: TODO!!!\n");
-    }
+        if (UsbdiGlobals.Data_0x17c != 0)
+        {
+            if (pthread_rwlock_unlock(&usb_rwlock) != 0)
+            {
+                usb_slogf(12, 2, 1, "%s: error releasing rdlock",
+                    "CLASS_ThreadHandler");
+                //->loc_10ace4
+            }
+            //->loc_10ace0
+            break;
+        }
+        else
+        {
+            //loc_10a9f8
+            switch (fp_0x4c.bData_4)
+            {
+                case 2:
+                    //loc_10aa28
+                    sub_10a51c(0x100);
+                    //->loc_10aca0
+                    break;
+                    
+                case 1:
+                    //loc_10aa34
+                    sub_10a51c(0x00);
+                    //->loc_10aca0
+                    break;
+
+                case 3:
+                    //loc_10aa40
+                    sub_10a5a4();
+                    //->loc_10aca0
+                    break;
+                    
+                case 4:
+                    //loc_10aa48
+                    fp_0x18 = fp_0x4c.Data_8;
+
+                    usb_slogf(12, 2, 1, "Processing Reset Event: path %d dno %d, refcnt %d",
+                        fp_0x18->Data_0x88, 
+                        fp_0x18->Data_0, 
+                        fp_0x18->Data_0xa8);
+
+                    pthread_mutex_lock(&fp_0x18->Data_0x94);
+
+                    fp_0x14 = CTRL_HCLookup(fp_0x18->Data_0x88);
+
+                    if ((fp_0x14 == NULL) ||
+                        ((fp_0x18->bData_0xd & 1) == 0))
+                    {
+                        //loc_10aad4
+                        fp_0x18->Data_0xa4 = 0x13;
+                    }
+                    else
+                    {
+                        //loc_10aae4
+                        fp_0x18->Data_0xa4 = sub_10db1c(fp_0x14, fp_0x18);
+                    }
+                    //loc_10ab00
+                    pthread_cond_broadcast(&fp_0x18->Data_0x9c);
+
+                    pthread_mutex_unlock(&fp_0x18->Data_0x94);
+                    //->loc_10aca0
+                    break;
+                    
+                case 6:
+                    //loc_10ab24
+                    fp_0x18 = fp_0x4c.Data_8;
+
+                    usb_slogf(12, 2, 1, "Processing Detach Event: path %d dno %d, refcnt %d",
+                        fp_0x18->Data_0x88, 
+                        fp_0x18->Data_0, 
+                        fp_0x18->Data_0xa8);
+
+                    fp_0x14 = CTRL_HCLookup(fp_0x18->Data_0x88);
+
+                    if ((fp_0x14 == NULL) ||
+                        (fp_0x18 == NULL)
+
+                        //TODO!!!
+
+                        )
+                    {
+                        //loc_10ac10
+                        usb_slogf(12, 2, 1, "Processing Detach Event (hold off): path %d dno %d, refcnt %d, opening %d, Status %x",
+                            fp_0x18->Data_0x88, 
+                            fp_0x18->Data_0, 
+                            fp_0x18->Data_0xa8,
+                            fp_0x18->Data_0x10,
+                            fp_0x18->bData_0xd);
+                    }
+                    //loc_10aca0
+                    break;
+                    
+                case 5:
+                    //loc_10ac9c
+                    /* Not handled */
+                    //loc_10aca0
+                    break;
+                    
+                default:
+                    //loc_10ac68
+                    usb_slogf(12, 2, 0, "%s: Enum unhandled pulse code(%d)",
+                        "CLASS_ThreadHandler", fp_0x4c.bData_4);
+                    //->loc_10aca0
+                    break;
+            } //switch (fp_0x4c.bData_4)
+            //loc_10aca0
+            if (pthread_rwlock_unlock(&usb_rwlock) != 0)
+            {
+                usb_slogf(12, 2, 1, "%s: error releasing rdlock", 
+                    "CLASS_ThreadHandler");
+                //->loc_10a924
+            }
+            //->loc_10a920
+        }
+    } //while (1)
+    //loc_10ace4
 }
 
 
