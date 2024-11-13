@@ -6,6 +6,7 @@
 
 
 Uart_Module* main_hUart0 = 0;
+Struct_20611068* main_hUsbGpio = 0;
 
 
 void mb86h60_board_init(void)
@@ -27,5 +28,16 @@ void mb86h60_board_init(void)
 
 	uart_init(&uartParams, &main_hUart0);
 	console_init(main_hUart0);
+
+	GPIO_Params sp_0x10;
+
+	sp_0x10.dwOutFunction = 0;
+	sp_0x10.dwInFunction = 0xff;
+	sp_0x10.bPin = 0x53;
+
+	gpio_open(&sp_0x10, &main_hUsbGpio);
+
+	gpio_set(main_hUsbGpio, 0);
+
 }
 

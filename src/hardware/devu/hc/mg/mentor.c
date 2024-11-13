@@ -783,7 +783,7 @@ int mentor_board_specific_init2(struct Mentor_Controller* ctrl)
     MGC_Write16(ctrl, MGC_O_HDRC_INTRTXE, 0xffff);
     MGC_Write16(ctrl, MGC_O_HDRC_INTRRXE, 0xfffe);
     MGC_Write8(ctrl, MGC_O_HDRC_INTRUSBE, 0xff);
-    dma_SetUsbIntMask(ctrl, 1); //USB General IRQ
+    dma_SetUsbIntMask(ctrl, 0x7e); //Bit 0: USB General IRQ
     //TODO: USB DMA Endpoint Read/Write Request IRQ (for endpoints 1, 2, 3)
 
 #else
@@ -1141,18 +1141,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
 #ifdef MB86H60
                                                         MGC_Write8(r4, MGC_O_HDRC_POWER,
                                                             MGC_M_POWER_SOFTCONN|MGC_M_POWER_HSENAB);
-//                                                        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
-#if 0
-                                                        while (1)
-                                                        {
-                                                            uint8_t devctl = MGC_Read8(r4, MGC_O_HDRC_DEVCTL);
-                                                            fprintf(stderr, "devctl = 0x%02x\n", devctl);
-                                                            if (devctl == 0x5d)
-                                                            {
-                                                                break;
-                                                            }
-                                                        }
-#endif
+                                                        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, MGC_M_DEVCTL_SESSION);
 #else
                                                         ((volatile uint8_t*)(r4->Data_0x14))[0x01] = 0x60;
                                                         ((volatile uint8_t*)(r4->Data_0x14))[0x60] = 0x01;
@@ -1217,18 +1206,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
     struct Mentor_Controller* r4 = a->Data_0x84;
 
 #if 1
-    fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x TODO!!!\n", r4->Data_0x6c);
-
-    uint8_t devctl = MGC_Read8(r4, MGC_O_HDRC_DEVCTL);
-
-    fprintf(stderr, "mentor_check_port_status: MGC_O_HDRC_DEVCTL=0x%02x\n", devctl);
-
-    if ((bUsbIntStatus & (1 << 6)/*Sess Req*/) != 0)
-    {
-        devctl |= MGC_M_DEVCTL_SESSION;
-
-        MGC_Write8(r4, MGC_O_HDRC_DEVCTL, devctl);
-    }
+    fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x\n", r4->Data_0x6c);
 #endif
 
     if (r4->Data_0x6c & 0x04)
@@ -1316,6 +1294,38 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 }
 
 
+int mentor_check_device_connected(struct USB_Controller* a, int b)
+{
+    fprintf(stderr, "mentor_check_device_connected: b = %d, TODO!!!\n", b);
+
+    return 0;
+}
+
+
+int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
+{
+    fprintf(stderr, "mentor_set_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
+
+    return 0;
+}
+
+
+int mentor_clear_port_feature(struct USB_Controller* a, int b, int c)
+{
+    fprintf(stderr, "mentor_clear_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
+
+    return 0;
+}
+
+
+int mentor_get_root_device_speed(struct USB_Controller* a, int b)
+{
+    fprintf(stderr, "mentor_get_root_device_speed: b=%d, c=%d, TODO!!!\n", b);
+
+    return 0;
+}
+
+
 static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
 
 struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
@@ -1341,12 +1351,12 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
     mentor_controller_shutdown,
     0, //mentor_set_bus_state,
     0, 0, 0,
-    0, //mentor_set_port_feature,
-    0, //mentor_clear_port_feature,
+    mentor_set_port_feature,
+    mentor_clear_port_feature,
     mentor_check_port_status,
-#if 0 //TODO
     mentor_check_device_connected,
     mentor_get_root_device_speed,
+#if 0 //TODO
     mentor_get_timer_from_controller,
 #endif
 };

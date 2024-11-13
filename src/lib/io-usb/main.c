@@ -155,14 +155,14 @@ struct USB_Controller* CTRL_GetHCEntry()
 
             ausb_controllers[i] = pController;
 
-            pController->Data_0x7c = calloc(1, 0xd70);
+            pController->Data_0x7c = calloc(1, 20 * sizeof(struct USB_Controller_Inner_0x7c));
             if (pController->Data_0x7c == 0)
             {
                 pController = NULL;
                 break;
             }
 
-            pController->Data_0x78 = calloc(1, 0x50);
+            pController->Data_0x78 = calloc(1, 20*4);
             if (pController->Data_0x78 == 0)
             {
                 free(pController->Data_0x78);

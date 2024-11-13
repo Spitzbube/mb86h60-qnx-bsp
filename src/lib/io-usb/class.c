@@ -2,6 +2,8 @@
 #include "externs.h"
 
 
+//#define ENABLE_DELAY
+
 struct ArrayClass  ArrayClass[8]; //0x00127230
 
 static void* usb_port_enum_handler(void*);
@@ -112,13 +114,107 @@ int sub_113ed0(struct USB_Controller* fp_0x18, int fp_0x1c)
 }
 
 
-/* 110b48 - todo */
-void sub_110b48(int a, int b)
+/* 113914 - todo */
+struct USB_Controller_Inner_0x7c* sub_113914(struct USB_Controller* fp_0x10, int fp_0x14, int fp_0x18)
+{
+#if 0
+    fprintf(stderr, "sub_113914: TODO!!!\n");
+#endif
+
+    struct USB_Controller_Inner_0x7c* fp_0xc;
+    uint32_t fp8;
+
+    for (fp8 = 0; fp8 < 20; fp8++)
+    {
+        if (fp_0x10->Data_0x78[fp8] != NULL)
+        {
+            fp_0xc = &fp_0x10->Data_0x7c[fp8];
+
+            if ((fp_0xc->Data_0x1c == ((fp_0x14 != 0)? fp_0x10->Data_0x78[fp_0x14 - 1]: NULL)) &&
+                (fp_0xc->Data_0x20 == fp_0x18) &&
+                ((fp_0xc->bData_0xd & 1) != 0))
+            {
+                return fp_0xc;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+
+
+/* 10c748 - todo */
+int sub_10c748(struct USB_Controller* a, void* b)
 {
 #if 1
+    fprintf(stderr, "sub_10c748: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+
+
+/* 10c904 - todo */
+int CLASS_ExtractDevice(int fp_0x10, int fp_0x14, int fp_0x18)
+{
+#if 0
+    fprintf(stderr, "CLASS_ExtractDevice: TODO!!!\n");
+#endif
+
+    struct USB_Controller* fp_0xc;
+    struct USB_Controller_Inner_0x7c* fp8;
+    
+    fp_0xc = &usb_controllers[fp_0x10];
+
+    if (pthread_mutex_lock(&fp_0xc->Data_0x24) != 0)
+    {
+        usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, errno %d",
+            "CLASS_ExtractDevice", 1009, errno);
+    }
+    //loc_10c990
+    fp8 = sub_113914(fp_0xc, fp_0x14, fp_0x18);
+    if (fp8 == 0)
+    {
+        if (pthread_mutex_unlock(&fp_0xc->Data_0x24) != 0)
+        {
+            usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, errno %d",
+                "CLASS_ExtractDevice", 1014, errno);
+        }
+        //loc_10ca0c
+        usb_slogf(12, 2, 1, "CLASS_ExtractDevice:  no parent, bus %d, port %d",
+            fp_0x10, fp_0x18);
+
+        //->loc_10cb20
+        return 2;
+    }
+    //loc_10ca3c
+    fp8->bData_0xd |= 2;
+    fp8->bData_0xd &= ~1;
+
+    if (pthread_mutex_unlock(&fp_0xc->Data_0x24) != 0)
+    {
+        usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, errno %d",
+            "CLASS_ExtractDevice", 1024, errno);
+    }
+    //loc_10cac0
+    usb_slogf(12, 2, 1, "CLASS_ExtractDevice:  dno %d, vid %x, parent %d, port %d, openings %d",
+        fp8->Data_0, fp8->wData_0x34, fp_0x14, fp_0x18, fp8->Data_0x10);
+
+    return sub_10c748(fp_0xc, fp8);
+}
+
+
+/* 110b48 - complete */
+void sub_110b48(int a, int b)
+{
+#if 0
     fprintf(stderr, "sub_110b48: TODO!!!\n");
 #endif
 
+    CLASS_ExtractDevice(a, 0, b);
 }
 
 
@@ -132,14 +228,93 @@ void sub_106124(int a, int b, int c, int d, int e)
 }
 
 
-/* 1109a0 - todo */
-int sub_1109a0(int a, int b)
+/* 10d2f0 - todo */
+int sub_10d2f0(int a, int b, int c, int d)
 {
 #if 1
-    fprintf(stderr, "sub_1109a0: TODO!!!\n");
+    fprintf(stderr, "sub_10d2f0: TODO!!!\n");
 #endif
 
     return 0;
+}
+
+
+/* 1109a0 - todo */
+int sub_1109a0(int fp_0x18, int fp_0x1c)
+{
+#if 0
+    fprintf(stderr, "sub_1109a0: TODO!!!\n");
+#endif
+
+    int fp_0x10 = 0;
+    int fp_0xc;
+    struct USB_Controller* fp8;
+
+    fp8 = &usb_controllers[fp_0x18];
+
+    if ((fp8->controller_methods->check_device_connected)(fp8, fp_0x1c) == 0)
+    {
+        //0x001109fc
+#ifdef ENABLE_DELAY
+        delay(100);
+#endif
+
+        fp_0xc = UsbdiGlobals.Data_0x180;
+        //->loc_110ae0
+        while (fp_0xc--)
+        {
+            //->loc_110a18
+            fp_0x10 = (fp8->controller_methods->set_port_feature)(fp8, fp_0x1c, 2);
+            if (fp_0x10 != 0x13)
+            {
+#ifdef ENABLE_DELAY
+                delay(100);
+#endif
+
+                fp_0x10 = sub_10d2f0(fp_0x18, 0, fp_0x1c, 
+                    (fp8->controller_methods->get_root_device_speed)(fp8, fp_0x1c));
+
+                if (fp_0x10 != 0)
+                {
+                    //0x00110a90
+                    if ((fp8->controller_methods->check_device_connected)(fp8, fp_0x1c) != 0)
+                    {
+                        //0x00110ab4
+                        fp_0x10 = 0x13;
+                        //->loc_110b10
+                        break;
+                    }
+                    //loc_110ac0
+                }
+                //loc_110ac0
+                if (fp_0x10 == 0)
+                {
+                    //->loc_110b10
+                    break;
+                }
+
+                if (fp_0x10 == 12)
+                {
+                    //->loc_110b10
+                    break;
+                }
+                //0x00110ad8
+#ifdef ENABLE_DELAY
+                delay(1000);
+#endif
+                //loc_110ae0
+            }
+            //loc_110b0c
+        } //while (fp_0xc--)
+        //loc_110b10
+    }
+    //loc_110b10
+    if (fp_0x10 != 0)
+    {
+        (fp8->controller_methods->clear_port_feature)(fp8, fp_0x1c, 1);
+    }
+    //loc_110b38
+    return fp_0x10;
 }
 
 
@@ -316,10 +491,10 @@ static void* usb_port_enum_handler(void* a)
     //loc_10a8bc
     usb_port_monitor_wait_init_complete();
 
-#if 1
-    fprintf(stderr, "usb_port_enum_handler: after usb_port_monitor_wait_init_complete: TODO\n");
-#else
+#ifdef ENABLE_DELAY
     delay(20);
+#else
+    fprintf(stderr, "usb_port_enum_handler: after usb_port_monitor_wait_init_complete: TODO\n");
 #endif
 
     fp_0x2c.it_value.tv_sec = 0;

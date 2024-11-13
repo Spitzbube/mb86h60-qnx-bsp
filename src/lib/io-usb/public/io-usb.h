@@ -41,6 +41,24 @@ struct USB_Controller_Inner4
 #define USB_CONTROLLER_PRIV_T void
 #endif
 
+
+struct USB_Controller_Inner_0x7c
+{
+    int Data_0; //0
+    int fill_4[2]; //4
+    uint8_t fill_0xc; //0xc
+    uint8_t bData_0xd; //0xd
+    int Data_0x10; //0x10
+    int fill_0x14[2]; //0x14
+    void* Data_0x1c; //0x1c
+    int Data_0x20; //0x20
+    int fill_0x24[4]; //0x24
+    uint16_t wData_0x34; //0x34
+    int fill_0x38[29]; //0x38
+    //0xac
+};
+
+
 struct USB_Controller
 {
     char* Data_0; //0
@@ -53,12 +71,14 @@ struct USB_Controller
     int fill_0x1c; //0x1c
     int Data_0x20; //0x20
     pthread_mutex_t Data_0x24; //0x24
+    int fill_0x2c[13]; //0x2c
     int Data_0x60; //0x60
+    int fill_0x64[2]; //0x64
     uint32_t Data_0x6c; //0x6c
     int Data_0x70; //0x70
     int fill_0x74; //0x74
-    void* Data_0x78; //0x78
-    void* Data_0x7c; //0x7c
+    void** Data_0x78; //0x78
+    struct USB_Controller_Inner_0x7c* Data_0x7c; //0x7c
     struct UsbdiGlobals_Inner_0x178* Data_0x80; //0x80
     USB_CONTROLLER_PRIV_T* Data_0x84; //0x84
     struct io_usb_controller_methods_t* controller_methods; //0x88
@@ -80,9 +100,11 @@ struct io_usb_controller_methods_t
     int fill_0x10; //16
     int fill_0x14; //20
     int Data_0x18; //0x18 = 24
-    int fill_0x1c; //28
-    int fill_0x20; //32
+    int (*set_port_feature)(struct USB_Controller*, int, int); //0x1c = 28
+    int (*clear_port_feature)(struct USB_Controller*, int, int); //0x20 = 32
     int (*check_port_status)(struct USB_Controller*, uint32_t*); //0x24 = 36
+    int (*check_device_connected)(struct USB_Controller*, int); //0x28 = 40
+    int (*get_root_device_speed)(struct USB_Controller*, int); //0x2c = 44
     //TODO!!!
     //???
 };
