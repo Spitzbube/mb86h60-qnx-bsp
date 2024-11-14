@@ -19,6 +19,8 @@ struct Mentor_Controller;
 #include "io-usb.h"
 
 
+//#define ENABLE_DELAY
+
 
 struct Struct_0xa0;
 struct Struct_0x94
@@ -409,7 +411,9 @@ static void* mentor_interrupt_thread(void* a)
     while ((r4->Data_0x50 & 0x10) == 0)
     {
         //loc_803c
+#ifdef ENABLE_DELAY
         delay(1);
+#endif
     }
 #endif
     //loc_8050
@@ -1234,7 +1238,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
                 mentor_slogf(r4, 12, 2, 1, "%s - %s: Session off %x, trying to recover ...",
                     "devu-dm816x-mg.so", "mentor_check_port_status", r3);
 
-#if 0 //TODO!!!
+#ifdef ENABLE_DELAY
                 delay(10);
 #endif
 
@@ -1242,7 +1246,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
                 {
                     mentor_ulpi_write(r4, 0x05, 0x20);
 
-#if 0 //TODO!!!
+#ifdef ENABLE_DELAY
                     delay(5);
 #endif
                     //->loc_6bf4
@@ -1259,7 +1263,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
                 ((volatile uint8_t*)(r4->Data_0x14))[0x60] = 1;
 #endif
 
-#if 0 //TODO
+#ifdef ENABLE_DELAY
                 delay(1);
 #endif
 
@@ -1294,33 +1298,136 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 }
 
 
+/* 0x00004f00 - complete */
 int mentor_check_device_connected(struct USB_Controller* a, int b)
 {
+#if 0
     fprintf(stderr, "mentor_check_device_connected: b = %d, TODO!!!\n", b);
+#endif
 
-    return 0;
+    return ((a->Data_0x84->Data_0x6c & 0x02) == 0)? -1: 0;
 }
 
 
-int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
-{
-    fprintf(stderr, "mentor_set_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
-
-    return 0;
-}
-
-
+/* 0x00005044 - complete */
 int mentor_clear_port_feature(struct USB_Controller* a, int b, int c)
 {
+#if 0
     fprintf(stderr, "mentor_clear_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
+#endif
+
+    struct Mentor_Controller* ctrl = a->Data_0x84;
+
+    switch (c)
+    {
+        case 3:
+#ifdef MB86H60
+            MGC_Write8(ctrl, MGC_O_HDRC_POWER, 
+                MGC_Read8(ctrl, MGC_O_HDRC_POWER) & ~MGC_M_POWER_SUSPENDM);
+            MGC_Write8(ctrl, MGC_O_HDRC_POWER, 
+                MGC_Read8(ctrl, MGC_O_HDRC_POWER) | MGC_M_POWER_SUSPENDM);
+#else
+            ((volatile uint8_t*)(ctrl->Data_0x14))[1] &= ~(1 << 1);
+            ((volatile uint8_t*)(ctrl->Data_0x14))[1] |= (1 << 1);
+#endif
+#ifdef ENABLE_DELAY
+            delay(20);
+#endif
+#ifdef MB86H60
+            if (MGC_Read8(ctrl, MGC_O_HDRC_POWER) & MGC_M_POWER_SUSPENDM)
+#else
+            if (((volatile uint8_t*)(ctrl->Data_0x14))[1] & (1 << 1))
+#endif
+            {
+                return -1;
+            }
+            break;
+    }
 
     return 0;
 }
 
 
+/* 0x000050a8 - complete */
+int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
+{
+#if 0
+    fprintf(stderr, "mentor_set_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
+#endif
+
+    struct Mentor_Controller* ctrl = a->Data_0x84;
+
+    switch (c)
+    {
+        case 2:
+            //loc_50cc
+#ifdef MB86H60
+            MGC_Write8(ctrl, MGC_O_HDRC_POWER, 
+                MGC_Read8(ctrl, MGC_O_HDRC_POWER) | MGC_M_POWER_RESET);
+#else
+            ((volatile uint8_t*)(ctrl->Data_0x14))[1] |= (1 << 3);
+#endif
+#ifdef ENABLE_DELAY
+            delay(20);
+#endif
+#ifdef MB86H60
+            MGC_Write8(ctrl, MGC_O_HDRC_POWER, 
+                MGC_Read8(ctrl, MGC_O_HDRC_POWER) & ~MGC_M_POWER_RESET);
+#else
+            ((volatile uint8_t*)(ctrl->Data_0x14))[1] &= ~(1 << 3);
+#endif
+            break;
+
+        case 3:
+            //loc_50f8
+#ifdef MB86H60
+            MGC_Write8(ctrl, MGC_O_HDRC_POWER, 
+                MGC_Read8(ctrl, MGC_O_HDRC_POWER) | MGC_M_POWER_SUSPENDM);
+#else
+            ((volatile uint8_t*)(ctrl->Data_0x14))[1] |= (1 << 1);
+#endif
+            break;
+
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+
+/* 0x00005110 - complete */
 int mentor_get_root_device_speed(struct USB_Controller* a, int b)
 {
-    fprintf(stderr, "mentor_get_root_device_speed: b=%d, c=%d, TODO!!!\n", b);
+#if 0
+    fprintf(stderr, "mentor_get_root_device_speed: b=%d, TODO!!!\n", b);
+#endif
+
+    struct Mentor_Controller* ctrl = a->Data_0x84;
+
+#ifdef ENABLE_DELAY
+    delay(200);
+#endif
+
+#ifdef MB86H60
+    if ((MGC_Read8(ctrl, MGC_O_HDRC_DEVCTL) & MGC_M_DEVCTL_LSDEV) != 0)
+    {
+        return 1;
+    }
+    else if ((MGC_Read8(ctrl, MGC_O_HDRC_POWER) & MGC_M_POWER_HSMODE) != 0)
+    {
+        return 2;
+    }
+#else
+    if ((((volatile uint8_t*)(ctrl->Data_0x14))[0x60] & 0x20) != 0)
+    {
+        return 1;
+    }
+    else if ((((volatile uint8_t*)(ctrl->Data_0x14))[0x01] & 0x10) != 0)
+    {
+        return 2;
+    }
+#endif
 
     return 0;
 }

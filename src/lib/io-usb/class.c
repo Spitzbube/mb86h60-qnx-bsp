@@ -377,7 +377,7 @@ void sub_110b74(int fp_0x28)
         } //if (fp_0x1c < 16)
         //loc_110df8
         //loc_110dfc
-    }
+    } //for (fp_0x18 = 0; fp_0x18 < 16; fp_0x18++)
 }
 
 
