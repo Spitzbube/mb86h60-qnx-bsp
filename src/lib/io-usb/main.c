@@ -444,10 +444,10 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
     pthread_attr_setstacksize(&sp_0x44, 0x4000);
 
     r4->controller_methods = r5->pDllEntry->controller_methods;
-    r4->Data_0x8c = r5->pDllEntry->ctrl_pipe_methods;
-    r4->Data_0x90 = r5->pDllEntry->int_pipe_methods;
-    r4->Data_0x94 = r5->pDllEntry->bulk_pipe_methods;
-    r4->Data_0x98 = r5->pDllEntry->isoch_pipe_methods;
+    r4->ctrl_pipe_methods = r5->pDllEntry->ctrl_pipe_methods;
+    r4->int_pipe_methods = r5->pDllEntry->int_pipe_methods;
+    r4->bulk_pipe_methods = r5->pDllEntry->bulk_pipe_methods;
+    r4->isoch_pipe_methods = r5->pDllEntry->isoch_pipe_methods;
 
     if (pthread_mutex_init(&r4->Data_0x24, 0) == -1)
     {
@@ -726,6 +726,29 @@ void* usb_interrupt_handler(void* a)
         //TODO!!!        
         fprintf(stderr, "usb_interrupt_handler: 0x001045cc TODO!!!\n");
     }
+}
+
+
+/* 1047a8 - complete */
+int sub_1047a8(struct Struct_1047a8** a, int b)
+{
+#if 0
+    fprintf(stderr, "sub_1047a8: TODO!!!\n");
+#endif
+
+    struct Struct_1047a8* p = calloc(1, sizeof(struct Struct_1047a8));
+
+    if (p == NULL)
+    {
+        return 12;
+    }
+
+    p->Data_4 = 0;
+    p->Data_8 = &p->Data_4;
+
+    *a = p;
+
+    return 0;
 }
 
 
@@ -1420,6 +1443,17 @@ void* io_usb_dlopen(char* r5, int r8)
     }
     //loc_10a108
     return r6;
+}
+
+
+/* 117bbc - todo */
+void* sub_117bbc(int a)
+{
+#if 0
+    fprintf(stderr, "sub_117bbc: TODO!!!\n");
+#endif
+
+    return usbdi_memchunk_malloc(UsbdiGlobals.Data_8, a);
 }
 
 

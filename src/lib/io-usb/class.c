@@ -228,12 +228,334 @@ void sub_106124(int a, int b, int c, int d, int e)
 }
 
 
+/* 10afc4 - todo */
+struct USB_Controller_Inner_0x7c* sub_10afc4(struct USB_Controller* fp_0x10)
+{
+#if 0
+    fprintf(stderr, "sub_10afc4: TODO!!!\n");
+#endif
+
+    uint32_t fp_0xc;
+    struct USB_Controller_Inner_0x7c* fp8;
+
+    //->loc_10b188
+    for (fp_0xc = 0; fp_0xc < 20; fp_0xc++)
+    {
+        //loc_10afe0
+        if (fp_0x10->Data_0x78[fp_0xc] == NULL)
+        {
+            if (fp_0xc > 2)
+            {
+                usb_slogf(12, 2, 1, "CLASS_MakeNewDeviceEntry");
+            }
+            //loc_10b028
+            fp8 = &fp_0x10->Data_0x7c[fp_0xc];
+
+            memset(fp8, 0, sizeof(struct USB_Controller_Inner_0x7c));
+
+            fp_0x10->Data_0x78[fp_0xc] = fp8;
+
+            fp8->Data_4 = fp_0xc + 1;
+            fp8->Data_0x40.Data_0x14 = 0;
+            fp8->Data_0x40.Data_0x18 = &fp8->Data_0x40.Data_0x14;
+            fp8->Data_0x40.Data_0x1c = 0;
+            fp8->Data_0x40.Data_0x20 = &fp8->Data_0x40.Data_0x1c;
+
+            pthread_mutex_init(&fp8->Data_0x70, 0);
+            pthread_cond_init(&fp8->Data_0x78, 0);
+            pthread_mutex_init(&fp8->Data_0x94, 0);
+            pthread_cond_init(&fp8->Data_0x9c, 0);
+
+            usb_slogf(12, 2, 1, "%s(%d): devno %d, dmutexp %p, emutexp %p",
+                "CLASS_MakeNewDeviceEntry", 0x162, 
+                fp8->Data_4, &fp8->Data_0x94, &fp8->Data_0x70);
+
+            sub_1047a8(&fp8->Data_0x8c, 0);
+
+            return fp8;
+        }
+        //loc_10b17c
+    }
+
+    return 0;
+}
+
+
+/* 10d208 - todo */
+struct USB_Controller_Inner_0x7c* sub_10d208(struct USB_Controller* fp_0x10, int fp_0x14, int fp_0x18, int fp_0x1c)
+{
+#if 0
+    fprintf(stderr, "sub_10d208: TODO!!!\n");
+#endif
+
+    struct USB_Controller_Inner_0x7c* fp8;
+
+    fp8 = sub_10afc4(fp_0x10);
+    if (fp8 == NULL)
+    {
+        usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  Too many devices");
+
+        return 0;
+    }
+    //loc_10d260
+    fp8->bData_0xc = fp_0x1c;
+    fp8->Data_0x1c = (fp_0x14 == 0)? NULL: fp_0x10->Data_0x78[fp_0x14 - 1];
+    fp8->Data_0x20 = fp_0x18;
+    fp8->Data_0x88 = fp_0x10->Data_8;
+    fp8->Data_0x40.bData_3 = 0;
+    fp8->Data_0x40.wData_4 = 8;
+
+    return fp8;
+}
+
+
+/* 112b08 - todo */
+int sub_112b08(struct USB_Controller* fp_0x10, 
+    struct USB_Controller_Inner_0x7c* fp_0x14, 
+    struct Struct_112b08* fp_0x18)
+{
+#if 1
+    fprintf(stderr, "sub_112b08: TODO!!!\n");
+#endif
+
+    int fp8 = 0;
+
+    switch (fp_0x18->bData_3 & 0x03)
+    {
+        case 0:
+            //loc_112b50
+            fp8 = (fp_0x10->ctrl_pipe_methods->ctrl_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
+            break;
+
+        case 1:
+            //loc_112b78
+            fp8 = (fp_0x10->isoch_pipe_methods->isoch_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
+
+            fp_0x18->Data_0x28 = 0;
+            break;
+
+        case 2:
+            //loc_112bac
+            fp8 = (fp_0x10->bulk_pipe_methods->bulk_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
+            break;
+
+        case 3:
+            //loc_112bd4
+            fp8 = (fp_0x10->int_pipe_methods->int_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
+            break;
+#if 0
+        default:
+            //loc_112bf8
+            break;
+#endif
+    }
+    //loc_112bf8
+    return fp8;
+}
+
+
+/* 10cb2c - todo */
+int sub_10cb2c(struct USB_Controller_Inner_0x7c* a)
+{
+#if 1
+    fprintf(stderr, "sub_10cb2c: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 117854 - todo */
+void* sub_117854(void* a)
+{
+#if 1
+    fprintf(stderr, "sub_117854: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+struct Struct_10bab4
+{
+    int Data_0; //0
+    int fill_4; //4
+    int Data_8; //8
+    int fill_0xc; //0xc
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14
+    int Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    int Data_0x20; //0x20
+    int Data_0x24; //0x24
+    int Data_0x28; //0x28
+    void* Data_0x2c; //0x2c
+    int Data_0x30; //0x30
+    int fill_0x34; //0x34
+    int Data_0x38; //0x38
+    int Data_0x3c; //0x3c
+    int Data_0x40; //0x40
+    int Data_0x44; //0x44
+    int Data_0x48; //0x48
+    int Data_0x4c; //0x4c
+    int Data_0x50; //0x50
+    int fill_0x54; //0x54
+    int Data_0x58; //0x58
+    int fill_0x5c[2]; //0x5c
+    //0x64
+};
+
+
+/* 10bab4 - todo */
+void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_0x1c,
+    int e/*fp4*/, 
+    int f/*fp8*/, 
+    int g/*fp_0xc*/, 
+    int h/*fp_0x10*/, 
+    int i/*fp_0x14*/, 
+    int j/*fp_0x18*/, 
+    void* k/*fp_0x1c*/, 
+    int l/*fp_0x20*/, 
+    int o/*fp_0x24*/)
+{
+#if 1
+    fprintf(stderr, "sub_10bab4: TODO!!!\n");
+#endif
+
+    struct USB_Controller* fp8;
+
+    fp8 = CTRL_HCLookup(fp_0x14);
+
+    fp_0x10->Data_0x10 = 7;
+    fp_0x10->Data_0x18 = fp_0x14;
+    fp_0x10->Data_0x14 = fp_0x18;
+    fp_0x10->Data_0x1c = o; //fp_0x24;
+    fp_0x10->Data_8 = 0;
+    fp_0x10->Data_0x20 = 0;
+    fp_0x10->Data_0x24 = 0;
+    fp_0x10->Data_0x28 = 0;
+    fp_0x10->Data_0 = 0;
+    fp_0x10->Data_0x38 = (fp_0x1c == 1)? 0x80: 0x00;
+    fp_0x10->Data_0x3c = e; //fp4;
+    fp_0x10->Data_0x40 = h; //fp_0x10;
+    fp_0x10->Data_0x44 = g; //fp_0xc;
+    fp_0x10->Data_0x48 = f; //fp8;
+    fp_0x10->Data_0x4c = i; //fp_0x14;
+    fp_0x10->Data_0x50 = j; //fp_0x18
+    fp_0x10->Data_0x58 = 0;
+    fp_0x10->Data_0x30 = l; //fp_0x20
+
+    if (l/*fp_0x20*/ != 0)
+    {
+        if (fp8->Data_0x6c & 0x40000000)
+        {
+            fp_0x10->Data_0x2c = k/*fp_0x1c*/;
+            //->loc_10bc14
+        }
+        else
+        {
+            //loc_10bbfc
+            fp_0x10->Data_0x2c = sub_117854(k/*fp_0x1c*/);
+        }
+    }
+    //loc_10bc14
+}
+
+
+/* 111ab0 - todo */
+int sub_111ab0(struct Struct_10bab4* a, struct Struct_112b08* b)
+{
+#if 1
+    fprintf(stderr, "sub_111ab0: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 10bc1c - todo */
+int sub_10bc1c(struct USB_Controller_Inner_0x7c* fp_0x70, 
+    int fp_0x74, int fp_0x78, void* fp_0x7c, int fp4)
+{
+#if 1
+    fprintf(stderr, "sub_10bc1c: TODO!!!\n");
+#endif
+
+    struct Struct_10bab4 fp_0x6c;
+
+    int fp8 = 0;
+
+    sub_10bab4(&fp_0x6c, fp_0x70->Data_0x88, fp_0x70->Data_0, 1,
+        6, fp_0x74, 0, 0, fp_0x78, 0, fp_0x7c, fp4, 2000);
+
+    fp8 = sub_111ab0(&fp_0x6c, &fp_0x70->Data_0x40);
+    if (fp8 != 0)
+    {
+        usb_slogf(12, 2, 1, "%s:  Get descriptor type %d failed 0x%x",
+            "CLASS_GetDescriptor", fp_0x74, fp8);
+    }
+    //loc_10bd10
+    return fp8;
+}
+
+
 /* 10d2f0 - todo */
-int sub_10d2f0(int a, int b, int c, int d)
+int sub_10d2f0(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
 {
 #if 1
     fprintf(stderr, "sub_10d2f0: TODO!!!\n");
 #endif
+
+    struct USB_Controller_Inner_0x7c* fp_0x18;
+    int fp_0x10; 
+    void* fp_0xc;
+    struct USB_Controller* fp8;
+
+    fp8 = &usb_controllers[fp_0x20];
+
+    usb_slogf(12, 2, 1, 
+        "CLASS_EnumerateDevice: bus %d, parent %d, port %d, speed %d",
+        fp_0x20, fp_0x24, fp_0x28, fp_0x2c);
+
+    fp_0x18 = sub_10d208(fp8, fp_0x24, fp_0x28, fp_0x2c);
+    if (fp_0x18 == NULL)
+    {
+        return 0x8203;
+        //->loc_10d770
+    }
+    //loc_10d390
+    fp_0x10 = sub_112b08(fp8, fp_0x18, &fp_0x18->Data_0x40);
+    if (fp_0x10 != 0)
+    {
+        usb_slogf(12, 2, 1, "CLASS_EnumerateDevice: USB_EnableEndpoint failed");
+
+        sub_10cb2c(fp_0x18);
+
+        return 0x8202;
+        //->loc_10d770
+    }
+    //loc_10d3e4
+    fp_0xc = sub_117bbc(0x12);
+    if (fp_0xc == NULL)
+    {
+        usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  device descriptor ENOMEM");
+
+        sub_10cb2c(fp_0x18);
+
+        return 0x9000;
+        //->loc_10d770
+    }
+    //loc_10d428
+    usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  Get device descriptor");
+
+    fp_0x10 = sub_10bc1c(fp_0x18, 1, 0, fp_0xc, 8);
+    if (fp_0x10 != 0)
+    {
+
+    }
+    //loc_10d4a8
+    fprintf(stderr, "loc_10d4a8: TODO!!!\n");
+    //TODO!!!
 
     return 0;
 }

@@ -2,6 +2,10 @@
 struct USB_Controller_Inner4;
 struct UsbdiGlobals_Inner_0x178;
 struct io_usb_controller_methods_t;
+struct io_usb_ctrl_pipe_methods_t;
+struct io_usb_int_pipe_methods_t;
+struct io_usb_bulk_pipe_methods_t;
+struct io_usb_isoch_pipe_methods_t;
 
 
 struct USB_Controller_Inner4
@@ -42,11 +46,42 @@ struct USB_Controller_Inner4
 #endif
 
 
+struct Struct_1047a8
+{
+    int fill_0; //0
+    int Data_4; //4
+    void* Data_8; //8
+    //12
+};
+
+
+struct Struct_112b08
+{
+    uint16_t fill_0; //0
+    uint8_t bData_2; //2
+    uint8_t bData_3; //3
+    uint16_t wData_4; //4
+    uint8_t bData_6; //6
+    int fill_8; //8
+    struct Struct_0xa4* Data_0xc; //0xc
+    int fill_0x10; //0x10
+    int Data_0x14; //0x14
+    void* Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    void* Data_0x20; //0x20
+    int fill_0x24; //0x24
+    int Data_0x28; //0x28
+    int fill_0x2c; //0x2c
+    //0x30???
+};
+
+
 struct USB_Controller_Inner_0x7c
 {
     int Data_0; //0
-    int fill_4[2]; //4
-    uint8_t fill_0xc; //0xc
+    int Data_4; //4
+    int fill_8; //8
+    uint8_t bData_0xc; //0xc
     uint8_t bData_0xd; //0xd
     int Data_0x10; //0x10
     int fill_0x14[2]; //0x14
@@ -54,7 +89,17 @@ struct USB_Controller_Inner_0x7c
     int Data_0x20; //0x20
     int fill_0x24[4]; //0x24
     uint16_t wData_0x34; //0x34
-    int fill_0x38[29]; //0x38
+    int fill_0x38[2]; //0x38
+    struct Struct_112b08 Data_0x40; //0x40
+    pthread_mutex_t Data_0x70; //0x70
+    pthread_cond_t Data_0x78; //0x78
+    int fill_0x80[2]; //0x80
+    int Data_0x88; //0x88
+    struct Struct_1047a8* Data_0x8c; //0x8c
+    int fill_0x90; //0x90
+    pthread_mutex_t Data_0x94; //0x94
+    pthread_cond_t Data_0x9c; //0x9c
+    int fill_0xa4[2]; //0xa4
     //0xac
 };
 
@@ -82,10 +127,10 @@ struct USB_Controller
     struct UsbdiGlobals_Inner_0x178* Data_0x80; //0x80
     USB_CONTROLLER_PRIV_T* Data_0x84; //0x84
     struct io_usb_controller_methods_t* controller_methods; //0x88
-    void* Data_0x8c; //0x8c
-    void* Data_0x90; //0x90
-    void* Data_0x94; //0x94
-    void* Data_0x98; //0x98
+    struct io_usb_ctrl_pipe_methods_t* ctrl_pipe_methods; //0x8c
+    struct io_usb_int_pipe_methods_t* int_pipe_methods; //0x90
+    struct io_usb_bulk_pipe_methods_t* bulk_pipe_methods; //0x94
+    struct io_usb_isoch_pipe_methods_t* isoch_pipe_methods; //0x98
     //0x9c
 };
 
@@ -110,6 +155,53 @@ struct io_usb_controller_methods_t
 };
 
 
+struct io_usb_ctrl_pipe_methods_t
+{
+    int (*ctrl_endpoint_enable)(struct USB_Controller*, struct USB_Controller_Inner_0x7c*, struct Struct_112b08*); //0
+    int fill_4; //4
+    int fill_8; //8
+    int fill_12; //12
+    int Data_16; //16
+};
+
+
+struct io_usb_bulk_pipe_methods_t
+{
+    int (*bulk_endpoint_enable)(struct USB_Controller*, struct USB_Controller_Inner_0x7c*, struct Struct_112b08*); //0
+#if 0
+0x0000bfc4                        dd         mentor_bulk_endpoint_disable
+0x0000bfc8                        dd         mentor_bulk_transfer
+0x0000bfcc                        dd         mentor_transfer_abort
+0x0000bfd0                        dd         0x00000000
+#endif
+};
+
+
+struct io_usb_isoch_pipe_methods_t
+{
+    int (*isoch_endpoint_enable)(struct USB_Controller*, struct USB_Controller_Inner_0x7c*, struct Struct_112b08*); //0
+#if 0
+0x0000bfd8                        dd         mentor_isoch_endpoint_disable
+0x0000bfdc                        dd         mentor_isoch_transfer
+0x0000bfe0                        dd         mentor_transfer_abort
+0x0000bfe4                        dd         0x00000000
+#endif
+};
+
+
+struct io_usb_int_pipe_methods_t
+{
+    int (*int_endpoint_enable)(struct USB_Controller*, struct USB_Controller_Inner_0x7c*, struct Struct_112b08*); //0
+#if 0
+0x0000bfac                        dd         mentor_int_endpoint_enable         ; DATA XREF=0xbf58
+0x0000bfb0                        dd         mentor_int_endpoint_disable
+0x0000bfb4                        dd         mentor_int_transfer
+0x0000bfb8                        dd         mentor_transfer_abort
+0x0000bfbc                        dd         0x0
+#endif
+};
+
+
 struct io_usb_dll_entry_t
 {
     char* Data_0; //0
@@ -117,10 +209,10 @@ struct io_usb_dll_entry_t
     int (*init)(); //8
     int (*shutdown)(); //12
     struct io_usb_controller_methods_t* controller_methods; //16
-    void* ctrl_pipe_methods; //20
-    void* int_pipe_methods; //24
-    void* bulk_pipe_methods; //28
-    void* isoch_pipe_methods; //32
+    struct io_usb_ctrl_pipe_methods_t* ctrl_pipe_methods; //20
+    struct io_usb_int_pipe_methods_t* int_pipe_methods; //24
+    struct io_usb_bulk_pipe_methods_t* bulk_pipe_methods; //28
+    struct io_usb_isoch_pipe_methods_t* isoch_pipe_methods; //32
     //36???
 };
 

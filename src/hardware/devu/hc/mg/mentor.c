@@ -44,9 +44,19 @@ struct Struct_0xa4
     int Data_8; //8
     int* Data_0xc; //12
     int Data_0x10; //0x10 = 16
-    int fill_0x14[6]; //0x14 = 20
+    int Data_0x14; //0x14 = 20
+    uint16_t wData_0x18; //0x18 = 24
+    uint8_t bData_0x1a; //0x1a = 26
+    uint8_t bData_0x1b; //0x1b = 27
+    uint8_t bData_0x1c; //0x1c = 28
+    uint8_t bData_0x1d; //0x1d = 29
+    uint8_t bData_0x1e; //0x1e = 30
+    int Data_0x20; //0x20
+    int Data_0x24; //0x24
+    int Data_0x28; //0x28
     int Data_0x2c; //0x2c
-    int fill_0x30[2]; //0x30
+    int fill_0x30; //0x30
+    struct Struct_112b08* Data_0x34; //0x34
     int Data_0x38; //0x38
     int fill_0x3c; //0x3c
     //0x40 = 64
@@ -1301,7 +1311,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 /* 0x00004f00 - complete */
 int mentor_check_device_connected(struct USB_Controller* a, int b)
 {
-#if 0
+#if 1
     fprintf(stderr, "mentor_check_device_connected: b = %d, TODO!!!\n", b);
 #endif
 
@@ -1312,7 +1322,7 @@ int mentor_check_device_connected(struct USB_Controller* a, int b)
 /* 0x00005044 - complete */
 int mentor_clear_port_feature(struct USB_Controller* a, int b, int c)
 {
-#if 0
+#if 1
     fprintf(stderr, "mentor_clear_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
 #endif
 
@@ -1351,7 +1361,7 @@ int mentor_clear_port_feature(struct USB_Controller* a, int b, int c)
 /* 0x000050a8 - complete */
 int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
 {
-#if 0
+#if 1
     fprintf(stderr, "mentor_set_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
 #endif
 
@@ -1369,6 +1379,14 @@ int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
 #endif
 #ifdef ENABLE_DELAY
             delay(20);
+#else
+            {
+                int i;
+                for (i = 0; i < 1000000; i++)
+                {
+                    /*delay*/
+                }
+            }
 #endif
 #ifdef MB86H60
             MGC_Write8(ctrl, MGC_O_HDRC_POWER, 
@@ -1399,7 +1417,7 @@ int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
 /* 0x00005110 - complete */
 int mentor_get_root_device_speed(struct USB_Controller* a, int b)
 {
-#if 0
+#if 1
     fprintf(stderr, "mentor_get_root_device_speed: b=%d, TODO!!!\n", b);
 #endif
 
@@ -1433,7 +1451,167 @@ int mentor_get_root_device_speed(struct USB_Controller* a, int b)
 }
 
 
+
+/* 5278 - todo */
+void MENTOR_PutEDPool(struct Mentor_Controller* r4, struct Struct_0xa4* r5)
+{
+#if 1
+    fprintf(stderr, "MENTOR_PutEDPool: TODO!!!\n");
+#endif
+
+}
+
+
+/* 99d0 - todo */
+int MENTOR_InitializeEndpoint(struct Mentor_Controller* r7, 
+    struct USB_Controller_Inner_0x7c* r5, 
+    struct Struct_112b08* r4)
+{
+#if 1
+    fprintf(stderr, "MENTOR_InitializeEndpoint: TODO!!!\n");
+#endif
+
+    struct Struct_0xa4* r1 = r4->Data_0xc;
+    if (r1 == NULL)
+    {
+        r1 = MENTOR_GetEDPool(r7);
+        if (r1 == NULL)
+        {
+            mentor_slogf(r7, 12, 2, 1, "%s - No ED for Endpoint",
+                "devu-dm816x-mg.so");
+
+            return 12;
+        }
+        //9a40
+        r4->Data_0xc = r1;
+        r1->Data_0x34 = r4;
+        r1->Data_0x28 = -1;
+    }
+    //9a50
+    r1->bData_0x1a = r4->bData_3 & 0x03;
+    r1->wData_0x18 = r4->wData_4;
+    r1->bData_0x1b = r4->bData_2 & ~0x7f;
+    r1->Data_0x20 = 0;
+    r1->Data_0x14 = ((r5->Data_0 & 0x7f) << 4) | (r4->bData_2 & 0x0f);
+
+    switch (r5->bData_0xc & 0x03)
+    {
+        case 1:
+            r1->bData_0x1c = 0xc0;
+            break;
+
+        case 2:
+            r1->bData_0x1c = 0x40;
+            break;
+
+        case 0:
+            r1->bData_0x1c = 0x80;
+            break;
+    }
+    //9ac4
+    r1->Data_0x24 = r4->bData_6;
+
+    if ((r1->bData_0x1c != 0x40) &&
+        (r5->Data_0x1c != NULL))
+    {
+        struct USB_Controller_Inner_0x7c* r3;
+        while (1)
+        {
+            //9ae4
+            r3 = r5->Data_0x1c;
+
+            if (r3->bData_0xc == 2)
+            {
+                break;
+            }
+
+            if (r3->Data_0x1c == NULL)
+            {
+                break;
+            }
+            
+            r5 = r3;
+        }
+        //9b04
+        if (r5 == NULL)
+        {
+            MENTOR_PutEDPool(r7, r1);
+
+            return -1;
+        }
+        //9b1c
+        r1->bData_0x1d = r3->Data_0;
+        r1->bData_0x1e = r5->Data_0x20;
+
+        return 0;
+    }
+    //9b34
+    return 0;
+}
+
+
+/* 51b4 - todo */
+int MENTOR_HookED(struct Mentor_Controller* a, 
+    struct Struct_0xa4* r6, 
+    struct Struct_0xa4* r4)
+{
+#if 1
+    fprintf(stderr, "MENTOR_HookED: TODO!!!\n");
+#endif
+
+    if (pthread_mutex_lock(&a->Data_4) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x2f2);
+    }
+    //5204
+    r6->Data_4->Data_0 = r4;
+    r4->Data_0 = r6;
+    r6->Data_4 = r4;
+    r4->Data_4 = r6->Data_4;
+    r4->Data_8 = 0;
+    r4->Data_0xc = &r4->Data_8;
+
+    if (pthread_mutex_unlock(&a->Data_4) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x2fd);
+    }
+
+    return 0;
+}
+
+
+/* 9c9c - complete */
+int mentor_ctrl_endpoint_enable(struct USB_Controller* a, 
+    struct USB_Controller_Inner_0x7c* b, 
+    struct Struct_112b08* c)
+{
+#if 1
+    fprintf(stderr, "mentor_ctrl_endpoint_enable: TODO!!!\n");
+#endif
+
+    struct Mentor_Controller* r5 = a->Data_0x84;
+    struct Struct_0xa4* r7 = c->Data_0xc;
+
+    int r4 = MENTOR_InitializeEndpoint(r5, b, c);
+
+    if (r4 == 0)
+    {
+        if (r7 == NULL)
+        {
+            c->Data_0xc->Data_0x24 = 0;
+
+            MENTOR_HookED(r5, r5->Data_0xac, c->Data_0xc);
+        }
+    }
+
+    return r4;
+}
+
+
 static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
+static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
 
 struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
 {
@@ -1442,8 +1620,8 @@ struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
     mentor_init,
     mentor_shutdown,
     &mentor_controller_methods,
-#if 0 //TODO
     &mentor_ctrl_pipe_methods,
+#if 0 //TODO
     &mentor_int_pipe_methods,
     &mentor_bulk_pipe_methods,
     &mentor_isoch_pipe_methods,
@@ -1466,6 +1644,16 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
 #if 0 //TODO
     mentor_get_timer_from_controller,
 #endif
+};
+
+
+static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
+{
+    mentor_ctrl_endpoint_enable,
+    0, //mentor_ctrl_endpoint_disable
+    0, //mentor_ctrl_transfer
+    0, //mentor_ctrl_transfer_abort
+    NULL
 };
 
 
