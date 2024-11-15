@@ -1446,6 +1446,38 @@ void* io_usb_dlopen(char* r5, int r8)
 }
 
 
+/* 114b8c - todo */
+void* sub_114b8c(int a, void* b)
+{
+#if 1
+    fprintf(stderr, "sub_114b8c: TODO!!!\n");
+#endif
+
+    return b;
+}
+
+
+/* 1177f8 - todo */
+void sub_1177f8(void* a)
+{
+#if 1
+    fprintf(stderr, "sub_1177f8: TODO!!!\n");
+#endif
+
+}
+
+
+/* 117854 - todo */
+void* sub_117854(void* a)
+{
+#if 0
+    fprintf(stderr, "sub_117854: TODO!!!\n");
+#endif
+
+    return sub_114b8c(UsbdiGlobals.Data_8, a);
+}
+
+
 /* 117bbc - todo */
 void* sub_117bbc(int a)
 {

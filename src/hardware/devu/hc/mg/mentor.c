@@ -21,7 +21,7 @@ struct Mentor_Controller;
 
 //#define ENABLE_DELAY
 
-
+struct Struct_0xa4;
 struct Struct_0xa0;
 struct Struct_0x94
 {
@@ -30,9 +30,18 @@ struct Struct_0x94
 
 struct Struct_0xa0
 {
-    int fill_0[11]; //0
+    int Data_0; //0
+    int Data_4; //4
+    int fill_8; //8
+    void* Data_0xc; //0xc
+    int fill_0x10; //0x10
+    int Data_0x14; //0x14
+    int fill_0x18[4]; //0x18
+    int Data_0x28; //0x28
     struct Struct_0x94 Data_0x2c; //0x2c
-    int fill_0x30[5]; //0x30
+    struct Struct_0xa4* Data_0x30; //0x30
+    struct Struct_10bab4* Data_0x34; //0x34
+    int fill_0x38[3]; //0x38
     //0x44
 };
 
@@ -42,7 +51,7 @@ struct Struct_0xa4
     struct Struct_0xa4* Data_0; //0
     struct Struct_0xa4* Data_4; //4
     int Data_8; //8
-    int* Data_0xc; //12
+    struct Struct_0x94* Data_0xc; //12
     int Data_0x10; //0x10 = 16
     int Data_0x14; //0x14 = 20
     uint16_t wData_0x18; //0x18 = 24
@@ -51,6 +60,7 @@ struct Struct_0xa4
     uint8_t bData_0x1c; //0x1c = 28
     uint8_t bData_0x1d; //0x1d = 29
     uint8_t bData_0x1e; //0x1e = 30
+    uint8_t bData_0x1f; //0x1f = 31
     int Data_0x20; //0x20
     int Data_0x24; //0x24
     int Data_0x28; //0x28
@@ -119,7 +129,8 @@ struct Mentor_Controller
     struct Struct_0xa4* Data_0xc0; //0xc0
     void* Data_0xc4; //0xc4
     void* Data_0xc8; //0xc8
-    int fill_0xc8[7]; //0xc8
+    int fill_0xcc; //0xcc
+    struct intrspin Data_0xd0; //0xd0
     struct Struct_0xe4* Data_0xe4; //0xe4
     //0xe8
 };
@@ -1610,6 +1621,370 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
 }
 
 
+/* 0x00008184 - todo */
+struct Struct_0xa0* MENTOR_TD_Setup(struct Mentor_Controller* a, 
+    struct Struct_10bab4* b, struct Struct_0xa4* c, int d)
+{
+#if 0
+    fprintf(stderr, "MENTOR_TD_Setup: TODO!!!\n");
+#endif
+
+    struct Struct_0xa0* r4;
+
+    InterruptLock(&a->Data_0xd0);
+
+    r4 = a->Data_0x90.Data_0;
+    if (r4 == NULL)
+    {
+        b->Data_8 = 12;
+
+        InterruptUnlock(&a->Data_0xd0);
+
+        mentor_slogf(a, 12, 2, 1, "%s - No TD's available",
+            "devu-dm816x-mg.so");
+    }
+    else
+    {
+        a->Data_0x90.Data_0 = r4->Data_0x2c.Data_0;
+        if (a->Data_0x90.Data_0 == NULL)
+        {
+            a->Data_0x94 = &a->Data_0x90;
+        }
+
+        InterruptUnlock(&a->Data_0xd0);
+
+        r4->Data_4 = d & 0x8000003f;
+        r4->Data_0x14 = 0;
+        r4->Data_0x28 = 0;
+        r4->Data_0x30 = c;
+        r4->Data_0x34 = b;
+    }
+
+    return r4;
+}
+
+
+/* */
+void MENTOR_LoadFIFO(struct Mentor_Controller* a, uint16_t b, int c, uint16_t r8)
+{
+#if 0
+    fprintf(stderr, "MENTOR_LoadFIFO: TODO!!!\n");
+#endif
+
+    int r7;
+    int r6;
+    int r5;
+    uint32_t* r3;
+
+//    b &= 0xffff;
+//    uint16_t r8 = d & 0xffff;
+
+    if (r8 > 3)
+    {
+        r6 = b * 4;
+        r8 -= 4;
+        r7 = r8 >> 18;
+        r5 = c + 4;
+        r5 = r5 + r7 * 4;
+        r3 = c;
+
+        while (1)
+        {
+            //loc_4704
+            ((volatile uint32_t*)(a->Data_0x14))[0x20 + r6] = *r3++;
+
+            if (r3 == r5)
+            {
+                break;
+            }
+        }
+        
+        r7++;
+        c = c + r7 * 4;
+    }
+    //loc_472c
+    if (r8 & 2)
+    {
+        ((volatile uint16_t*)(a->Data_0x14))[0x20 + b] = *((uint16_t*)c);
+        c += 2;
+    }
+    if (r8 & 1)
+    {
+        ((volatile uint8_t*)(a->Data_0x14))[0x20 + b] = *((uint8_t*)c);
+    }
+}
+
+
+/* */
+int MENTOR_WaitEndControl()
+{
+#if 1
+    fprintf(stderr, "MENTOR_WaitEndControl: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 0x0000947c - todo */
+int mentor_ctrl_transfer(struct USB_Controller* sl, 
+    struct Struct_10bab4* r8, 
+    struct Struct_112b08* sb, 
+    void* fp_0x34/*fp52*/, 
+    int e/*fp4*/, 
+    int f/*fp8*/)
+{
+#if 0
+    fprintf(stderr, "mentor_ctrl_transfer: TODO!!!\n");
+#endif
+
+    int res;
+
+    struct Struct_0xa0* fp_0x38;
+    struct Mentor_Controller* r5 = sl->Data_0x84;
+    struct Struct_0xa4* fp_0x30/*fp48*/ = sb->Data_0xc;
+
+    if (pthread_mutex_lock(&r5->Data_0xc/*r7*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4c9);
+    }
+
+    if (pthread_mutex_lock(&r5->Data_4/*r6*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4ca);
+    }
+    //loc_9518
+    if ((r5->Data_0x6c & 0x06) != 0x06)
+    {
+        if (pthread_mutex_unlock(&r5->Data_4/*r6*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4cd);
+        }
+        //loc_9558
+        if (pthread_mutex_unlock(&r5->Data_0xc/*r7*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4ce);
+        }
+        //loc_9588
+        r8->Data_8 = 0x2000005;
+
+        return 0x13;
+        //->loc_9988
+    }
+    //loc_9598
+    fp_0x38 = MENTOR_TD_Setup(r5, r8, fp_0x30, f/*fp8*/);
+    if (fp_0x38 == NULL)
+    {
+        //0x000095b8
+        if (pthread_mutex_unlock(&r5->Data_4/*r6*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4cd);
+        }
+        //0x000095e8
+        if (pthread_mutex_unlock(&r5->Data_0xc/*r7*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4ce);
+        }
+        //0x00009618
+        r8->Data_8 = 0x2000010;
+
+        return 0x0c;
+        //->loc_9988
+    }
+    //0x00009628
+    fp_0x38->Data_0xc = fp_0x34;
+    fp_0x38->Data_0 = e/*fp4*/;
+
+    r8->Data_4 = 0;
+    //0x00009648
+    InterruptLock(&r5->Data_0xd0);
+    //0x0000967c
+    fp_0x38->Data_0x2c.Data_0 = NULL;
+    fp_0x30->Data_0xc->Data_0 = fp_0x38;
+    fp_0x30->Data_0xc = &fp_0x38->Data_0x2c;
+
+    if ((fp_0x30->Data_0x10 & 1) == 0)
+    {
+        //0x000096a4
+        fp_0x30->Data_0x10 |= 1;
+        fp_0x30->Data_0x28 = 0;
+
+        *((int*)(r5->Data_0xc4)) = fp_0x38; //r1;
+        //0x000096bc
+        InterruptUnlock(&r5->Data_0xd0);
+        //0x000096d0
+        struct Struct_96d0
+        {
+            uint32_t Data_0; //0
+            int Data_4; //4
+            int fill_8; //8
+            int Data_0xc; //0xc
+            int fill_0x10; //0x10
+            int Data_0x14; //0x14
+            int fill_0x18[6]; //0x18
+            int Data_0x30; //0x30
+        }* r2;
+
+        r2 = fp_0x30->Data_8;
+
+        fp_0x30 = r2->Data_0x30;
+        r2->Data_4 |= 0x100;
+        fp_0x30->bData_0x1f = 0; //r3; //TODO!!!
+
+        int fp_0x34_;
+        uint32_t r1;
+        if (r2->Data_4 & 1)
+        {
+            //0x00009700
+            fp_0x30->Data_0x20 = 0;
+
+            fp_0x34_ = 0x08;
+            //->0x00009760
+            r1 = 0;
+            //0x00009764
+        }
+        //0x00009714
+        else if (r2->Data_4 & 2)
+        {
+            //0x00009720
+            fp_0x30->Data_0x20 = 1;
+
+            fp_0x34_ = 0x40;
+            r1 = 0x200;
+            //->0x00009764
+        }
+        else
+        {
+            //0x0000973c
+            if (fp_0x30->Data_0x20 != 0)
+            {
+                fp_0x34_ = 0;
+                r1 = 0x200;
+                //->0x00009764
+            }
+            else
+            {
+                //0x00009758
+                fp_0x34_ = 0;
+                r1 = 0;
+            }
+        }
+        //0x00009764
+        r1 |= (r5->Data_0x50 & 0x80)? 0x800: 0;
+        r1 |= 0x500;
+        r1 &= 0xf00;
+
+        ((volatile uint16_t*)(r5->Data_0x14))[0x102/2] = r1;
+        ((volatile uint16_t*)(r5->Data_0x14))[0x80/2] = (fp_0x30->Data_0x14 >> 4) & 0x7f;
+
+        if (fp_0x30->bData_0x1c != 0x40)
+        {
+            //0x000097b8
+            ((volatile uint8_t*)(r5->Data_0x14))[0x82] = fp_0x30->bData_0x1d;
+            ((volatile uint8_t*)(r5->Data_0x14))[0x83] = fp_0x30->bData_0x1e;
+        }
+        //0x000097d8
+        ((volatile uint8_t*)(r5->Data_0x14))[0x10b] = 0;
+
+        uint16_t r2_;
+        if (r2->Data_4 & 1)
+        {
+            //0x000097f8
+            MENTOR_LoadFIFO(r5, 0, r2->Data_0xc, r2->Data_0 & 0xffff);
+
+            r2_ = fp_0x34_ | 0x0a;
+            //->0x0000987c
+        }
+        //0x0000981c
+        else if (r2->Data_4 & 8)
+        {
+            //0x00009828
+            int r3 = fp_0x30->wData_0x18;
+            if (r3 > r2->Data_0)
+            {
+                r3 = r2->Data_0;
+            }
+
+            r2->Data_0x14 += r3;
+
+            if (r3 > 0)
+            {
+                //0x00009850
+                MENTOR_LoadFIFO(r5, 0, r2->Data_0xc, r3 & 0xffff);
+            }
+            //0x00009868
+            r2_ = fp_0x34_ | 0x02;
+            //->0x0000987c
+        }
+        else
+        {
+            //0x00009874
+            r2_ = fp_0x34_ | 0x20;
+        }
+        //0x0000987c
+        ((volatile uint16_t*)(r5->Data_0x14))[0x10a/2] = fp_0x30->bData_0x1c;
+        ((volatile uint16_t*)(r5->Data_0x14))[0x102/2] |= r2_;
+        //->0x000098c8
+    }
+    else
+    {
+        //0x000098b0
+        InterruptUnlock(&r5->Data_0xd0);
+    }
+    //0x000098c8
+    if (pthread_mutex_unlock(&r5->Data_4/*r6*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4ed);
+    }
+    //0x000098f8
+    if (f/*fp8*/ < 0)
+    {
+        //0x00009904
+        res = MENTOR_WaitEndControl(sl, r8, sb, fp_0x38);
+
+        if (pthread_mutex_unlock(&r5->Data_0xc/*r7*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4f1);
+        }
+        //0x00009988
+    }
+    else
+    {
+        //0x00009950
+        if (pthread_mutex_unlock(&r5->Data_0xc/*r7*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c", 0x4f1);
+        }
+
+        res = 0;
+    }
+    //loc_9988
+    return res;
+}
+
+
+int mentor_ctrl_transfer_abort(struct USB_Controller* a, 
+    struct Struct_10bab4* b, 
+    struct Struct_112b08* c)
+{
+#if 1
+    fprintf(stderr, "mentor_ctrl_transfer_abort: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+
 static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
 static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
 
@@ -1650,9 +2025,9 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
 static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
 {
     mentor_ctrl_endpoint_enable,
-    0, //mentor_ctrl_endpoint_disable
-    0, //mentor_ctrl_transfer
-    0, //mentor_ctrl_transfer_abort
+    0, //mentor_ctrl_endpoint_disable,
+    mentor_ctrl_transfer,
+    mentor_ctrl_transfer_abort,
     NULL
 };
 

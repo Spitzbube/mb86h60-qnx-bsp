@@ -365,47 +365,6 @@ int sub_10cb2c(struct USB_Controller_Inner_0x7c* a)
 }
 
 
-/* 117854 - todo */
-void* sub_117854(void* a)
-{
-#if 1
-    fprintf(stderr, "sub_117854: TODO!!!\n");
-#endif
-
-    return 0;
-}
-
-
-struct Struct_10bab4
-{
-    int Data_0; //0
-    int fill_4; //4
-    int Data_8; //8
-    int fill_0xc; //0xc
-    int Data_0x10; //0x10
-    int Data_0x14; //0x14
-    int Data_0x18; //0x18
-    int Data_0x1c; //0x1c
-    int Data_0x20; //0x20
-    int Data_0x24; //0x24
-    int Data_0x28; //0x28
-    void* Data_0x2c; //0x2c
-    int Data_0x30; //0x30
-    int fill_0x34; //0x34
-    int Data_0x38; //0x38
-    int Data_0x3c; //0x3c
-    int Data_0x40; //0x40
-    int Data_0x44; //0x44
-    int Data_0x48; //0x48
-    int Data_0x4c; //0x4c
-    int Data_0x50; //0x50
-    int fill_0x54; //0x54
-    int Data_0x58; //0x58
-    int fill_0x5c[2]; //0x5c
-    //0x64
-};
-
-
 /* 10bab4 - todo */
 void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_0x1c,
     int e/*fp4*/, 
@@ -462,13 +421,236 @@ void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_
 }
 
 
+/* 11199c - todo */
+int sub_11199c(struct Struct_10bab4* a, void* b)
+{
+#if 1
+    fprintf(stderr, "sub_11199c: TODO!!!\n");
+#endif
+
+}
+
+
+/* 110e50 - todo */
+int sub_110e50(int a, int b)
+{
+#if 1
+    fprintf(stderr, "sub_110e50: TODO!!!\n");
+#endif
+
+
+    return 0;
+}
+
+
+/* 111030 - todo */
+int sub_111030(struct USB_Controller* a, void* b, struct Struct_112b08* c)
+{
+#if 1
+    fprintf(stderr, "sub_111030: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
 /* 111ab0 - todo */
-int sub_111ab0(struct Struct_10bab4* a, struct Struct_112b08* b)
+int sub_111ab0(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
 {
 #if 1
     fprintf(stderr, "sub_111ab0: TODO!!!\n");
 #endif
 
+    int fp_0x3c = 0;
+    void* fp_0x38;
+    int fp_0x34;
+    int fp_0x30 = 0;
+    uint32_t fp_0x2c = 0;
+    int fp_0x28;
+    int fp_0x24;
+    int fp_0x20 = 0;
+    uint32_t fp_0x1c = 0;
+    int fp_0x18;
+    int fp_0x14;
+    void* fp_0x10 = fp_0x40->Data_0x2c;
+    struct USB_Controller* fp_0xc = &usb_controllers[fp_0x40->Data_0x18];
+    struct
+    {
+        int fill_0[3]; //0
+        uint8_t bData_0xc; //0xc = 12
+    }* fp8;
+
+    fp_0x38 = sub_117bbc(8);
+    if (fp_0x38 == NULL)
+    {
+        return 12;
+    }
+    //loc_111b3c
+    fp_0x34 = usb_controllers[fp_0x40->Data_0x18].Data_0x70 + 1;
+    fp_0x18 = fp_0xc->Data_0x6c & 0x800;
+    //->loc_111f20
+    while (fp_0x34--)
+    {
+        //loc_111b80
+        sub_11199c(fp_0x40, fp_0x38);
+
+        fp_0x40->Data_0x34 = 0;
+        fp_0x30 = 0;
+        fp_0x2c = fp_0x40->Data_0x30;
+
+        if (fp_0x18 != 0)
+        {
+            //0x00111bb8
+            fp_0x10 = sub_117854(fp_0x38);
+            fp_0x14 = 0;
+            //->loc_111c0c
+        }
+        else
+        {
+            //loc_111bd4
+            if ((fp_0xc->Data_0x6c & 0x40000000) == 0)
+            {
+                //0x00111be8
+                fp_0x10 = sub_117854(fp_0x38);
+                //->loc_111c04
+            }
+            else
+            {
+                //loc_111bfc
+                fp_0x10 = fp_0x38;
+            }
+            //loc_111c04
+            fp_0x14 = 0x80000000;
+        }
+        //loc_111c0c
+        fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer)(fp_0xc, 
+            fp_0x40, fp_0x44, fp_0x10, 8, fp_0x14 | 1);
+
+        if ((fp_0x3c == 0) && (fp_0x40->Data_0x30 != 0))
+        {
+            //0x00111c64
+            fp_0x10 = fp_0x40->Data_0x2c;
+            fp_0x40->Data_0x34 = 0;
+            //->loc_111dd4
+            while ((fp_0x1c < fp_0x2c) && (fp_0x30 == 0) && (fp_0x3c == 0))
+            {
+                //loc_111c80
+//                uint32_t r3 = ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/;
+                fp_0x28 = (((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/ > (fp_0x2c - fp_0x1c)/*r2*/)? (fp_0x2c - fp_0x1c)/*r2*/: 
+                    ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/;
+
+                fp_0x40->Data_0x30 = fp_0x28;
+                fp_0x24 = fp_0x40->Data_0x34;
+
+                fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer/*ip*/)(fp_0xc,
+                    fp_0x40, fp_0x44, 
+                    ((char*)fp_0x10 + fp_0x1c)/*lr*/,
+                    fp_0x28, 
+                    ((fp_0x40->Data_0x38 == 0x80)? 4: 8) | fp_0x14);
+
+                fp_0x20 += fp_0x28;
+
+                if (fp_0x18 != 0)
+                {
+                    //0x00111d54
+                    fp_0x1c = fp_0x20;
+                    //->loc_111dd4
+                }
+                else
+                {
+                    //loc_111d60
+#if 0
+                    int r2 = fp_0x40->Data_0x34;
+                    int r3 = fp_0xc->Data_0x60;
+
+                    if (r3 != 0)
+                    {
+                        r3 = fp_0xc->Data_0x60;
+                        //->loc_111d8c
+                    }
+                    else
+                    {
+                        //loc_111d84
+                        r3 = fp_0x44->wData_4;
+                    }
+                    //loc_111d8c
+                    if (((r2 % r3) != 0) ||
+                        (fp_0x40->Data_0x34 == fp_0x24))
+                    {
+                        //loc_111db8
+                        r3 = 1;
+                    }
+                    else
+                    {
+                        //loc_111dc0
+                        r3 = 0;
+                    }
+                    //loc_111dc4
+                    fp_0x30 = r3;
+#else
+                    fp_0x30 = (((fp_0x40->Data_0x34/*r2*/ % 
+                        ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/) != 0) ||
+                        (fp_0x40->Data_0x34 == fp_0x24))? 1: 0;
+#endif
+                    fp_0x1c = fp_0x40->Data_0x34;
+                }
+                //loc_111dd4
+            } //while ((fp_0x1c < fp_0x2c) && (fp_0x30 == 0) && (fp_0x3c == 0))
+            //loc_111dfc
+        }
+        //loc_111dfc
+        if (fp_0x3c == 0)
+        {
+            //0x00111e08
+            fp_0x40->Data_0x30 = 0;
+
+            fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer)(fp_0xc,
+                fp_0x40, fp_0x44, 0, 0,
+                (fp_0x40->Data_0x38 == 0x80)? 0x8000000a: 0x80000006);
+        }
+        //loc_111e64
+        if (fp_0x3c != 0)
+        {
+            //0x00111e70
+            (fp_0xc->ctrl_pipe_methods->ctrl_transfer_abort)(fp_0xc, fp_0x40, fp_0x44);
+        }
+        //loc_111e8c
+        if ((fp_0x3c != 0) && (fp_0xc->Data_0x6c & 0x40))
+        {
+            //0x00111eac
+            fp8 = sub_110e50(fp_0x40->Data_0x18, fp_0x40->Data_0x14);
+            if ((fp8 != NULL) && (fp8->bData_0xc != 2))
+            {
+                sub_111030(fp_0xc, fp8, fp_0x44);
+            }
+            //loc_111efc
+        }
+        //loc_111efc
+        if (fp_0x3c == 0)
+        {
+            //->loc_111f48
+            break;
+        }
+
+        if (fp_0x3c == 12)
+        {
+            //->loc_111f48
+            break;
+        }
+
+        fp_0x40->Data_0x30 = fp_0x2c;
+        //loc_111f20
+    } //while (fp_0x34--)
+    //loc_111f48
+    fp_0x40->Data_0x30 = fp_0x2c;
+
+    sub_1177f8(fp_0x38);
+
+    if (fp_0x3c != 0)
+    {
+        return 5;
+    }
+    //loc_111f70
     return 0;
 }
 
