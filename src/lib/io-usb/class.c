@@ -422,12 +422,20 @@ void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_
 
 
 /* 11199c - todo */
-int sub_11199c(struct Struct_10bab4* a, void* b)
+void sub_11199c(struct Struct_10bab4* fp8, uint8_t* fp_0xc)
 {
 #if 1
-    fprintf(stderr, "sub_11199c: TODO!!!\n");
+    fprintf(stderr, "sub_11199c: fp_0xc=0x%x: TODO!!!\n", fp_0xc);
 #endif
 
+    fp_0xc[0] = ((uint8_t)(fp8->Data_0x40) << 5) | (fp8->Data_0x38) | (fp8->Data_0x44);
+    fp_0xc[1] = fp8->Data_0x3c;
+    fp_0xc[2] = fp8->Data_0x4c;
+    fp_0xc[3] = fp8->Data_0x48;
+    fp_0xc[4] = fp8->Data_0x50;
+    fp_0xc[5] = fp8->Data_0x50 >> 8;
+    fp_0xc[6] = fp8->Data_0x30;
+    fp_0xc[7] = fp8->Data_0x30 >> 8;
 }
 
 
@@ -480,6 +488,7 @@ int sub_111ab0(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
         uint8_t bData_0xc; //0xc = 12
     }* fp8;
 
+    // Allocate Setup data
     fp_0x38 = sub_117bbc(8);
     if (fp_0x38 == NULL)
     {
@@ -491,7 +500,7 @@ int sub_111ab0(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
     //->loc_111f20
     while (fp_0x34--)
     {
-        //loc_111b80
+        //loc_111b80: Fill Setup Packet
         sub_11199c(fp_0x40, fp_0x38);
 
         fp_0x40->Data_0x34 = 0;
@@ -668,7 +677,15 @@ int sub_10bc1c(struct USB_Controller_Inner_0x7c* fp_0x70,
     int fp8 = 0;
 
     sub_10bab4(&fp_0x6c, fp_0x70->Data_0x88, fp_0x70->Data_0, 1,
-        6, fp_0x74, 0, 0, fp_0x78, 0, fp_0x7c, fp4, 2000);
+        6/*MUSB_REQ_GET_DESCRIPTOR*/, 
+        fp_0x74, 
+        0, 
+        0, 
+        fp_0x78, 
+        0, 
+        fp_0x7c, 
+        fp4, 
+        2000);
 
     fp8 = sub_111ab0(&fp_0x6c, &fp_0x70->Data_0x40);
     if (fp8 != 0)

@@ -1667,51 +1667,57 @@ struct Struct_0xa0* MENTOR_TD_Setup(struct Mentor_Controller* a,
 /* */
 void MENTOR_LoadFIFO(struct Mentor_Controller* a, uint16_t b, int c, uint16_t r8)
 {
-#if 0
+#if 1
     fprintf(stderr, "MENTOR_LoadFIFO: TODO!!!\n");
 #endif
 
+#ifdef MB86H60
+    fprintf(stderr, "MENTOR_LoadFIFO: b=%d, r8=%d\n", b, r8);
+    int i;
+    for (i = 0; i < r8; i++)
+    {
+        fprintf(stderr, "MENTOR_LoadFIFO: c[%d]=0x%02x\n", i, ((uint8_t*)c)[i]);
+    }
+
+    //TODO!!!
+#else
     int r7;
     int r6;
     int r5;
-    uint32_t* r3;
 
 //    b &= 0xffff;
 //    uint16_t r8 = d & 0xffff;
 
     if (r8 > 3)
     {
-        r6 = b * 4;
+//        r6 = b * 4;
         r8 -= 4;
-        r7 = r8 >> 18;
-        r5 = c + 4;
-        r5 = r5 + r7 * 4;
-        r3 = c;
-
-        while (1)
+        r7 = r8 / 4;
+        //r5 = c + 4 + r7 * 4;
+        uint32_t* r3 = c;
+        
+        do
         {
             //loc_4704
-            ((volatile uint32_t*)(a->Data_0x14))[0x20 + r6] = *r3++;
-
-            if (r3 == r5)
-            {
-                break;
-            }
+            ((volatile uint32_t*)(a->Data_0x14))[MGC_FIFO_OFFSET(b)/4] = *r3++;
         }
+        while (r3 != /*r5*/(c + 4 + r7 * 4));
         
         r7++;
         c = c + r7 * 4;
+        r8 = r8 & 0x03;
     }
     //loc_472c
     if (r8 & 2)
     {
-        ((volatile uint16_t*)(a->Data_0x14))[0x20 + b] = *((uint16_t*)c);
+        ((volatile uint16_t*)(a->Data_0x14))[MGC_FIFO_OFFSET(b)] = *((uint16_t*)c);
         c += 2;
     }
     if (r8 & 1)
     {
-        ((volatile uint8_t*)(a->Data_0x14))[0x20 + b] = *((uint8_t*)c);
+        ((volatile uint8_t*)(a->Data_0x14))[MGC_FIFO_OFFSET(b)] = *((uint8_t*)c);
     }
+#endif
 }
 
 
@@ -1832,6 +1838,10 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         }* r2;
 
         r2 = fp_0x30->Data_8;
+#if 1
+        fprintf(stderr, "r2->Data_0=0x%x, r2->Data_4=0x%x, r2->Data_0xc=0x%x, \n",
+            r2->Data_0, r2->Data_4, r2->Data_0xc);
+#endif
 
         fp_0x30 = r2->Data_0x30;
         r2->Data_4 |= 0x100;
@@ -1880,17 +1890,32 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         r1 |= 0x500;
         r1 &= 0xf00;
 
+#ifdef MB86H60
+        fprintf(stderr, "mentor_ctrl_transfer: r1=0x%x\n", r1);
+        fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->Data_0x14=0x%x\n", 
+            (fp_0x30->Data_0x14 >> 4) & 0x7f);
+#else
         ((volatile uint16_t*)(r5->Data_0x14))[0x102/2] = r1;
         ((volatile uint16_t*)(r5->Data_0x14))[0x80/2] = (fp_0x30->Data_0x14 >> 4) & 0x7f;
+#endif
 
         if (fp_0x30->bData_0x1c != 0x40)
         {
             //0x000097b8
+#ifdef MB86H60
+            fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->bData_0x1d=0x%x\n", fp_0x30->bData_0x1d);
+            fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->bData_0x1e=0x%x\n", fp_0x30->bData_0x1e);
+#else
             ((volatile uint8_t*)(r5->Data_0x14))[0x82] = fp_0x30->bData_0x1d;
             ((volatile uint8_t*)(r5->Data_0x14))[0x83] = fp_0x30->bData_0x1e;
+#endif
         }
         //0x000097d8
+#ifdef MB86H60
+        //TODO!!!
+#else
         ((volatile uint8_t*)(r5->Data_0x14))[0x10b] = 0;
+#endif
 
         uint16_t r2_;
         if (r2->Data_4 & 1)
@@ -1928,8 +1953,13 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
             r2_ = fp_0x34_ | 0x20;
         }
         //0x0000987c
+#ifdef MB86H60
+        fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->bData_0x1c=0x%x\n", fp_0x30->bData_0x1c);
+        fprintf(stderr, "mentor_ctrl_transfer: r2_=0x%x\n", r2_);
+#else
         ((volatile uint16_t*)(r5->Data_0x14))[0x10a/2] = fp_0x30->bData_0x1c;
         ((volatile uint16_t*)(r5->Data_0x14))[0x102/2] |= r2_;
+#endif
         //->0x000098c8
     }
     else

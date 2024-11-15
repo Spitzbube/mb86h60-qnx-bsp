@@ -53,6 +53,12 @@
 #define MGC_M_POWER_SUSPENDM    0x02
 #define MGC_M_POWER_ENSUSPEND   0x01
 
+/*
+ *  DRC register access macros
+ */
+
+/* Get offset for a given FIFO */
+#define MGC_FIFO_OFFSET(_bEnd) (MGC_M_FIFO_EP0 + (_bEnd * 4))
 
 
 /* indexed vs. flat register model */

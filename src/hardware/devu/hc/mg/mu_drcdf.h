@@ -13,6 +13,8 @@
 #ifndef __MUSB_DRC_DEFS_H__
 #define __MUSB_DRC_DEFS_H__
 
+#define MGC_M_FIFO_EP0     0x20
+
 /* DEVCTL */
 
 #define MGC_M_DEVCTL_BDEVICE    0x80
