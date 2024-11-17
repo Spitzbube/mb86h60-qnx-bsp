@@ -3,12 +3,6 @@
 #include "externs.h"
 
 
-void usb_slogf()
-{
-    fprintf(stderr, "usb_slogf\n");
-
-}
-
 
 void CTRL_FreeHCEntry(int a)
 {

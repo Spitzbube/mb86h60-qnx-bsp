@@ -56,7 +56,6 @@ extern int CTRL_IsPCIDevice();
 extern int usbdi_timeout_init(struct USB_Timer*);
 extern int usbdi_init_server_globals(char*, struct USB_Timer*);
 extern void usbdi_timeout_tick();
-extern void usb_slogf();
 extern int io_usb_dlclose(void* handle);
 extern void CTRL_FreeHCEntry(int);
 extern void CTRL_StripArgs(char*);
@@ -114,6 +113,32 @@ struct USB_Timer usb_timer; //121590
 extern int usb_verbosity; //0x001215a0
 extern struct UdiCtrl UdiCtrl; //0x001215a4
 
+
+
+
+/* 0x001052ac - complete */
+int usb_slogf(int opcode, int severity, int v,
+        const char* fmt, ...)
+{
+    int res;
+
+    if (usb_verbosity < v)
+    {
+        return 0;
+    }
+
+    va_list arglist;
+
+    va_start(arglist, fmt);
+#if 0
+    res = vslogf(opcode, severity, fmt, arglist);
+#else
+    res = vfprintf(stderr, fmt, arglist);
+    fprintf(stderr, "\n");
+#endif
+    va_end( arglist );
+    return res;
+}
 
 
 

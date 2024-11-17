@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <atomic.h>
 #include <signal.h>
@@ -167,6 +168,8 @@ struct Struct_120220
 
 
 extern int sub_1047a8(struct Struct_1047a8**, int);
+extern int usb_slogf(int opcode, int severity, int v, const char* fmt, ...);
+
 
 extern struct USB_Controller usb_controllers[]; //0x0011f590 +0x14*0x8c
 extern void* Data_12021c; //12021c

@@ -53,6 +53,16 @@
 #define MGC_O_HDRC_FIFOSIZE	    0x0F
 #define MGC_O_HDRC_CONFIGDATA	MGC_O_HDRC_FIFOSIZE	/* re-used for EP0 */
 
+/* "bus control" registers */
+#define MGC_O_HDRC_TXFUNCADDR	0x00
+#define MGC_O_HDRC_TXHUBADDR	0x02
+#define MGC_O_HDRC_TXHUBPORT	0x03
+
+#define MGC_O_HDRC_RXFUNCADDR	0x04
+#define MGC_O_HDRC_RXHUBADDR	0x06
+#define MGC_O_HDRC_RXHUBPORT	0x07
+
+
 
 /*
  *     MUSBHDRC Register bit masks
@@ -77,6 +87,8 @@
 #define MGC_FIFO_OFFSET(_bEnd) (MGC_M_FIFO_EP0 + (_bEnd * 4))
 
 #define MGC_END_OFFSET(_bEnd, _bOffset)	(0x100 + (0x10*_bEnd) + _bOffset)
+
+#define MGC_BUSCTL_OFFSET(_bEnd, _bOffset)	(0x80 + (8*_bEnd) + _bOffset)
 
 
 /* indexed vs. flat register model */

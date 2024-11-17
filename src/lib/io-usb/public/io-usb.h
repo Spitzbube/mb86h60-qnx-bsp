@@ -108,8 +108,8 @@ struct Struct_112b08
 
 struct USB_Controller_Inner_0x7c
 {
-    int Data_0; //0
-    int Data_4; //4
+    int device_address; //0
+    int new_device_address; //4
     int fill_8; //8
     uint8_t bData_0xc; //0xc
     uint8_t bData_0xd; //0xd

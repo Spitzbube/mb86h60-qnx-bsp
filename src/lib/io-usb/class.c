@@ -200,7 +200,8 @@ int CLASS_ExtractDevice(int fp_0x10, int fp_0x14, int fp_0x18)
     }
     //loc_10cac0
     usb_slogf(12, 2, 1, "CLASS_ExtractDevice:  dno %d, vid %x, parent %d, port %d, openings %d",
-        fp8->Data_0, fp8->device_descriptor.idVendor, 
+        fp8->device_address, 
+        fp8->device_descriptor.idVendor, 
         fp_0x14, fp_0x18, fp8->Data_0x10);
 
     return sub_10c748(fp_0xc, fp8);
@@ -255,7 +256,7 @@ struct USB_Controller_Inner_0x7c* sub_10afc4(struct USB_Controller* fp_0x10)
 
             fp_0x10->Data_0x78[fp_0xc] = fp8;
 
-            fp8->Data_4 = fp_0xc + 1;
+            fp8->new_device_address = fp_0xc + 1;
             fp8->Data_0x40.Data_0x14 = 0;
             fp8->Data_0x40.Data_0x18 = &fp8->Data_0x40.Data_0x14;
             fp8->Data_0x40.Data_0x1c = 0;
@@ -268,7 +269,8 @@ struct USB_Controller_Inner_0x7c* sub_10afc4(struct USB_Controller* fp_0x10)
 
             usb_slogf(12, 2, 1, "%s(%d): devno %d, dmutexp %p, emutexp %p",
                 "CLASS_MakeNewDeviceEntry", 0x162, 
-                fp8->Data_4, &fp8->Data_0x94, &fp8->Data_0x70);
+                fp8->new_device_address, 
+                &fp8->Data_0x94, &fp8->Data_0x70);
 
             sub_1047a8(&fp8->Data_0x8c, 0);
 
@@ -715,7 +717,7 @@ int CLASS_GetDescriptor(struct USB_Controller_Inner_0x7c* fp_0x70,
     /* Prepare the Standard Request */
     CLASS_CreateUrb(&fp_0x6c, 
         fp_0x70->Data_0x88, 
-        fp_0x70->Data_0, 
+        fp_0x70->device_address, 
         1,
         USB_GET_DESCRIPTOR, 
         descr_type, 
@@ -743,8 +745,8 @@ int CLASS_SetDeviceAdress(struct USB_Controller_Inner_0x7c* fp_0x78,
     char* fp_0x7c)
 {
 #if 1
-    fprintf(stderr, "CLASS_SetDeviceAdress: fp_0x78->Data_4=%d: TODO!!!\n",
-        fp_0x78->Data_4);
+    fprintf(stderr, "CLASS_SetDeviceAdress: fp_0x78->new_device_address=%d: TODO!!!\n",
+        fp_0x78->new_device_address);
 #endif
 
     struct Struct_10bab4 fp_0x70;
@@ -754,18 +756,18 @@ int CLASS_SetDeviceAdress(struct USB_Controller_Inner_0x7c* fp_0x78,
     fp_0xc = &usb_controllers[fp_0x78->Data_0x88];
 
     usb_slogf(12, 2, 1, "%s:  Set address %d",
-        fp_0x7c, fp_0x78->Data_4);
+        fp_0x7c, fp_0x78->new_device_address);
 
     /* Prepare the Standard Request */
     CLASS_CreateUrb(&fp_0x70,
         fp_0x78->Data_0x88,
-        fp_0x78->Data_0,
+        fp_0x78->device_address,
         2,
         USB_SET_ADDRESS,
         0,
         0,
         0,
-        fp_0x78->Data_4,
+        fp_0x78->new_device_address,
         0,
         0,
         0, 
@@ -780,7 +782,7 @@ int CLASS_SetDeviceAdress(struct USB_Controller_Inner_0x7c* fp_0x78,
         return res;
     }
     //loc_10d18c
-    fp_0x78->Data_0 = fp_0x78->Data_4;
+    fp_0x78->device_address = fp_0x78->new_device_address;
 
     delay(20);
 
