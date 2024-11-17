@@ -2312,10 +2312,8 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
             r1, fp_0x30->Data_0x14);
 
         MGC_Write16(r5, 0x102, r1);
-#if 0
         MGC_Write16(r5, MGC_BUSCTL_OFFSET(0/*bEnd*/, MGC_O_HDRC_TXFUNCADDR),
             (fp_0x30->Data_0x14 >> 4) & 0x7f);
-#endif
 #else
         ((volatile uint16_t*)(r5->Data_0x14))[0x102/2] = r1;
         ((volatile uint16_t*)(r5->Data_0x14))[0x80/2] = (fp_0x30->Data_0x14 >> 4) & 0x7f;
@@ -2325,8 +2323,13 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         {
             //0x000097b8
 #ifdef MB86H60
-            fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->bData_0x1d=0x%x\n", fp_0x30->bData_0x1d);
-            fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->bData_0x1e=0x%x\n", fp_0x30->bData_0x1e);
+            fprintf(stderr, "mentor_ctrl_transfer: fp_0x30->bData_0x1d=0x%x, fp_0x30->bData_0x1e=0x%x\n", 
+                fp_0x30->bData_0x1d, fp_0x30->bData_0x1e);
+
+            MGC_Write8(r5, MGC_BUSCTL_OFFSET(0/*bEnd*/, MGC_O_HDRC_TXHUBADDR),
+                fp_0x30->bData_0x1d);
+            MGC_Write8(r5, MGC_BUSCTL_OFFSET(0/*bEnd*/, MGC_O_HDRC_TXHUBPORT),
+                fp_0x30->bData_0x1e);
 #else
             ((volatile uint8_t*)(r5->Data_0x14))[0x82] = fp_0x30->bData_0x1d;
             ((volatile uint8_t*)(r5->Data_0x14))[0x83] = fp_0x30->bData_0x1e;
@@ -2334,7 +2337,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         }
         //0x000097d8
 #ifdef MB86H60
-        //TODO!!!
+        MGC_Write16(r5, 0x10b, 0); //TxInterval?
 #else
         ((volatile uint8_t*)(r5->Data_0x14))[0x10b] = 0;
 #endif
