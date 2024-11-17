@@ -36,6 +36,22 @@
 #define MGC_O_HDRC_TXFIFOADD	0x64	/* 16-bit offset shifted right 3 */
 #define MGC_O_HDRC_RXFIFOADD	0x66	/* 16-bit offset shifted right 3 */
 
+/* Endpoint registers */
+#define MGC_O_HDRC_TXMAXP	0x00
+#define MGC_O_HDRC_TXCSR	0x02
+#define MGC_O_HDRC_CSR0		MGC_O_HDRC_TXCSR	/* re-used for EP0 */
+#define MGC_O_HDRC_RXMAXP	0x04
+#define MGC_O_HDRC_RXCSR	0x06
+#define MGC_O_HDRC_RXCOUNT	0x08
+#define MGC_O_HDRC_COUNT0	MGC_O_HDRC_RXCOUNT	/* re-used for EP0 */
+#define MGC_O_HDRC_TXTYPE	0x0A
+#define MGC_O_HDRC_TYPE0	MGC_O_HDRC_TXTYPE	/* re-used for EP0 */
+#define MGC_O_HDRC_TXINTERVAL	0x0B
+#define MGC_O_HDRC_NAKLIMIT0	MGC_O_HDRC_TXINTERVAL	/* re-used for EP0 */
+#define MGC_O_HDRC_RXTYPE	    0x0C
+#define MGC_O_HDRC_RXINTERVAL	0x0D
+#define MGC_O_HDRC_FIFOSIZE	    0x0F
+#define MGC_O_HDRC_CONFIGDATA	MGC_O_HDRC_FIFOSIZE	/* re-used for EP0 */
 
 
 /*
@@ -59,6 +75,8 @@
 
 /* Get offset for a given FIFO */
 #define MGC_FIFO_OFFSET(_bEnd) (MGC_M_FIFO_EP0 + (_bEnd * 4))
+
+#define MGC_END_OFFSET(_bEnd, _bOffset)	(0x100 + (0x10*_bEnd) + _bOffset)
 
 
 /* indexed vs. flat register model */

@@ -2,7 +2,6 @@
 #include "externs.h"
 
 
-//#define ENABLE_DELAY
 
 struct ArrayClass  ArrayClass[8]; //0x00127230
 
@@ -776,9 +775,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
     if ((fp8->controller_methods->check_device_connected)(fp8, fp_0x1c) == 0)
     {
         //0x001109fc
-#ifdef ENABLE_DELAY
         delay(100);
-#endif
 
         fp_0xc = UsbdiGlobals.Data_0x180;
         //->loc_110ae0
@@ -788,9 +785,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
             fp_0x10 = (fp8->controller_methods->set_port_feature)(fp8, fp_0x1c, 2);
             if (fp_0x10 != 0x13)
             {
-#ifdef ENABLE_DELAY
                 delay(100);
-#endif
 
                 fp_0x10 = sub_10d2f0(fp_0x18, 0, fp_0x1c, 
                     (fp8->controller_methods->get_root_device_speed)(fp8, fp_0x1c));
@@ -820,9 +815,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
                     break;
                 }
                 //0x00110ad8
-#ifdef ENABLE_DELAY
                 delay(1000);
-#endif
                 //loc_110ae0
             }
             //loc_110b0c
@@ -1012,16 +1005,12 @@ static void* usb_port_enum_handler(void* a)
     //loc_10a8bc
     usb_port_monitor_wait_init_complete();
 
-#ifdef ENABLE_DELAY
     delay(20);
-#else
-    fprintf(stderr, "usb_port_enum_handler: after usb_port_monitor_wait_init_complete: TODO\n");
-#endif
 
-    fp_0x2c.it_value.tv_sec = 0;
-    fp_0x2c.it_value.tv_nsec = 100; //100000000;
-    fp_0x2c.it_interval.tv_sec = 0;
-    fp_0x2c.it_interval.tv_nsec = 100; //100000000;
+    fp_0x2c.it_value.tv_sec = 5;
+    fp_0x2c.it_value.tv_nsec = 0; //1000000000; //100000000;
+    fp_0x2c.it_interval.tv_sec = 5;
+    fp_0x2c.it_interval.tv_nsec = 0; //1000000000; //100000000;
 
     timer_settime(fp_0x1c, 0, &fp_0x2c, 0);
 
@@ -1061,6 +1050,7 @@ static void* usb_port_enum_handler(void* a)
         }
         else
         {
+#if 1
             //loc_10a9f8
             switch (fp_0x4c.bData_4)
             {
@@ -1155,6 +1145,7 @@ static void* usb_port_enum_handler(void* a)
                     //->loc_10aca0
                     break;
             } //switch (fp_0x4c.bData_4)
+#endif
             //loc_10aca0
             if (pthread_rwlock_unlock(&usb_rwlock) != 0)
             {

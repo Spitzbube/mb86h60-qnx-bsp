@@ -55,7 +55,11 @@ timer_start_mb86h60(void)
     out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_HI, 0);
     out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, MB86H60_TIMER_EN_ENABLE);
 
-	return in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
+    unsigned start_val = in32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW);
+
+//    kprintf("timer_start_mb86h60: start_val=%d\n", start_val);
+
+	return start_val;
 }
 
 static unsigned
@@ -72,6 +76,8 @@ timer_diff_mb86h60(unsigned start)
     {
         diff = (start + TIMER_LOAD_VAL - now);
     }
+
+    kprintf("timer_diff_mb86h60: start=%d, now=%d, diff=%d\n", start, now, diff);
 
     return diff;
 }
@@ -94,10 +100,14 @@ init_qtime_mb86h60(void)
      */
     out32(mb86h60_timer_base + MB86H60_TIMER_ENABLE, 0);
 
+    out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_PRE, 0);
+    out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_LOW, TIMER_LOAD_VAL);
+    out32(mb86h60_timer_base + MB86H60_TIMER_COUNT_HI, 0);
+
 	timer_start = timer_start_mb86h60;
 	timer_diff = timer_diff_mb86h60;
 
-	qtime->intr = 5;  /* Timer0 irq */
+	qtime->intr = MB86H60_INTR_TIMER0;
 	qtime->timer_rate  = MB86H60_CLOCK_RATE;
 	qtime->timer_scale = MB86H60_CLOCK_SCALE;
 	qtime->cycles_per_sec = (uint64_t)MB86H60_CLOCK_FREQ;

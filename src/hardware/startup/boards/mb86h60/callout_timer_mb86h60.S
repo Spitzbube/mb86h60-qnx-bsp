@@ -58,18 +58,14 @@ patch_timer_mb86h60:
     /*
      * Map uart registers
      */
-    /*
     mov     r0, #MB86H60_UART_SIZE      // size of registers
     ldr     r1, Lpaddr_uart
     bl      callout_io_map
-    */
 
     /*
      * Patch the callout routine
      */
-    /*
     CALLOUT_PATCH   r4, r0, r1, r2, ip
-    */
 
     ldmia   sp!, {r4, pc}
 
@@ -107,28 +103,24 @@ CALLOUT_START(timer_load_mb86h60, 0, patch_timer_mb86h60)
    	/*
 	 * Get the uart base address (patched)
 	 */
-    /*
 	mov		r2,     #0x000000ff
 	orr		r2, r2, #0x0000ff00
 	orr		r2, r2, #0x00ff0000
 	orr		r2, r2, #0xff000000
-    */
 
     /*
      *  Stop the timer
      */
-    /*
     ldr     r0, [ip, #MB86H60_TIMER_ENABLE]
     bic     r0, r0, #MB86H60_TIMER_EN_ENABLE
     str     r0, [ip, #MB86H60_TIMER_ENABLE]
-    */
 
     /*
      * Get the load value 
      */
-    /*
-    ldr     r4, [r1, #QT_TIMER_LOAD]
-    */
+
+    ldr     r1, [r1, #QT_TIMER_LOAD]
+
 
     /* Debug */
     /*
@@ -165,7 +157,6 @@ loop:
     uart_tx r2, r0, 0x0a
     */
 
-
     /*
      * Adjust the load value to suit the OMAP's formula
      * for computing Tint
@@ -177,19 +168,7 @@ loop:
     /*
      * Load counter value
      */
-
-    /*
-    ldr     r4, count_pre
-    str     r4, [ip, #MB86H60_TIMER_COUNT_PRE]
-    */
-
-    /*
-    str     r4, [ip, #MB86H60_TIMER_COUNT_LOW]
-    */
-
-    /*
-    str     r4, [ip, #MB86H60_TIMER_COUNT_HI]
-    */
+    str     r1, [ip, #MB86H60_TIMER_COUNT_LOW]
 
     /*
      * Enable overflow interrupt
@@ -197,8 +176,7 @@ loop:
     
     ldr     r0, [ip, #MB86H60_TIMER_ENABLE]
     orr     r0, r0, #MB86H60_TIMER_EN_IRQ
-    str     r0, [ip, #MB86H60_TIMER_ENABLE]
-    
+    str     r0, [ip, #MB86H60_TIMER_ENABLE]    
 
     /*
      *  Start the timer
@@ -237,12 +215,10 @@ CALLOUT_START(timer_value_mb86h60, 0, patch_timer_mb86h60)
    	/*
 	 * Get the uart base address (patched)
 	 */
-    /*
 	mov		r2,     #0x000000ff
 	orr		r2, r2, #0x0000ff00
 	orr		r2, r2, #0x00ff0000
 	orr		r2, r2, #0xff000000
-    */
 
     /* Debug */
     /*
@@ -294,12 +270,10 @@ CALLOUT_START(timer_reload_mb86h60, 0, patch_timer_mb86h60)
    	/*
 	 * Get the uart base address (patched)
 	 */
-    /*
 	mov		r2,     #0x000000ff
 	orr		r2, r2, #0x0000ff00
 	orr		r2, r2, #0x00ff0000
 	orr		r2, r2, #0xff000000
-    */
 
     /* Debug */
     /*

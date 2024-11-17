@@ -90,7 +90,7 @@ main(int argc, char **argv, char **envv)
 	 */
 	init_raminfo();
 
-#if 0 //Let arm_cpuspeed() do the calculation based on timer_start() and timer_diff()
+#if 1 //Let arm_cpuspeed() do the calculation based on timer_start() and timer_diff()
 	/*
 	 * set CPU frequency
 	 */

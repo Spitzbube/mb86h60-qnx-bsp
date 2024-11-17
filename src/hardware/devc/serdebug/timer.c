@@ -22,7 +22,7 @@
 #if 1
 int my_timer_tick(message_context_t *ctp, int code, unsigned flags, void *handle)
 {
-    fprintf(stderr, "timer_tick: TODO!!!\n");
+//    fprintf(stderr, "timer_tick: TODO!!!\n");
 
 }
 #endif
