@@ -754,6 +754,28 @@ void* usb_interrupt_handler(void* a)
 }
 
 
+/* 10467c - todo */
+int sub_10467c(struct Struct_1047a8* a,
+    int b, int c, int d, int e)
+{
+#if 1
+    fprintf(stderr, "sub_10467c: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 104760 - todo */
+void sub_104760(struct Struct_1047a8* a, int b)
+{
+#if 1
+    fprintf(stderr, "sub_104760: TODO!!!\n");
+#endif
+    
+}
+
+
 /* 1047a8 - complete */
 int sub_1047a8(struct Struct_1047a8** a, int b)
 {
@@ -772,6 +794,76 @@ int sub_1047a8(struct Struct_1047a8** a, int b)
     p->Data_8 = &p->Data_4;
 
     *a = p;
+
+    return 0;
+}
+
+
+/* 1047dc - todo */
+int usb_store_data_key(struct Struct_1047a8* r6, 
+    int sb, 
+    int r7, 
+    int r8, 
+    int fp, //arg0
+    int arg4, //arg4
+    void* arg8, //arg8
+    int sl) //argc
+{
+#if 0
+    fprintf(stderr, "usb_store_data_key: TODO!!!\n");
+#endif
+
+    int r1 = sub_10467c(r6, r7, r8, fp, arg4);
+    if (r1 != 0)
+    {
+        sub_104760(r6, r1);
+    }
+    //loc_104824
+    struct
+    {
+        int Data_0; //0
+        struct
+        {
+            void* Data_0; //0
+
+        }* Data_4; //4
+        int Data_8; //8
+        int fill_0xc; //12
+        int Data_0x10; //0x10
+        int Data_0x14; //0x14
+        int Data_0x18; //0x18
+        int Data_0x1c; //0x1c
+        void* Data_0x20; //0x20
+        int Data_0x24; //0x24
+        //40 = 0x28
+    }* r4 = calloc(1, 40);
+    if (r4 == NULL)
+    {
+        return 12;
+    }
+    //0x0010483c
+    void* r5 = malloc(sl);
+    if (r5 == NULL)
+    {
+        free(r4);
+
+        return 12;
+    }
+    //loc_10485c
+    r4->Data_8 = sb;
+    r4->Data_0x10 = r7;
+    r4->Data_0x14 = r8;
+    r4->Data_0x18 = fp;
+    r4->Data_0x1c = arg4;
+
+    memcpy(r5, arg8, sl);
+
+    r4->Data_0x20 = r5;
+    r4->Data_0x24 = sl;
+    r4->Data_0 = 0;
+    r4->Data_4 = r6->Data_8;
+    r4->Data_4->Data_0 = r4;
+    r6->Data_8 = r4;
 
     return 0;
 }
@@ -1343,10 +1435,10 @@ void udi_start_driver(int argc, char* const argv[])
         }
     }
 
-    sp4.Data_0 = 0;
-    sp4.Data_4 = 0;
-    sp4.Data_8 = 0;
-    sp4.Data_0x14 = 0;
+    sp4.Data_0 = -1;
+    sp4.Data_4 = -1;
+    sp4.Data_8 = -1;
+    sp4.Data_0x14 = -1;
     sp4.Data_0x18 = udi_transfer_done;
     sp4.Data_0x1c = udi_insertion;
     sp4.Data_0x20 = udi_removal;

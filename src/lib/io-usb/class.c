@@ -800,13 +800,228 @@ int CLASS_SetDeviceAdress(struct USB_Controller_Inner_0x7c* fp_0x78,
 
 
 /* 10bd20 - todo */
-int CLASS_validate_device_descriptor(struct USB_Controller_Inner_0x7c* a)
+int CLASS_validate_device_descriptor(struct USB_Controller_Inner_0x7c* fp8)
 {
-#if 1
+#if 0
     fprintf(stderr, "CLASS_validate_device_descriptor: TODO!!!\n");
 #endif
 
+    if ((fp8->device_descriptor.bLength != sizeof(usbd_device_descriptor_t)) ||
+        (fp8->device_descriptor.bNumConfigurations == 0) || 
+        (fp8->device_descriptor.bDescriptorType != USB_DESC_DEVICE) ||
+        (fp8->device_descriptor.bMaxPacketSize0 == 0))
+    {
+        usb_slogf(12, 2, 1, 
+            "CLASS_EnumerateDevice: Get full device descriptor data corrupted (%x %x %x %x)",
+            fp8->device_descriptor.bLength,
+            fp8->device_descriptor.bNumConfigurations,
+            fp8->device_descriptor.bDescriptorType,
+            fp8->device_descriptor.bMaxPacketSize0);
 
+        return 22;
+    }
+    //loc_10bdcc
+    return 0;
+}
+
+
+/* 10c1e0 - todo */
+int CLASS_EnumerateDeviceConfiguration(int a, struct USB_Controller_Inner_0x7c* b)
+{
+#if 1
+    fprintf(stderr, "CLASS_EnumerateDeviceConfiguration: TODO!!!\n");
+#endif
+
+
+    return 0;
+}
+
+
+/* 10cdec - todo */
+int CLASS_SelectDefaultConfiguration(struct USB_Controller* a, struct USB_Controller_Inner_0x7c* b)
+{
+#if 1
+    fprintf(stderr, "CLASS_SelectDefaultConfiguration: TODO!!!\n");
+#endif
+
+
+    return 0;
+}
+
+
+struct Struct_10ae08
+{
+    uint8_t bDeviceClass; //0
+    uint8_t bDeviceSubClass; //1
+    uint8_t bDeviceProtocol; //2
+    uint16_t idProduct; //4
+    uint16_t idVendor; //6
+    //8???
+};
+
+
+/* 10ae08 - complete */
+struct ArrayClass* sub_10ae08(struct Struct_10ae08* fp_0x10)
+{
+#if 0
+    fprintf(stderr, "sub_10ae08: TODO!!!\n");
+#endif
+
+    uint32_t i = 0;
+    struct ArrayClass* fp8 = &ArrayClass[0];
+
+    for (; i < 8; i++, fp8++)
+    {
+#if 1
+        fprintf(stderr, "sub_10ae08[%d]: fp8->bData_0x2c=%d, fp8->Data_0=%d(%d), fp8->Data_0x14=0x%x\n",
+            i,
+            fp8->bData_0x2c, 
+            fp8->Data_0, fp_0x10->bDeviceClass, 
+            fp8->Data_0x14);
+#endif
+        if ((fp8->bData_0x2c != 0) &&
+            (fp8->Data_0 == fp_0x10->bDeviceClass) &&
+            (fp8->Data_0x14 == 0x10))
+        {
+            return fp8;
+        }
+    } //for (i = 0; i < 8; i++, fp8++)
+
+    i = 0;
+    fp8 = &ArrayClass[0];
+
+    for (; i < 8; i++, fp8++)
+    {
+#if 1
+        fprintf(stderr, "sub_10ae08[%d]: fp8->bData_0x2c=%d, fp8->Data_0=%d\n",
+            i,
+            fp8->bData_0x2c, fp8->Data_0);
+#endif
+        if ((fp8->bData_0x2c != 0) && 
+            (fp8->Data_0 == -1))
+        {
+            return fp8;
+        }
+    }
+
+    return NULL;
+}
+
+
+/* 10af0c - todo */
+void sub_10af0c(int a, int b, int c, int d)
+{
+#if 1
+    fprintf(stderr, "sub_10af0c: TODO!!!\n");
+#endif
+
+}
+
+
+/* 10ceb4 - todo */
+int CLASS_StartDriver(struct USB_Controller_Inner_0x7c* fp_0x28)
+{
+#if 1
+    fprintf(stderr, "CLASS_StartDriver: TODO!!!\n");
+#endif
+
+    struct Struct_10ae08 fp_0x24;
+
+    struct ArrayClass* fp_0x1c;
+    usbd_device_descriptor_t* fp_0x18;
+    struct
+    {
+        int fill_0[2]; //0
+        uint8_t fill_8; //8
+        uint8_t bData_9; //9
+        int fill_0xc[2]; //12 = 0xc
+        int Data_0x14; //0x14
+        //???
+    }* fp_0x14;
+
+    struct fp_0x10
+    {
+        int fill_0[2]; //0
+        int Data_8; //8
+        int fill_0xc[4]; //12 = 0xc
+        struct fp_0x10* Data_0x1c; //0x1c = 28
+        //???
+    }* fp_0x10;
+
+    struct
+    {
+        uint16_t fill_0; //0
+        uint8_t fill_2; //2
+        uint8_t bData_3; //3
+        //???
+    }* fp_0xc;
+    
+    int fp8;
+    
+    fp_0x18 = &fp_0x28->device_descriptor;
+
+    fp_0x24.idProduct = fp_0x18->idProduct;
+    fp_0x24.idVendor = fp_0x18->idVendor;
+    fp_0x24.bDeviceClass = fp_0x18->bDeviceClass;
+    fp_0x24.bDeviceSubClass = fp_0x18->bDeviceSubClass;
+    fp_0x24.bDeviceProtocol = fp_0x18->bDeviceProtocol;
+
+    fp_0x1c = sub_10ae08(&fp_0x24);
+    if (fp_0x1c != NULL)
+    {
+        //0x0010cf2c
+        fp_0x28->Data_0x18 = fp_0x1c;
+
+        if (fp_0x18->bNumConfigurations == 1)
+        {
+            //0x0010cf48
+            fp_0x14 = fp_0x28->Data_0x84;
+            fp8 = fp_0x14->bData_9;
+            //->loc_10cf6c
+        }
+        else
+        {
+            //loc_10cf64
+            fp8 = -1;
+        }
+        //loc_10cf6c
+        (fp_0x1c->Data_0x24__)(fp_0x28->Data_0x88, 
+            fp_0x28->device_address, fp8, -1);
+        //->loc_10d04c
+    }
+    else
+    {
+        //loc_10cf9c
+        fp_0x24.bDeviceClass = fp_0x18->bDeviceClass;
+        fp_0x24.bDeviceSubClass = fp_0x18->bDeviceSubClass;
+        fp_0x24.bDeviceProtocol = fp_0x18->bDeviceProtocol;
+
+        if (fp_0x18->bNumConfigurations == 1)
+        {
+            //0x0010cfd0
+            fp_0x14 = fp_0x28->Data_0x84;
+            fp_0x10 = fp_0x14->Data_0x14;
+            //->loc_10d040
+            while (fp_0x10 != NULL)
+            {
+                //->loc_10cfec
+                fp_0xc = &fp_0x10->Data_8;
+
+                if (fp_0xc->bData_3 == 0)
+                {
+                    //0x0010d008
+                    sub_10af0c(fp_0x28->Data_0x88,
+                        fp_0x28->device_address, fp_0x14->bData_9, fp_0x10);
+                }
+                //loc_10d034
+                fp_0x10 = fp_0x10->Data_0x1c;
+                //loc_10d040
+            } //while (fp_0x10 != 0)
+            //loc_10d04c
+        }
+        //loc_10d04c
+    }
+    //loc_10d04c
     return 0;
 }
 
@@ -923,9 +1138,46 @@ int CLASS_EnumerateDevice(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
         return 0x8300;
     }
     //loc_10d60c
+    usb_store_data_key(fp_0x18->Data_0x8c, 
+        0, 1, 0x100, 0, 0, fp_0xc, sizeof(usbd_device_descriptor_t));
 
-    fprintf(stderr, "loc_10d60c: TODO!!!\n");
-    //TODO!!!
+    usbd_free(fp_0xc);
+
+    fp_0x10 = CLASS_EnumerateDeviceConfiguration(fp_0x20, fp_0x18);
+    if (fp_0x10 != 0)
+    {
+        CLASS_CancelDeviceEnumeration(fp_0x18);
+
+        return fp_0x10;
+    }
+    //loc_10d680
+    if ((fp_0x18->device_descriptor.bDeviceClass == 9/*Hub???*/) ||
+        (((UsbdiGlobals.Data_0x10 & 0x40000000) == 0) && 
+            ((fp_0x18->device_descriptor.bNumConfigurations < 2) ||
+            ((UsbdiGlobals.Data_0x10 & 1) == 0))))
+    {
+        //loc_10d6d0
+        fp_0x10 = CLASS_SelectDefaultConfiguration(fp8, fp_0x18);
+        if (fp_0x10 != 0)
+        {
+            CLASS_CancelDeviceEnumeration(fp_0x18);
+
+            return fp_0x10;
+        }
+    }
+    //loc_10d700
+    fp_0x18->bData_0xd = 1;
+
+    fp_0x10 = CLASS_StartDriver(fp_0x18);
+    if (fp_0x10 != 0)
+    {
+        return 0x8402;
+    }
+    //loc_10d730
+    usb_slogf(12, 2, 1, "CLASS_EnumerateDevice: bus %d dno %d, vid %x",
+        fp8->Data_8, 
+        fp_0x18->device_address, 
+        fp_0x18->device_descriptor.idVendor);
 
     return 0;
 }
@@ -1353,7 +1605,7 @@ struct ArrayClass* CLASS_RegisterDriver(struct Struct_10acec* a)
             p->Data_0x10 = a->Data_0x10;
             p->Data_0x14 = a->Data_0x14;
             p->Data_0x20 = a->Data_0x18;
-            p->Data_0x24 = a->Data_0x1c;
+            p->Data_0x24__ = a->Data_0x1c;
             p->Data_0x28 = a->Data_0x20;
             p->bData_0x2c = 1;
 
