@@ -15,6 +15,8 @@
 #include <sys/procmgr.h>
 #include <hw/pci.h>
 #include <pthread.h>
+#include <sys/usb100.h>
+#include <sys/usbdi.h>
 
 #include "io-usb.h"
 

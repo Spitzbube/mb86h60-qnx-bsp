@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <sys/neutrino.h>
 #include <sys/netmgr.h>
+#include <sys/usbdi.h>
 #include <pthread.h>
 #include <arm/mb86h60.h>
 #include "mu_hdrdf.h"

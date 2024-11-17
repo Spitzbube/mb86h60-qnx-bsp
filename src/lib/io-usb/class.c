@@ -200,7 +200,8 @@ int CLASS_ExtractDevice(int fp_0x10, int fp_0x14, int fp_0x18)
     }
     //loc_10cac0
     usb_slogf(12, 2, 1, "CLASS_ExtractDevice:  dno %d, vid %x, parent %d, port %d, openings %d",
-        fp8->Data_0, fp8->wData_0x34, fp_0x14, fp_0x18, fp8->Data_0x10);
+        fp8->Data_0, fp8->device_descriptor.idVendor, 
+        fp_0x14, fp_0x18, fp8->Data_0x10);
 
     return sub_10c748(fp_0xc, fp8);
 }
@@ -309,12 +310,12 @@ struct USB_Controller_Inner_0x7c* sub_10d208(struct USB_Controller* fp_0x10, int
 
 
 /* 112b08 - todo */
-int sub_112b08(struct USB_Controller* fp_0x10, 
+int USB_EnableEndpoint(struct USB_Controller* fp_0x10, 
     struct USB_Controller_Inner_0x7c* fp_0x14, 
     struct Struct_112b08* fp_0x18)
 {
 #if 1
-    fprintf(stderr, "sub_112b08: TODO!!!\n");
+    fprintf(stderr, "USB_EnableEndpoint: TODO!!!\n");
 #endif
 
     int fp8 = 0;
@@ -354,10 +355,10 @@ int sub_112b08(struct USB_Controller* fp_0x10,
 
 
 /* 10cb2c - todo */
-int sub_10cb2c(struct USB_Controller_Inner_0x7c* a)
+int CLASS_CancelDeviceEnumeration(struct USB_Controller_Inner_0x7c* a)
 {
 #if 1
-    fprintf(stderr, "sub_10cb2c: TODO!!!\n");
+    fprintf(stderr, "CLASS_CancelDeviceEnumeration: TODO!!!\n");
 #endif
 
     return 0;
@@ -365,19 +366,23 @@ int sub_10cb2c(struct USB_Controller_Inner_0x7c* a)
 
 
 /* 10bab4 - todo */
-void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_0x1c,
-    int e/*fp4*/, 
+void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10, 
+    int fp_0x14, 
+    int fp_0x18, 
+    int fp_0x1c,
+    int request_type/*fp4*/, //e.g. USB_GET_DESCRIPTOR 
     int f/*fp8*/, 
     int g/*fp_0xc*/, 
     int h/*fp_0x10*/, 
     int i/*fp_0x14*/, 
     int j/*fp_0x18*/, 
-    void* k/*fp_0x1c*/, 
+    void* buffer/*fp_0x1c*/, 
     int l/*fp_0x20*/, 
     int o/*fp_0x24*/)
 {
 #if 1
-    fprintf(stderr, "sub_10bab4: TODO!!!\n");
+    fprintf(stderr, "CLASS_CreateUrb: request_type=%d: TODO!!!\n",
+        request_type);
 #endif
 
     struct USB_Controller* fp8;
@@ -394,7 +399,7 @@ void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_
     fp_0x10->Data_0x28 = 0;
     fp_0x10->Data_0 = 0;
     fp_0x10->Data_0x38 = (fp_0x1c == 1)? 0x80: 0x00;
-    fp_0x10->Data_0x3c = e; //fp4;
+    fp_0x10->Data_0x3c = request_type; //fp4;
     fp_0x10->Data_0x40 = h; //fp_0x10;
     fp_0x10->Data_0x44 = g; //fp_0xc;
     fp_0x10->Data_0x48 = f; //fp8;
@@ -407,13 +412,13 @@ void sub_10bab4(struct Struct_10bab4* fp_0x10, int fp_0x14, int fp_0x18, int fp_
     {
         if (fp8->Data_0x6c & 0x40000000)
         {
-            fp_0x10->Data_0x2c = k/*fp_0x1c*/;
+            fp_0x10->Data_0x2c = buffer/*fp_0x1c*/;
             //->loc_10bc14
         }
         else
         {
             //loc_10bbfc
-            fp_0x10->Data_0x2c = sub_117854(k/*fp_0x1c*/);
+            fp_0x10->Data_0x2c = sub_117854(buffer/*fp_0x1c*/);
         }
     }
     //loc_10bc14
@@ -462,10 +467,10 @@ int sub_111030(struct USB_Controller* a, void* b, struct Struct_112b08* c)
 
 
 /* 111ab0 - todo */
-int sub_111ab0(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
+int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
 {
 #if 1
-    fprintf(stderr, "sub_111ab0: TODO!!!\n");
+    fprintf(stderr, "USB_ControlTransfer: TODO!!!\n");
 #endif
 
     int fp_0x3c = 0;
@@ -652,7 +657,7 @@ int sub_111ab0(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
     //loc_111f48
     fp_0x40->Data_0x30 = fp_0x2c;
 
-    sub_1177f8(fp_0x38);
+    usbd_free(fp_0x38);
 
     if (fp_0x3c != 0)
     {
@@ -663,48 +668,156 @@ int sub_111ab0(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_0x44)
 }
 
 
-/* 10bc1c - todo */
-int sub_10bc1c(struct USB_Controller_Inner_0x7c* fp_0x70, 
-    int fp_0x74, int fp_0x78, void* fp_0x7c, int fp4)
+/* 10cc08 - todo */
+void CLASS_CreateDeviceDescriptor(uint8_t* fp8, usbd_device_descriptor_t* fp_0xc)
 {
 #if 1
-    fprintf(stderr, "sub_10bc1c: TODO!!!\n");
+    int i;
+    for (i = 0; i < sizeof(usbd_device_descriptor_t); i++)
+    {
+        fprintf(stderr, "CLASS_CreateDeviceDescriptor: fp8[%d]=0x%02x\n", i, fp8[i]);
+    }
+#endif
+
+    fp_0xc->bLength = fp8[0];
+    fp_0xc->bDescriptorType = fp8[1];
+    fp_0xc->bcdUSB = fp8[2] | (fp8[3] << 8);
+    fp_0xc->bDeviceClass = fp8[4];
+    fp_0xc->bDeviceSubClass = fp8[5];
+    fp_0xc->bDeviceProtocol = fp8[6];
+    fp_0xc->bMaxPacketSize0 = fp8[7];
+    fp_0xc->idVendor = fp8[8] | (fp8[9] << 8);
+    fp_0xc->idProduct = fp8[10] | (fp8[11] << 8);
+    fp_0xc->bcdDevice = fp8[12] | (fp8[13] << 8);
+    fp_0xc->iManufacturer = fp8[14];
+    fp_0xc->iProduct = fp8[15];
+    fp_0xc->iSerialNumber = fp8[16];
+    fp_0xc->bNumConfigurations = fp8[17];
+}
+
+
+/* 10bc1c - todo */
+int CLASS_GetDescriptor(struct USB_Controller_Inner_0x7c* fp_0x70, 
+    int descr_type/*fp_0x74*/, 
+    int fp_0x78, 
+    void* buffer/*fp_0x7c*/, 
+    int fp4)
+{
+#if 1
+    fprintf(stderr, "CLASS_GetDescriptor: descr_type=%d: TODO!!!\n",
+        descr_type);
 #endif
 
     struct Struct_10bab4 fp_0x6c;
 
-    int fp8 = 0;
+    int res/*fp8*/ = 0;
 
-    sub_10bab4(&fp_0x6c, fp_0x70->Data_0x88, fp_0x70->Data_0, 1,
-        6/*MUSB_REQ_GET_DESCRIPTOR*/, 
-        fp_0x74, 
+    /* Prepare the Standard Request */
+    CLASS_CreateUrb(&fp_0x6c, 
+        fp_0x70->Data_0x88, 
+        fp_0x70->Data_0, 
+        1,
+        USB_GET_DESCRIPTOR, 
+        descr_type, 
         0, 
         0, 
         fp_0x78, 
         0, 
-        fp_0x7c, 
+        buffer, 
         fp4, 
         2000);
 
-    fp8 = sub_111ab0(&fp_0x6c, &fp_0x70->Data_0x40);
-    if (fp8 != 0)
+    res = USB_ControlTransfer(&fp_0x6c, &fp_0x70->Data_0x40);
+    if (res != 0)
     {
         usb_slogf(12, 2, 1, "%s:  Get descriptor type %d failed 0x%x",
-            "CLASS_GetDescriptor", fp_0x74, fp8);
+            "CLASS_GetDescriptor", descr_type, res);
     }
     //loc_10bd10
-    return fp8;
+    return res;
+}
+
+
+/* 10d05c - todo */
+int CLASS_SetDeviceAdress(struct USB_Controller_Inner_0x7c* fp_0x78, 
+    char* fp_0x7c)
+{
+#if 1
+    fprintf(stderr, "CLASS_SetDeviceAdress: fp_0x78->Data_4=%d: TODO!!!\n",
+        fp_0x78->Data_4);
+#endif
+
+    struct Struct_10bab4 fp_0x70;
+    struct USB_Controller* fp_0xc;
+    int res; //res;
+    
+    fp_0xc = &usb_controllers[fp_0x78->Data_0x88];
+
+    usb_slogf(12, 2, 1, "%s:  Set address %d",
+        fp_0x7c, fp_0x78->Data_4);
+
+    /* Prepare the Standard Request */
+    CLASS_CreateUrb(&fp_0x70,
+        fp_0x78->Data_0x88,
+        fp_0x78->Data_0,
+        2,
+        USB_SET_ADDRESS,
+        0,
+        0,
+        0,
+        fp_0x78->Data_4,
+        0,
+        0,
+        0, 
+        2000);
+
+    res = USB_ControlTransfer(&fp_0x70, &fp_0x78->Data_0x40);
+    if (res != 0)
+    {
+        usb_slogf(12, 2, 1, "%s:  Set address failed %x",
+            fp_0x7c, res);
+
+        return res;
+    }
+    //loc_10d18c
+    fp_0x78->Data_0 = fp_0x78->Data_4;
+
+    delay(20);
+
+    res = USB_EnableEndpoint(fp_0xc, fp_0x78, &fp_0x78->Data_0x40);
+    if (res != 0)
+    {
+        usb_slogf(12, 2, 1, "%s:  CTRL_PrepareControlEndpoint failed",
+            fp_0x7c);
+
+        return res;
+    }
+    //loc_10d1f8
+    return 0;
+}
+
+
+/* 10bd20 - todo */
+int CLASS_validate_device_descriptor(struct USB_Controller_Inner_0x7c* a)
+{
+#if 1
+    fprintf(stderr, "CLASS_validate_device_descriptor: TODO!!!\n");
+#endif
+
+
+    return 0;
 }
 
 
 /* 10d2f0 - todo */
-int sub_10d2f0(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
+int CLASS_EnumerateDevice(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
 {
 #if 1
-    fprintf(stderr, "sub_10d2f0: TODO!!!\n");
+    fprintf(stderr, "CLASS_EnumerateDevice: TODO!!!\n");
 #endif
 
     struct USB_Controller_Inner_0x7c* fp_0x18;
+    void* fp_0x14;
     int fp_0x10; 
     void* fp_0xc;
     struct USB_Controller* fp8;
@@ -722,23 +835,23 @@ int sub_10d2f0(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
         //->loc_10d770
     }
     //loc_10d390
-    fp_0x10 = sub_112b08(fp8, fp_0x18, &fp_0x18->Data_0x40);
+    fp_0x10 = USB_EnableEndpoint(fp8, fp_0x18, &fp_0x18->Data_0x40);
     if (fp_0x10 != 0)
     {
         usb_slogf(12, 2, 1, "CLASS_EnumerateDevice: USB_EnableEndpoint failed");
 
-        sub_10cb2c(fp_0x18);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
 
         return 0x8202;
         //->loc_10d770
     }
     //loc_10d3e4
-    fp_0xc = sub_117bbc(0x12);
+    fp_0xc = sub_117bbc(sizeof(usbd_device_descriptor_t));
     if (fp_0xc == NULL)
     {
         usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  device descriptor ENOMEM");
 
-        sub_10cb2c(fp_0x18);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
 
         return 0x9000;
         //->loc_10d770
@@ -746,13 +859,70 @@ int sub_10d2f0(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
     //loc_10d428
     usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  Get device descriptor");
 
-    fp_0x10 = sub_10bc1c(fp_0x18, 1, 0, fp_0xc, 8);
+    fp_0x10 = CLASS_GetDescriptor(fp_0x18, USB_DESC_DEVICE, 0, fp_0xc, 8);
     if (fp_0x10 != 0)
     {
+        usb_slogf(12, 2, 1, 
+            "CLASS_EnumerateDevice:  Get device descriptor failed %x", fp_0x10);
 
+        usbd_free(fp_0xc);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
+
+        return 0x8403;
     }
-    //loc_10d4a8
-    fprintf(stderr, "loc_10d4a8: TODO!!!\n");
+    //loc_10d4a8: Extract Device Descriptor data (max packet size)
+    CLASS_CreateDeviceDescriptor(fp_0xc, &fp_0x18->device_descriptor);
+    //0x0010d4c0
+    fp_0x18->Data_0x40.wData_4 = fp_0x18->device_descriptor.bMaxPacketSize0;
+
+    if (fp_0x18->Data_0x40.wData_4 == 0)
+    {
+        //0x0010d4e4
+        usb_slogf(12, 2, 1, "CLASS_EnumerateDevice: Control Endpoint MPS is zero");
+
+        usbd_free(fp_0xc);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
+
+        return 0x8403;
+    }
+    //loc_10d514
+    fp_0x14 = fp_0xc;
+
+    if (CLASS_SetDeviceAdress(fp_0x18, "CLASS_EnumerateDevice") != 0)
+    {
+        //0x0010d538
+        usbd_free(fp_0xc);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
+
+        return 0x8300;
+    }
+    //loc_10d550
+    usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  Get full device descriptor");
+
+    if (CLASS_GetDescriptor(fp_0x18, USB_DESC_DEVICE, 0, fp_0xc, 
+            sizeof(usbd_device_descriptor_t)) != 0)
+    {
+        usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  Get full device descriptor failed %x",
+            fp_0x10);
+
+        usbd_free(fp_0xc);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
+
+        return 0x8300;
+    }
+    //loc_10d5c8
+    CLASS_CreateDeviceDescriptor(fp_0xc, &fp_0x18->device_descriptor);
+
+    if (CLASS_validate_device_descriptor(fp_0x18) != 0)
+    {
+        usbd_free(fp_0xc);
+        CLASS_CancelDeviceEnumeration(fp_0x18);
+
+        return 0x8300;
+    }
+    //loc_10d60c
+
+    fprintf(stderr, "loc_10d60c: TODO!!!\n");
     //TODO!!!
 
     return 0;
@@ -787,7 +957,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
             {
                 delay(100);
 
-                fp_0x10 = sub_10d2f0(fp_0x18, 0, fp_0x1c, 
+                fp_0x10 = CLASS_EnumerateDevice(fp_0x18, 0, fp_0x1c, 
                     (fp8->controller_methods->get_root_device_speed)(fp8, fp_0x1c));
 
                 if (fp_0x10 != 0)

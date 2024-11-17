@@ -1458,10 +1458,10 @@ void* sub_114b8c(int a, void* b)
 
 
 /* 1177f8 - todo */
-void sub_1177f8(void* a)
+void usbd_free(void* a)
 {
 #if 1
-    fprintf(stderr, "sub_1177f8: TODO!!!\n");
+    fprintf(stderr, "usbd_free: TODO!!!\n");
 #endif
 
 }
