@@ -147,6 +147,46 @@ struct ArrayClass
 };
 
 
+struct UsbConfiguration
+{
+    int fill_0; //0
+    usbd_configuration_descriptor_t configuration_descriptor; //4 +9 = 0x0d
+    struct UsbConfiguration* Data_0x10; //0x10
+    struct UsbInterfaces* Data_0x14; //0x14
+    struct USB_Controller_Inner_0x7c* Data_0x18; //0x18
+    //0x1c
+};
+
+
+struct UsbInterface
+{
+    int fill_0[2];
+    usbd_interface_descriptor_t Data_8; //8 +9 = 0x11
+    int fill_0x14[2]; //0x14
+    struct UsbInterface* Data_0x1c; //0x1c = 28
+    struct UsbEndpoint* Data_0x20; //0x20 = 32
+    struct UsbConfiguration* Data_0x24; //0x24 = 36
+    //0x28
+};
+
+
+struct UsbEndpoint
+{
+    usbd_endpoint_descriptor_t endpoint_descriptor; //0
+    struct UsbEndpoint* Data_8; //8
+    int fill_0xc; //0xc
+    struct UsbInterfaces* Data_0x10; //0x10
+    int Data_0x14; //0x14
+    int* Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    int* Data_0x20; //0x20
+    int fill_0x24[3]; //0x24
+    pthread_mutex_t Data_0x30; //0x30
+    pthread_cond_t Data_0x38; //0x38
+    //0x40
+};
+
+
 struct Struct_120220
 {
     int fill_0; //0

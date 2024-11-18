@@ -754,33 +754,71 @@ void* usb_interrupt_handler(void* a)
 }
 
 
-/* 10467c - todo */
-int sub_10467c(struct Struct_1047a8* a,
+/* 10467c - complete */
+struct Struct_10467c* usb_find_key(struct Struct_1047a8* a,
     int b, int c, int d, int e)
 {
-#if 1
-    fprintf(stderr, "sub_10467c: TODO!!!\n");
+#if 0
+    fprintf(stderr, "usb_find_key: TODO!!!\n");
 #endif
+
+    struct Struct_10467c* r0 = a->Data_4;
+
+    while (r0 != NULL)
+    {
+        //loc_104690
+        if ((r0->Data_0x10 == b) &&
+            (r0->Data_0x14 == c) &&
+            (r0->Data_0x18 == d) &&
+            (r0->Data_0x1c == e))
+        {
+            //->loc_1046cc
+            break;
+        }
+        //loc_1046c0
+        r0 = r0->Data_0;
+    }
+    //loc_1046cc
+    return r0;
+}
+
+
+/* 104760 - complete */
+int usb_remove_data_key(struct Struct_1047a8* a, struct Struct_10467c* b)
+{
+#if 0
+    fprintf(stderr, "usb_remove_data_key: TODO!!!\n");
+#endif
+
+    if (b->Data_0 != NULL)
+    {
+        b->Data_0->Data_4 = b->Data_4;
+    }
+    else
+    {
+        a->Data_8 = b->Data_4;
+    }
+
+    int r2 = b->Data_0;
+    int* r3 = b->Data_4;
+    *r3 = r2;
+
+    if (b->Data_0x20 != NULL)
+    {
+        free(b->Data_0x20);
+    }
+
+    free(b);
 
     return 0;
 }
 
 
-/* 104760 - todo */
-void sub_104760(struct Struct_1047a8* a, int b)
-{
-#if 1
-    fprintf(stderr, "sub_104760: TODO!!!\n");
-#endif
-    
-}
-
-
 /* 1047a8 - complete */
-int sub_1047a8(struct Struct_1047a8** a, int b)
+int usb_data_store_init(struct Struct_1047a8** a, int b)
 {
 #if 0
-    fprintf(stderr, "sub_1047a8: TODO!!!\n");
+    fprintf(stderr, "usb_data_store_init: TODO!!!\n");
 #endif
 
     struct Struct_1047a8* p = calloc(1, sizeof(struct Struct_1047a8));
@@ -790,7 +828,7 @@ int sub_1047a8(struct Struct_1047a8** a, int b)
         return 12;
     }
 
-    p->Data_4 = 0;
+    p->Data_4 = NULL;
     p->Data_8 = &p->Data_4;
 
     *a = p;
@@ -813,10 +851,10 @@ int usb_store_data_key(struct Struct_1047a8* r6,
     fprintf(stderr, "usb_store_data_key: TODO!!!\n");
 #endif
 
-    int r1 = sub_10467c(r6, r7, r8, fp, arg4);
-    if (r1 != 0)
+    struct Struct_10467c* r1 = usb_find_key(r6, r7, r8, fp, arg4);
+    if (r1 != NULL)
     {
-        sub_104760(r6, r1);
+        usb_remove_data_key(r6, r1);
     }
     //loc_104824
     struct
@@ -1596,13 +1634,13 @@ void* sub_117854(void* a)
 
 
 /* 117bbc - todo */
-void* sub_117bbc(int a)
+void* usbd_alloc(size_t size)
 {
 #if 0
-    fprintf(stderr, "sub_117bbc: TODO!!!\n");
+    fprintf(stderr, "usbd_alloc: TODO!!!\n");
 #endif
 
-    return usbdi_memchunk_malloc(UsbdiGlobals.Data_8, a);
+    return usbdi_memchunk_malloc(UsbdiGlobals.Data_8, size);
 }
 
 

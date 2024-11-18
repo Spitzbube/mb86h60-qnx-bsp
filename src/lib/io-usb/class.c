@@ -3,7 +3,11 @@
 
 
 
+struct UsbInterface UsbInterfaces[80]; //0x001215b0
+struct UsbEndpoint UsbEndpoints[320]; //0x00122230
 struct ArrayClass  ArrayClass[8]; //0x00127230
+struct UsbConfiguration UsbConfigurations[40]; //0x001273b4
+
 
 static void* usb_port_enum_handler(void*);
 
@@ -272,7 +276,7 @@ struct USB_Controller_Inner_0x7c* sub_10afc4(struct USB_Controller* fp_0x10)
                 fp8->new_device_address, 
                 &fp8->Data_0x94, &fp8->Data_0x70);
 
-            sub_1047a8(&fp8->Data_0x8c, 0);
+            usb_data_store_init(&fp8->Data_0x8c, 0);
 
             return fp8;
         }
@@ -495,7 +499,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
     }* fp8;
 
     // Allocate Setup data
-    fp_0x38 = sub_117bbc(8);
+    fp_0x38 = usbd_alloc(8);
     if (fp_0x38 == NULL)
     {
         return 12;
@@ -825,13 +829,519 @@ int CLASS_validate_device_descriptor(struct USB_Controller_Inner_0x7c* fp8)
 }
 
 
-/* 10c1e0 - todo */
-int CLASS_EnumerateDeviceConfiguration(int a, struct USB_Controller_Inner_0x7c* b)
+/* 10b1a4 - complete */
+struct UsbConfiguration* CLASS_GetFreeConfiguration(struct USB_Controller_Inner_0x7c* d)
 {
-#if 1
+#if 0
+    fprintf(stderr, "CLASS_GetFreeConfiguration: TODO!!!\n");
+#endif
+
+    uint32_t i;
+    struct UsbConfiguration* c = &UsbConfigurations[0];
+
+    for (i = 0; i < 40; c++, i++)
+    {
+        if (c->Data_0x18 == NULL)
+        {
+            c->Data_0x18 = d;
+            return c;
+        }
+    }
+
+    return NULL;
+}
+
+
+/* 10b2b8 - todo */
+void CLASS_CreateConfigurationDescriptor(uint8_t* fp8, usbd_configuration_descriptor_t* fp_0xc)
+{
+#if 0
+    fprintf(stderr, "CLASS_CreateConfigurationDescriptor: TODO!!!\n");
+#endif
+
+    fp_0xc->bLength = fp8[0];
+    fp_0xc->bDescriptorType = fp8[1];
+    fp_0xc->wTotalLength = fp8[2] | (fp8[3] << 8);
+    fp_0xc->bNumInterfaces = fp8[4];
+    fp_0xc->bConfigurationValue = fp8[5];
+    fp_0xc->iConfiguration = fp8[6];
+    fp_0xc->bmAttributes = fp8[7];
+    fp_0xc->MaxPower = fp8[8];
+}
+
+
+/* 10bddc - complete */
+int CLASS_validate_configuration_descriptor(usbd_configuration_descriptor_t* fp8)
+{
+#if 0
+    fprintf(stderr, "CLASS_validate_configuration_descriptor: TODO!!!\n");
+#endif
+
+    if ((fp8->wTotalLength < sizeof(usbd_configuration_descriptor_t)) ||
+        (fp8->bNumInterfaces == 0) ||
+        (fp8->bDescriptorType != USB_DESC_CONFIGURATION))
+    {
+        //loc_10be1c
+        usb_slogf(12, 2, 1, 
+            "CLASS_EnumerateDeviceConfiguration:  Invalid data in configuration descriptor ( 0x%x, 0x%x, 0x%x )",
+            fp8->wTotalLength, fp8->bNumInterfaces, fp8->bDescriptorType);
+
+        return 22;
+    }
+
+    return 0;
+}
+
+
+/* 0x0010b228 - complete */
+struct UsbInterface* CLASS_GetFreeInterface(struct UsbConfiguration* fp_0x10)
+{
+#if 0
+    fprintf(stderr, "CLASS_EnumerateDeviceInterface: TODO!!!\n");
+#endif
+
+    uint32_t i;
+    struct UsbInterface* fp8 = &UsbInterfaces[0];
+    //->loc_10b29c
+    for (i = 0; i < 80; fp8++, i++)
+    {
+        //loc_10b250
+        if (fp8->Data_0x24 == 0)
+        {
+            memset(fp8, 0, sizeof(struct UsbInterface));
+
+            fp8->Data_0x24 = fp_0x10;
+
+            return fp8;
+        }
+        //loc_10b284
+    } //for (i = 0; i < 80; i++)
+
+    return NULL;
+}
+
+
+/* 0x0010b3a0 - complete */
+void CLASS_CreateInterfaceDescriptor(uint8_t* fp8, usbd_interface_descriptor_t* fp_0xc)
+{
+#if 0
+    fprintf(stderr, "CLASS_CreateInterfaceDescriptor: TODO!!!\n");
+#endif
+
+    fp_0xc->bLength = fp8[0];
+    fp_0xc->bDescriptorType = fp8[1];
+    fp_0xc->bInterfaceNumber = fp8[2];
+    fp_0xc->bAlternateSetting = fp8[3];
+    fp_0xc->bNumEndpoints = fp8[4];
+    fp_0xc->bInterfaceClass = fp8[5];
+    fp_0xc->bInterfaceSubClass = fp8[6];
+    fp_0xc->bInterfaceProtocol = fp8[7];
+    fp_0xc->iInterface = fp8[8];
+}
+
+
+/* 0x0010b470 - complete */
+int CLASS_EnumerateDeviceInterface(struct UsbConfiguration* fp_0x10, 
+    uint8_t* fp_0x14, struct UsbInterface** fp_0x18)
+{
+#if 0
+    fprintf(stderr, "CLASS_EnumerateDeviceInterface: TODO!!!\n");
+#endif
+
+    struct UsbInterface* fp_0xc;
+    struct UsbInterface* fp8;
+
+    fp_0xc = CLASS_GetFreeInterface(fp_0x10);
+    if (fp_0xc == NULL)
+    {
+        *fp_0x18 = NULL;
+
+        return 12;
+    }
+    //loc_10b4b8
+    CLASS_CreateInterfaceDescriptor(fp_0x14, &fp_0xc->Data_8);
+
+    if (fp_0x10->Data_0x14 == NULL)
+    {
+        fp_0x10->Data_0x14 = fp_0xc;
+        //->loc_10b524
+    }
+    else
+    {
+        //loc_10b4ec
+        fp8 = fp_0x10->Data_0x14;
+        //->loc_10b508
+        while (fp8->Data_0x1c != NULL)
+        {
+            //loc_10b4fc
+            fp8 = fp8->Data_0x1c;
+        }
+        //0x0010b518
+        fp8->Data_0x1c = fp_0xc;
+    }
+    //loc_10b524
+    *fp_0x18 = fp_0xc;
+
+    return 0;
+}
+
+
+/* 0x0010b540 - todo */
+struct UsbEndpoint* CLASS_GetFreeEndpoint(struct UsbInterface* fp_0x10)
+{
+#if 0
+    fprintf(stderr, "CLASS_GetFreeEndpoint: TODO!!!\n");
+#endif
+
+    uint32_t i;
+    struct UsbEndpoint* fp8 = &UsbEndpoints[0];
+    //->loc_10b644
+    for (i = 0; i < 320; fp8++, i++)
+    {
+        //loc_10b568
+        if (fp8->Data_0x10 == NULL)
+        {
+            fp8->Data_0x10 = fp_0x10;
+            fp8->Data_0x14 = 0;
+            fp8->Data_0x18 = &fp8->Data_0x14;
+            fp8->Data_0x1c = 0;
+            fp8->Data_0x20 = &fp8->Data_0x1c;
+
+            pthread_mutex_init(&fp8->Data_0x30, 0);
+            pthread_cond_init(&fp8->Data_0x38, 0);
+
+            usb_slogf(12, 2, 1, "%s(%d): epno %d, emutexp %p",
+                "CLASS_GetFreeEndpoint", 0x1d5, i, &fp8->Data_0x30);
+
+            return fp8;
+        }
+        //loc_10b62c
+    }
+
+    return NULL;
+}
+
+
+/* 0x0010b664 - todo */
+void CLASS_CreateEndpointDescriptor(uint8_t* fp8, usbd_endpoint_descriptor_t* fp_0xc)
+{
+#if 0
+    fprintf(stderr, "CLASS_CreateEndpointDescriptor: TODO!!!\n");
+#endif
+
+    fp_0xc->bLength = fp8[0];
+    fp_0xc->bDescriptorType = fp8[1];
+    fp_0xc->bEndpointAddress = fp8[2];
+    fp_0xc->bmAttributes = fp8[3];
+    fp_0xc->wMaxPacketSize = fp8[4] | (fp8[5] << 8);
+    fp_0xc->bInterval = fp8[6];
+}
+
+
+/* 0x0010b724 - todo */
+int CLASS_EnumerateDeviceEndpoint(struct UsbInterface* fp_0x10, 
+        uint8_t* fp_0x14, struct UsbEndpoint** fp_0x18)
+{
+#if 0
+    fprintf(stderr, "CLASS_EnumerateDeviceEndpoint: TODO!!!\n");
+#endif
+
+    struct UsbEndpoint* fp_0xc;
+    struct UsbEndpoint* fp8;
+
+    fp_0xc = CLASS_GetFreeEndpoint(fp_0x10);
+    if (fp_0xc == NULL)
+    {
+        *fp_0x18 = NULL;
+
+        return 12;
+    }
+    //loc_10b76c
+    CLASS_CreateEndpointDescriptor(fp_0x14, &fp_0xc->endpoint_descriptor);
+
+    if (fp_0x10->Data_0x20 == NULL)
+    {
+        fp_0x10->Data_0x20 = fp_0xc;
+        //->loc_10b7d4
+    }
+    else
+    {
+        //loc_10b79c
+        fp8 = fp_0x10->Data_0x20;
+        //->loc_10b7b8
+        while (fp8->Data_8 != NULL)
+        {
+            //loc_10b7ac
+            fp8 = fp8->Data_8;
+        }
+        //0x0010b7c8
+        fp8->Data_8 = fp_0xc;
+    }
+    //loc_10b7d4
+    *fp_0x18 = fp_0xc;
+
+    return 0;
+}
+
+
+/* 10b7f0 - todo */
+int CLASS_ResolveConfiguration(struct UsbConfiguration* fp_0x28, uint8_t* fp_0x2c)
+{
+#if 0
+    fprintf(stderr, "CLASS_SelectDefaultConfiguration: TODO!!!\n");
+#endif
+
+    struct UsbEndpoint* fp_0x24;
+    struct UsbInterface* fp_0x20;
+    usbd_configuration_descriptor_t* fp_0x1c;
+    int fp_0x18;
+    int fp_0x14;
+    int fp_0x10 = 0;
+    int fp_0xc;
+    int fp8;
+
+    fp_0x1c = &fp_0x28->configuration_descriptor;
+    fp_0x18 = fp_0x1c->wTotalLength;
+    fp_0x2c += fp_0x1c->bLength;
+    fp_0x18 -= fp_0x1c->bLength;
+    fp_0x20 = NULL;
+    fp_0x24 = NULL;
+    //->loc_10b954
+    while (fp_0x18 > 0)
+    {
+        //loc_10b860
+        switch (fp_0x2c[1]) //bDescriptorType
+        {
+            case USB_DESC_INTERFACE:
+                //loc_10b880
+                fp_0x14 = CLASS_EnumerateDeviceInterface(fp_0x28, fp_0x2c, &fp_0x20);
+                if (fp_0x14 != 0)
+                {
+                    //0x0010b8a8
+                    return fp_0x14;
+                }
+                //->loc_10b910
+                break;
+
+            case USB_DESC_ENDPOINT:
+                //loc_10b8b0
+                if (fp_0x20 == 0)
+                {
+                    //0x0010b8bc
+                    usb_slogf(12, 2, 1, 
+                        "CLASS_ResolveConfiguration: No interface found for this endpoint");
+
+                    return -1;
+                }
+                //loc_10b8dc
+                fp_0x14 = CLASS_EnumerateDeviceEndpoint(fp_0x20, fp_0x2c, &fp_0x24);
+                if (fp_0x14 != 0)
+                {
+                    return fp_0x14;
+                }
+                //loc_10b914
+                break;
+
+            default:
+                //loc_10b914
+                break;
+        }
+        //loc_10b914
+        if (fp_0x2c[0] == 0)
+        {
+            return -1;
+        }
+        //loc_10b92c
+        fp_0x18 -= fp_0x2c[0]; //bLength
+        fp_0x2c += fp_0x2c[0]; //bLength
+        //loc_10b954
+    } //while (fp_0x18 > 0)
+    //0x0010b960
+    fp_0x20 = fp_0x28->Data_0x14;
+    //->loc_10ba50
+    while (fp_0x20 != 0)
+    {
+        //loc_10b970
+        fp_0xc = 0;
+        fp8 = fp_0x20->Data_8.bNumEndpoints;
+
+        if (fp_0x20->Data_8.bAlternateSetting == 0)
+        {
+            fp_0x10++;
+        }
+        //loc_10b9a0
+        fp_0x24 = fp_0x20->Data_0x20;
+        //->loc_10b9f8
+        while (fp_0x24 != NULL)
+        {
+            //loc_10b9b0
+            if (fp_0x24->endpoint_descriptor.wMaxPacketSize == 0)
+            {
+                usb_slogf(12, 2, 1, 
+                    "CLASS_ResolveConfiguration: Endpoint has wMaxPacketSize of zero");
+                
+                return -1;
+            }
+            //loc_10b9e0
+            fp_0xc++;
+            fp_0x24 = fp_0x24->Data_8;
+        } //while (fp_0x24 != NULL)
+        //0x0010ba04
+        if (fp_0xc != fp8)
+        {
+            usb_slogf(12, 2, 1, 
+                "CLASS_ResolveConfiguration: num endpoints are not consistent (expect %d parsed %d)",
+                fp8, fp_0xc);
+
+            return -1;
+        }
+        //loc_10ba44
+        fp_0x20 = fp_0x20->Data_0x1c;
+    } //while (fp_0x20 != 0)
+    //0x0010ba5c
+    if (fp_0x10 != fp_0x28->configuration_descriptor.bNumInterfaces)
+    {
+        //0x0010ba70
+        usb_slogf(12, 2, 1, 
+            "CLASS_ResolveConfiguration: num interfaces are not consistent (%d %d)",
+            fp_0x28->configuration_descriptor.bNumInterfaces, fp_0x10);
+        
+        return -1;
+    }
+    //loc_10baa4
+    return 0;
+}
+
+
+/* 10c1e0 - todo */
+int CLASS_EnumerateDeviceConfiguration(int fp_0x28, struct USB_Controller_Inner_0x7c* fp_0x2c)
+{
+#if 0
     fprintf(stderr, "CLASS_EnumerateDeviceConfiguration: TODO!!!\n");
 #endif
 
+    void* fp_0x24;
+    struct UsbConfiguration* fp_0x20;
+    struct UsbConfiguration* fp_0x1c;
+    usbd_configuration_descriptor_t* fp_0x18;
+    void* fp_0x14;
+    int fp_0x10;
+    uint32_t fp_0xc;
+    int fp8 = 0;
+
+    fp_0x10 = fp_0x2c->device_descriptor.bNumConfigurations;
+    if (fp_0x10 == 0)
+    {
+        return 22;
+    }
+    //loc_10c21c
+    fp_0x24 = usbd_alloc(sizeof(usbd_configuration_descriptor_t));
+    if (fp_0x24 == NULL)
+    {
+        usb_slogf(12, 2, 1, 
+            "CLASS_EnumerateDeviceConfiguration:  config descriptor ENOMEM");
+
+        return 0x9000;
+    }
+    //loc_10c258
+    //->loc_10c4b0
+    for (fp_0xc = 0; (fp_0xc < fp_0x10) && (fp8 == 0); fp_0xc++)
+    {
+        //loc_10c264
+        fp8 = CLASS_GetDescriptor(fp_0x2c, 
+                USB_DESC_CONFIGURATION, 
+                fp_0xc, 
+                fp_0x24, 
+                sizeof(usbd_configuration_descriptor_t));
+        if (fp8 != 0)
+        {
+            usb_slogf(12, 2, 1, 
+                "CLASS_EnumerateDeviceConfiguration:  Get config descriptor failed %x",
+                fp8);
+
+            usbd_free(fp_0x24);
+
+            return 0x8300;
+        }
+        //loc_10c2c4
+        fp_0x20 = CLASS_GetFreeConfiguration(fp_0x2c);
+        if (fp_0x20 == NULL)
+        {
+            usbd_free(fp_0x24);
+
+            return 0x9000;
+        }
+        //loc_10c2f0
+        if (fp_0x2c->Data_0x84 == NULL)
+        {
+            fp_0x2c->Data_0x84 = fp_0x20;
+            //->loc_10c348
+        }
+        else
+        {
+            //loc_10c310
+            fp_0x1c = fp_0x2c->Data_0x84;
+            //->loc_10c32c
+            while (fp_0x1c->Data_0x10 != NULL)
+            {
+                //loc_10c320
+                fp_0x1c = fp_0x1c->Data_0x10;
+            }
+            //0x0010c33c
+            fp_0x1c->Data_0x10 = fp_0x20;
+        }
+        //loc_10c348
+        fp_0x18 = &fp_0x20->configuration_descriptor;
+
+        CLASS_CreateConfigurationDescriptor(fp_0x24, fp_0x18);
+
+        if (CLASS_validate_configuration_descriptor(fp_0x18) != 0)
+        {
+            usbd_free(fp_0x24);
+
+            return 0x8300;
+        }
+        //loc_10c388
+        fp_0x14 = usbd_alloc(fp_0x18->wTotalLength);
+        if (fp_0x14 == NULL)
+        {
+            usbd_free(fp_0x24);
+
+            return 0x9000;
+        }
+        //loc_10c3bc
+        usb_slogf(12, 2, 1, 
+            "CLASS_EnumerateDeviceConfiguration:  Get full config descriptor");
+
+        fp8 = CLASS_GetDescriptor(fp_0x2c, USB_DESC_CONFIGURATION, 
+                fp_0xc, fp_0x14, fp_0x18->wTotalLength);
+        if (fp8 != 0)
+        {
+            usb_slogf(12, 2, 1, 
+                "CLASS_EnumerateDeviceConfiguration:  Get full config descriptor failed %x",
+                fp8);
+
+            usbd_free(fp_0x14);
+            usbd_free(fp_0x24);
+
+            return 0x8300;
+        }
+        //loc_10c440
+        usb_store_data_key(fp_0x2c->Data_0x8c, 
+            0, 1, fp_0xc | 0x200, 0, 0, fp_0x14, fp_0x18->wTotalLength);
+
+        fp8 = CLASS_ResolveConfiguration(fp_0x20, fp_0x14);
+
+        usbd_free(fp_0x14);
+
+    } //for (fp_0xc = 0; (fp_0xc < fp_0x10) && (fp8 == 0); fp_0xc++)
+    //loc_10c4cc
+    usbd_free(fp_0x24);
+    
+    if (fp8 != 0)
+    {
+        return 0x8400;
+    }
 
     return 0;
 }
@@ -1063,7 +1573,7 @@ int CLASS_EnumerateDevice(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
         //->loc_10d770
     }
     //loc_10d3e4
-    fp_0xc = sub_117bbc(sizeof(usbd_device_descriptor_t));
+    fp_0xc = usbd_alloc(sizeof(usbd_device_descriptor_t));
     if (fp_0xc == NULL)
     {
         usb_slogf(12, 2, 1, "CLASS_EnumerateDevice:  device descriptor ENOMEM");

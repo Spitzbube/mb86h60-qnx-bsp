@@ -76,10 +76,24 @@ struct USB_Controller_Inner4
 #endif
 
 
+struct Struct_10467c
+{
+    struct Struct_10467c* Data_0; //0
+    int Data_4; //4
+    int fill_8[2]; //8
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14
+    int Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    void* Data_0x20; //0x20 = 32
+    //???
+};
+
+
 struct Struct_1047a8
 {
     int fill_0; //0
-    int Data_4; //4
+    struct Struct_10467c* Data_4; //4
     void* Data_8; //8
     //12
 };
@@ -124,7 +138,7 @@ struct USB_Controller_Inner_0x7c
     pthread_mutex_t Data_0x70; //0x70
     pthread_cond_t Data_0x78; //0x78
     int fill_0x80; //0x80
-    int Data_0x84; //0x84
+    struct UsbConfiguration* Data_0x84; //0x84
     int Data_0x88; //0x88
     struct Struct_1047a8* Data_0x8c; //0x8c
     int fill_0x90; //0x90
