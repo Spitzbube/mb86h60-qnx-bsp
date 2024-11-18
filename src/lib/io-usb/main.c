@@ -1478,7 +1478,7 @@ void udi_start_driver(int argc, char* const argv[])
     sp4.Data_8 = -1;
     sp4.Data_0x14 = -1;
     sp4.Data_0x18 = udi_transfer_done;
-    sp4.Data_0x1c = udi_insertion;
+    sp4.on_insertion = udi_insertion;
     sp4.Data_0x20 = udi_removal;
 
     UdiCtrl.Data_8 = CLASS_RegisterDriver(&sp4);

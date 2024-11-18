@@ -961,23 +961,23 @@ int CLASS_EnumerateDeviceInterface(struct UsbConfiguration* fp_0x10,
     //loc_10b4b8
     CLASS_CreateInterfaceDescriptor(fp_0x14, &fp_0xc->Data_8);
 
-    if (fp_0x10->Data_0x14 == NULL)
+    if (fp_0x10->interfaces == NULL)
     {
-        fp_0x10->Data_0x14 = fp_0xc;
+        fp_0x10->interfaces = fp_0xc;
         //->loc_10b524
     }
     else
     {
         //loc_10b4ec
-        fp8 = fp_0x10->Data_0x14;
+        fp8 = fp_0x10->interfaces;
         //->loc_10b508
-        while (fp8->Data_0x1c != NULL)
+        while (fp8->next != NULL)
         {
             //loc_10b4fc
-            fp8 = fp8->Data_0x1c;
+            fp8 = fp8->next;
         }
         //0x0010b518
-        fp8->Data_0x1c = fp_0xc;
+        fp8->next = fp_0xc;
     }
     //loc_10b524
     *fp_0x18 = fp_0xc;
@@ -999,9 +999,9 @@ struct UsbEndpoint* CLASS_GetFreeEndpoint(struct UsbInterface* fp_0x10)
     for (i = 0; i < 320; fp8++, i++)
     {
         //loc_10b568
-        if (fp8->Data_0x10 == NULL)
+        if (fp8->interface == NULL)
         {
-            fp8->Data_0x10 = fp_0x10;
+            fp8->interface = fp_0x10;
             fp8->Data_0x14 = 0;
             fp8->Data_0x18 = &fp8->Data_0x14;
             fp8->Data_0x1c = 0;
@@ -1059,23 +1059,23 @@ int CLASS_EnumerateDeviceEndpoint(struct UsbInterface* fp_0x10,
     //loc_10b76c
     CLASS_CreateEndpointDescriptor(fp_0x14, &fp_0xc->endpoint_descriptor);
 
-    if (fp_0x10->Data_0x20 == NULL)
+    if (fp_0x10->endpoints == NULL)
     {
-        fp_0x10->Data_0x20 = fp_0xc;
+        fp_0x10->endpoints = fp_0xc;
         //->loc_10b7d4
     }
     else
     {
         //loc_10b79c
-        fp8 = fp_0x10->Data_0x20;
+        fp8 = fp_0x10->endpoints;
         //->loc_10b7b8
-        while (fp8->Data_8 != NULL)
+        while (fp8->next != NULL)
         {
             //loc_10b7ac
-            fp8 = fp8->Data_8;
+            fp8 = fp8->next;
         }
         //0x0010b7c8
-        fp8->Data_8 = fp_0xc;
+        fp8->next = fp_0xc;
     }
     //loc_10b7d4
     *fp_0x18 = fp_0xc;
@@ -1157,7 +1157,7 @@ int CLASS_ResolveConfiguration(struct UsbConfiguration* fp_0x28, uint8_t* fp_0x2
         //loc_10b954
     } //while (fp_0x18 > 0)
     //0x0010b960
-    fp_0x20 = fp_0x28->Data_0x14;
+    fp_0x20 = fp_0x28->interfaces;
     //->loc_10ba50
     while (fp_0x20 != 0)
     {
@@ -1170,7 +1170,7 @@ int CLASS_ResolveConfiguration(struct UsbConfiguration* fp_0x28, uint8_t* fp_0x2
             fp_0x10++;
         }
         //loc_10b9a0
-        fp_0x24 = fp_0x20->Data_0x20;
+        fp_0x24 = fp_0x20->endpoints;
         //->loc_10b9f8
         while (fp_0x24 != NULL)
         {
@@ -1184,7 +1184,7 @@ int CLASS_ResolveConfiguration(struct UsbConfiguration* fp_0x28, uint8_t* fp_0x2
             }
             //loc_10b9e0
             fp_0xc++;
-            fp_0x24 = fp_0x24->Data_8;
+            fp_0x24 = fp_0x24->next;
         } //while (fp_0x24 != NULL)
         //0x0010ba04
         if (fp_0xc != fp8)
@@ -1196,7 +1196,7 @@ int CLASS_ResolveConfiguration(struct UsbConfiguration* fp_0x28, uint8_t* fp_0x2
             return -1;
         }
         //loc_10ba44
-        fp_0x20 = fp_0x20->Data_0x1c;
+        fp_0x20 = fp_0x20->next;
     } //while (fp_0x20 != 0)
     //0x0010ba5c
     if (fp_0x10 != fp_0x28->configuration_descriptor.bNumInterfaces)
@@ -1282,13 +1282,13 @@ int CLASS_EnumerateDeviceConfiguration(int fp_0x28, struct USB_Controller_Inner_
             //loc_10c310
             fp_0x1c = fp_0x2c->Data_0x84;
             //->loc_10c32c
-            while (fp_0x1c->Data_0x10 != NULL)
+            while (fp_0x1c->next != NULL)
             {
                 //loc_10c320
-                fp_0x1c = fp_0x1c->Data_0x10;
+                fp_0x1c = fp_0x1c->next;
             }
             //0x0010c33c
-            fp_0x1c->Data_0x10 = fp_0x20;
+            fp_0x1c->next = fp_0x20;
         }
         //loc_10c348
         fp_0x18 = &fp_0x20->configuration_descriptor;
@@ -1495,7 +1495,7 @@ int CLASS_StartDriver(struct USB_Controller_Inner_0x7c* fp_0x28)
             fp8 = -1;
         }
         //loc_10cf6c
-        (fp_0x1c->Data_0x24__)(fp_0x28->Data_0x88, 
+        (fp_0x1c->on_insertion)(fp_0x28->Data_0x88, 
             fp_0x28->device_address, fp8, -1);
         //->loc_10d04c
     }
@@ -2115,7 +2115,7 @@ struct ArrayClass* CLASS_RegisterDriver(struct Struct_10acec* a)
             p->Data_0x10 = a->Data_0x10;
             p->Data_0x14 = a->Data_0x14;
             p->Data_0x20 = a->Data_0x18;
-            p->Data_0x24__ = a->Data_0x1c;
+            p->on_insertion = a->on_insertion;
             p->Data_0x28 = a->Data_0x20;
             p->bData_0x2c = 1;
 
