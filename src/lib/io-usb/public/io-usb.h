@@ -123,6 +123,7 @@ struct USB_Controller_Inner_0x7c
     int fill_8; //8
     uint8_t bData_0xc; //0xc
     uint8_t bData_0xd; //0xd
+    uint16_t wData_0xe; //0xe
     int Data_0x10; //0x10
     int Data_0x14; //0x14
     struct ArrayClass* Data_0x18; //0x18

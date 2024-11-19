@@ -113,16 +113,3 @@ void udi_transfer_done()
 }
 
 
-void udi_insertion()
-{
-    fprintf(stderr, "udi_insertion\n");
-
-}
-
-
-void udi_removal()
-{
-    fprintf(stderr, "udi_removal\n");
-
-}
-

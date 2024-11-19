@@ -1643,3 +1643,191 @@ void* usbd_alloc(size_t size)
 }
 
 
+
+/* 1146d8 - todo */
+int sub_1146d8()
+{
+#if 1
+    fprintf(stderr, "sub_1146d8: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+struct Struct_114828_a
+{
+    struct Struct_114828_a* Data_0; //0
+    int fill_4[3]; //4
+    int Data_0x10; //0x10
+    //???
+};
+
+
+/* 114828 - todo */
+int sub_114828(struct Struct_114828_a* a, 
+        void* r6, int r7, int r8, int sl)
+{
+#if 1
+    fprintf(stderr, "sub_114828: TODO!!!\n");
+#endif
+
+    int r4;
+
+    if (a == NULL)
+    {
+        pthread_mutex_lock(&UsbdiGlobals.Data_0);
+
+        r4 = 0;
+        struct Struct_114828_a* r5 = UsbdiGlobals.Data_0x24;
+        while (r5 != NULL)
+        {
+            //loc_11486c
+            if (r5->Data_0x10 & 0x01)
+            {
+                //0x00114878
+                int r0 = sub_1146d8(r5, r6, r7, r8, sl);
+                if (r0 != 0)
+                {
+                    if (r4 == 0)
+                    {
+                        r4 = r0;
+                    }
+                }
+                //loc_1148a0
+            }
+            //loc_1148a0
+            r5 = r5->Data_0;
+        }
+        //->loc_1148ac
+        pthread_mutex_unlock(&UsbdiGlobals.Data_0);
+        //->loc_1148dc
+    }
+    //loc_1148bc
+    else if ((a->Data_0x10 & 1) == 0)
+    {
+        r4 = 9;
+        //->loc_1148dc
+    }
+    else
+    {
+        r4 = sub_1146d8(a, r6, r7, r8, sl);
+    }
+    //loc_1148dc
+    return r4;
+}
+
+
+/* 0x00108928 - todo */
+void udi_in_out(struct Struct_114828_a* sp_0x14, 
+        int fp, int r5, int r6)
+{
+#if 1
+    fprintf(stderr, "udi_in_out: TODO\n");
+#endif
+
+    struct USB_Controller_Inner_0x7c* r4;
+    struct UsbConfiguration* sp_0x18;
+    
+    struct 
+    {
+        int fill_0; //0
+        //???
+    } sp_0x2c;
+
+    struct sp_0x98
+    {
+        int fill_0[28]; //0
+        //0x70
+    } sp_0x98;
+    
+    memset(&sp_0x98, 0, sizeof(struct sp_0x98));
+
+    r4 = USB_CheckDevice(r5, r6);
+    if (r4 == NULL)
+    {
+        //->loc_108c84
+        return;
+    }
+
+    if ((fp != 0) && ((r4->bData_0xd & 1) == 0))
+    {
+        //->loc_108c84
+        return;
+    }
+    //loc_108978
+    if (r4->device_descriptor.bDeviceClass == USB_CLASS_HUB)
+    {
+        //->loc_108c84
+        return;
+    }
+
+    struct USB_Controller* r0 = CTRL_HCLookup(r5);
+    if (r0 == NULL)
+    {
+        //->loc_108c84
+        return;
+    }
+
+    sp_0x18 = USB_GetConfiguration(r0, r6, r4->Data_0x14);
+    if (sp_0x18 == NULL)
+    {
+        sp_0x18 = r4->Data_0x84;
+    }
+
+    struct UsbInterface* r6_ = sp_0x18->interfaces;
+    int r3 = r4->wData_0xe;
+
+    //TODO!!!
+
+    //loc_108a28
+    while (r6_ != NULL)
+    {
+        //loc_108a50
+
+
+        //loc_108bfc
+        if (r6_->Data_8.bAlternateSetting == 0)
+        {
+            //0x00108c08
+
+            //TODO!!!
+
+            int r2 = sub_114828(sp_0x14, &sp_0x2c, 
+                        (sp_0x14 != NULL)? 0: 1, 0, 0);
+            if (r2 != 0)
+            {
+                fprintf(stderr, "udi_in_out:  usbdi_client_event %d\n");
+            }
+            //loc_108c78
+        }
+        //loc_108c78
+        r6_ = r6_->next;
+    } //while (r6_ != NULL)
+    //loc_108c84
+    return;
+}
+
+
+
+/* 0x00108cac - todo */
+void udi_insertion(int a, int b)
+{
+#if 0
+    fprintf(stderr, "udi_insertion\n");
+#endif
+
+    udi_in_out(0, 1, a, b);
+}
+
+
+/* 0x00108c90 - todo */
+void udi_removal(int a, int b)
+{
+#if 0
+    fprintf(stderr, "udi_removal\n");
+#endif
+
+    udi_in_out(0, 0, a, b);
+}
+

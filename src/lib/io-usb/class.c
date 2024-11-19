@@ -320,7 +320,7 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
     struct USB_Controller_Inner_0x7c* fp_0x14, 
     struct Struct_112b08* fp_0x18)
 {
-#if 1
+#if 0
     fprintf(stderr, "USB_EnableEndpoint: TODO!!!\n");
 #endif
 
@@ -333,6 +333,7 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
             fp8 = (fp_0x10->ctrl_pipe_methods->ctrl_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
             break;
 
+#if 0
         case 1:
             //loc_112b78
             fp8 = (fp_0x10->isoch_pipe_methods->isoch_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
@@ -349,11 +350,13 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
             //loc_112bd4
             fp8 = (fp_0x10->int_pipe_methods->int_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
             break;
-#if 0
+#endif
+
         default:
             //loc_112bf8
+            fprintf(stderr, "USB_EnableEndpoint: %d: TODO!!!\n",
+                fp_0x18->endpoint_descriptor.bmAttributes & 0x03);
             break;
-#endif
     }
     //loc_112bf8
     return fp8;
@@ -2238,7 +2241,7 @@ int sub_10a51c(int a)
 
     for (i = 0; i < 20; i++)
     {
-        //sub_10a51c
+        //loc_10a538
         ctrl = CTRL_HCLookup(i);
 
         if ((ctrl != NULL) &&
@@ -2380,7 +2383,6 @@ static void* usb_port_enum_handler(void* a)
         }
         else
         {
-#if 1
             //loc_10a9f8
             switch (fp_0x4c.bData_4)
             {
@@ -2475,7 +2477,6 @@ static void* usb_port_enum_handler(void* a)
                     //->loc_10aca0
                     break;
             } //switch (fp_0x4c.bData_4)
-#endif
             //loc_10aca0
             if (pthread_rwlock_unlock(&usb_rwlock) != 0)
             {
