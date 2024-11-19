@@ -162,7 +162,8 @@ struct UsbInterface
 {
     int fill_0[2];
     usbd_interface_descriptor_t Data_8; //8 +9 = 0x11
-    int fill_0x14[2]; //0x14
+    int Data_0x14; //0x14
+    int fill_0x18; //0x18
     struct UsbInterface* next; //0x1c = 28
     struct UsbEndpoint* endpoints; //0x20 = 32
     struct UsbConfiguration* Data_0x24; //0x24 = 36
@@ -174,17 +175,40 @@ struct UsbEndpoint
 {
     usbd_endpoint_descriptor_t endpoint_descriptor; //0
     struct UsbEndpoint* next; //8
-    int fill_0xc; //0xc
+    struct Struct_0xa4* Data_0xc; //0xc
     struct UsbInterface* interface; //0x10
     int Data_0x14; //0x14
     int* Data_0x18; //0x18
     int Data_0x1c; //0x1c
     int* Data_0x20; //0x20
-    int fill_0x24[3]; //0x24
+    int fill_0x24; //0x24
+    int Data_0x28; //0x28
+    int fill_0x2c; //0x2c
     pthread_mutex_t Data_0x30; //0x30
     pthread_cond_t Data_0x38; //0x38
     //0x40
 };
+#if 0
+struct Struct_112b08
+{
+    uint16_t fill_0; //0
+    uint8_t bEndpointAddress; //2
+    uint8_t bData_3; //3
+    uint16_t wData_4; //4
+    uint8_t bData_6; //6
+    int fill_8; //8
+    struct Struct_0xa4* Data_0xc; //0xc
+    int fill_0x10; //0x10
+    int Data_0x14; //0x14
+    void* Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    void* Data_0x20; //0x20
+    int fill_0x24; //0x24
+    int Data_0x28; //0x28
+    int fill_0x2c; //0x2c
+    //0x30???
+};
+#endif
 
 
 struct Struct_120220
@@ -212,6 +236,7 @@ extern int usb_slogf(int opcode, int severity, int v, const char* fmt, ...);
 
 
 extern struct USB_Controller usb_controllers[]; //0x0011f590 +0x14*0x8c
+extern struct USB_Controller* ausb_controllers[]; //0x001201c0
 extern void* Data_12021c; //12021c
 extern struct Struct_120220 Data_120220[]; //0x120220
 extern struct UsbdiGlobals UsbdiGlobals; //0x001212b0

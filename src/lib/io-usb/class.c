@@ -308,8 +308,8 @@ struct USB_Controller_Inner_0x7c* sub_10d208(struct USB_Controller* fp_0x10, int
     fp8->Data_0x1c = (fp_0x14 == 0)? NULL: fp_0x10->Data_0x78[fp_0x14 - 1];
     fp8->Data_0x20 = fp_0x18;
     fp8->Data_0x88 = fp_0x10->Data_8;
-    fp8->Data_0x40.bData_3 = 0;
-    fp8->Data_0x40.wData_4 = 8;
+    fp8->Data_0x40.endpoint_descriptor.bmAttributes = 0;
+    fp8->Data_0x40.endpoint_descriptor.wMaxPacketSize = 8;
 
     return fp8;
 }
@@ -326,7 +326,7 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
 
     int fp8 = 0;
 
-    switch (fp_0x18->bData_3 & 0x03)
+    switch (fp_0x18->endpoint_descriptor.bmAttributes & 0x03)
     {
         case 0:
             //loc_112b50
@@ -450,14 +450,53 @@ void sub_11199c(struct Struct_10bab4* fp8, uint8_t* fp_0xc)
 
 
 /* 110e50 - todo */
-int sub_110e50(int a, int b)
+struct USB_Controller_Inner_0x7c* USB_CheckDevice(uint32_t fp_0x18, uint32_t fp_0x1c)
 {
-#if 1
-    fprintf(stderr, "sub_110e50: TODO!!!\n");
+#if 0
+    fprintf(stderr, "USB_CheckDevice: TODO!!!\n");
 #endif
 
+    struct USB_Controller_Inner_0x7c* fp_0x10;
+    struct USB_Controller* fp_0xc;
+    int32_t i;
 
-    return 0;
+    if ((fp_0x1c > 20) || (fp_0x18 > 10))
+    {
+        return 0;
+    }
+    //loc_110e84
+    if (ausb_controllers[fp_0x18] == 0)
+    {
+        return 0;
+    }
+    //loc_110ea4
+    fp_0xc = &usb_controllers[fp_0x18];
+
+    if (fp_0x1c == 0)
+    {
+        //->loc_110f28
+        for (i = 0; i < 20; i++)
+        {
+            //loc_110ed8
+            fp_0x10 = fp_0xc->Data_0x78[i];
+            if ((fp_0x10 != NULL) && (fp_0x10->device_address == 0))
+            {
+                //0x00110f14
+                return fp_0x10;
+            }
+            //loc_110f1c
+        } //for (i = 0; i < 20; i++)
+        //0x00110f34
+        return 0;
+    }
+    //loc_110f3c
+    fp_0x10 = fp_0xc->Data_0x78[fp_0x1c - 1];
+    if (fp_0x10 == NULL)
+    {
+        return NULL;
+    }
+    //loc_110f74
+    return fp_0x10;
 }
 
 
@@ -492,11 +531,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
     int fp_0x14;
     void* fp_0x10 = fp_0x40->Data_0x2c;
     struct USB_Controller* fp_0xc = &usb_controllers[fp_0x40->Data_0x18];
-    struct
-    {
-        int fill_0[3]; //0
-        uint8_t bData_0xc; //0xc = 12
-    }* fp8;
+    struct USB_Controller_Inner_0x7c* fp8;
 
     // Allocate Setup data
     fp_0x38 = usbd_alloc(8);
@@ -555,8 +590,8 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
             {
                 //loc_111c80
 //                uint32_t r3 = ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/;
-                fp_0x28 = (((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/ > (fp_0x2c - fp_0x1c)/*r2*/)? (fp_0x2c - fp_0x1c)/*r2*/: 
-                    ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/;
+                fp_0x28 = (((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/ > (fp_0x2c - fp_0x1c)/*r2*/)? (fp_0x2c - fp_0x1c)/*r2*/: 
+                    ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/;
 
                 fp_0x40->Data_0x30 = fp_0x28;
                 fp_0x24 = fp_0x40->Data_0x34;
@@ -608,7 +643,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
                     fp_0x30 = r3;
 #else
                     fp_0x30 = (((fp_0x40->Data_0x34/*r2*/ % 
-                        ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/) != 0) ||
+                        ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/) != 0) ||
                         (fp_0x40->Data_0x34 == fp_0x24))? 1: 0;
 #endif
                     fp_0x1c = fp_0x40->Data_0x34;
@@ -637,7 +672,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
         if ((fp_0x3c != 0) && (fp_0xc->Data_0x6c & 0x40))
         {
             //0x00111eac
-            fp8 = sub_110e50(fp_0x40->Data_0x18, fp_0x40->Data_0x14);
+            fp8 = USB_CheckDevice(fp_0x40->Data_0x18, fp_0x40->Data_0x14);
             if ((fp8 != NULL) && (fp8->bData_0xc != 2))
             {
                 sub_111030(fp_0xc, fp8, fp_0x44);
@@ -1347,15 +1382,376 @@ int CLASS_EnumerateDeviceConfiguration(int fp_0x28, struct USB_Controller_Inner_
 }
 
 
-/* 10cdec - todo */
-int CLASS_SelectDefaultConfiguration(struct USB_Controller* a, struct USB_Controller_Inner_0x7c* b)
+/* 0x00111278 - todo */
+struct UsbConfiguration* USB_GetConfiguration(struct USB_Controller* fp_0x10, 
+        uint32_t fp_0x14, int fp_0x18)
+{
+#if 0
+    fprintf(stderr, "USB_GetConfiguration: TODO!!!\n");
+#endif
+
+    struct USB_Controller_Inner_0x7c* fp_0xc;
+    struct UsbConfiguration* fp8;
+
+    if ((fp_0x14 > 20) || (fp_0x14 == 0))
+    {
+        return NULL;
+    }
+    //loc_1112b0
+    fp_0xc = fp_0x10->Data_0x78[fp_0x14 - 1];
+    if (fp_0xc == NULL)
+    {
+        return NULL;
+    }
+    //loc_1112e8
+    fp8 = fp_0xc->Data_0x84;
+    if (fp8 == NULL)
+    {
+        return NULL;
+    }
+    //loc_111330
+    while (fp8->configuration_descriptor.bConfigurationValue != fp_0x18)
+    {
+        //loc_111308
+        if (fp8->next == NULL)
+        {
+            return NULL;
+        }
+        else
+        {
+            //loc_111320
+            fp8 = fp8->next;
+        }
+    }
+
+    return fp8;
+}
+
+
+/* 0x00112c08 - todo */
+int USB_EnableEndpoints(struct USB_Controller* fp_0x18, 
+        struct USB_Controller_Inner_0x7c* fp_0x1c,
+        struct UsbInterface* fp_0x20)
+{
+#if 0
+    fprintf(stderr, "USB_EnableEndpoints: TODO!!!\n");
+#endif
+
+    struct UsbEndpoint* fp_0x10;
+    uint8_t fp9;
+    int fp8 = 0;
+
+    fp9 = fp_0x20->Data_8.bNumEndpoints;
+    fp_0x10 = fp_0x20->endpoints;
+    //->loc_112c7c
+    while ((fp_0x10 != NULL) && (fp9--))
+    {
+        //loc_112c44
+        fp8 = USB_EnableEndpoint(fp_0x18, fp_0x1c, fp_0x10);
+        if (fp8 != 0)
+        {
+            return fp8;
+        }
+        //loc_112c70
+        fp_0x10 = fp_0x10->next;
+    }
+    //loc_112cb0
+    if (fp9 != 0)
+    {
+        return 22;
+    }
+    //loc_112cc4
+    return 0;
+}
+
+
+/* 0x00112cd4 - todo */
+int USB_EnableInterfaces(struct USB_Controller* fp_0x20, struct UsbConfiguration* fp_0x24)
+{
+#if 0
+    fprintf(stderr, "USB_EnableInterfaces: TODO!!!\n");
+#endif
+
+    usbd_configuration_descriptor_t* fp_0x18;
+    struct UsbInterface* fp_0x14;
+    usbd_interface_descriptor_t* fp_0x10;
+    struct USB_Controller_Inner_0x7c* fp_0xc;
+    int fp8;
+
+    fp_0x18 = &fp_0x24->configuration_descriptor;
+    fp_0x14 = fp_0x24->interfaces;
+    fp_0xc = fp_0x24->Data_0x18;
+    fp8 = 0;
+    //->loc_112d78
+    while (fp_0x14 != NULL)
+    {
+        //loc_112d18
+        fp_0x10 = &fp_0x14->Data_8;
+        if (fp_0x10->bAlternateSetting == 0)
+        {
+            fp8 = USB_EnableEndpoints(fp_0x20, fp_0xc, fp_0x14);
+            if (fp8 != 0)
+            {
+                return fp8;
+            }
+            //loc_112d60
+            fp_0x14->Data_0x14 = 0;
+        }
+        //loc_112d6c
+        fp_0x14 = fp_0x14->next;
+    }
+
+    return fp8;
+}
+
+
+/* 0x0011287c - todo */
+struct UsbEndpoint* USB_DisableDeviceEndpoint(struct USB_Controller* fp8, 
+        struct UsbEndpoint* fp_0xc)
 {
 #if 1
+    fprintf(stderr, "USB_DisableDeviceEndpoint: TODO!!!\n");
+#endif
+
+    if (fp8 != NULL)
+    {
+        switch (fp_0xc->endpoint_descriptor.bmAttributes & 0x03)
+        {
+            case 0:
+                //loc_1128c4
+                (fp8->ctrl_pipe_methods->ctrl_transfer_abort)(fp8, NULL, fp_0xc);
+                (fp8->ctrl_pipe_methods->ctrl_endpoint_disable)(fp8, fp_0xc);
+                break;
+
+#if 0 //TODO!!!
+            case 1:
+                //loc_1128fc
+                //TODO!!!
+                break;
+
+            case 2:
+                //loc_112934
+                //TODO!!!
+                break;
+
+            case 3:
+                //loc_11296c
+                //TODO!!!
+                break;
+#endif
+
+            default:
+                //loc_1129a0
+                fprintf(stderr, "USB_DisableDeviceEndpoint: %d: TODO!!!\n",
+                    fp_0xc->endpoint_descriptor.bmAttributes & 0x03);
+                break;
+        }
+    }
+    //loc_1129a0
+    fp_0xc->Data_0xc = NULL;
+
+    return fp_0xc->next;
+}
+
+
+/* 0x001129c0 - todo */
+int USB_DisableEndpoint(struct USB_Controller* fp_0x20, struct UsbInterface* fp_0x24)
+{
+#if 0
+    fprintf(stderr, "USB_DisableEndpoint: TODO!!!\n");
+#endif
+
+    usbd_interface_descriptor_t* fp_0x18;
+    struct UsbEndpoint* fp_0x14;
+    struct UsbEndpoint* fp_0x10;
+    int fp_0xc;
+    int fp8;
+
+    fp8 = 0;
+    fp_0x18 = &fp_0x24->Data_8;
+    fp_0xc = fp_0x18->bNumEndpoints;
+    fp_0x10 = fp_0x24->endpoints;
+    //->loc_112a2c
+    while (fp_0xc--)
+    {
+        //loc_112a04
+        fp_0x14 = fp_0x10;
+
+        fp_0x10 = USB_DisableDeviceEndpoint(fp_0x20, fp_0x14);
+
+        fp_0x14->Data_0xc = NULL;
+    }
+
+    return 0;
+}
+
+
+/* 0x00112a64 - todo */
+int USB_DisableInterfaces(struct USB_Controller* fp_0x18, struct UsbConfiguration* fp_0x1c)
+{
+#if 0
+    fprintf(stderr, "USB_DisableInterfaces: TODO!!!\n");
+#endif
+
+    usbd_configuration_descriptor_t* fp_0x14;
+    struct UsbInterface* fp_0x10;
+    usbd_interface_descriptor_t* fp_0xc;
+    int fp8;
+
+    fp_0x14 = &fp_0x1c->configuration_descriptor;
+    fp_0x10 = fp_0x1c->interfaces;
+    fp8 = 0;
+    //->loc_112aec
+    while (fp_0x10 != NULL)
+    {
+        //loc_112a9c
+        fp_0xc = &fp_0x10->Data_8;
+        if (fp_0xc->bAlternateSetting == 0)
+        {
+            fp8 = USB_DisableEndpoint(fp_0x18, fp_0x10);
+            if (fp8 != 0)
+            {
+                return fp8;
+            }
+        }
+        //loc_112ae0
+        fp_0x10 = fp_0x10->next;
+    }
+
+    return fp8;
+}
+
+
+struct Struct_112d94
+{
+    int fill_0[2]; //0
+    int Data_8; //8
+    int fill_0xc; //0xc
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14 = 20
+    int Data_0x18; //0x18 = 24
+    int fill_0x1c; //0x1c
+    int Data_0x20; //0x20 = 32
+    int fill_0x24[16]; //0x24
+    //???
+};
+
+
+/* 0x00112d94 - todo */
+int USB_SelectConfiguration(struct Struct_112d94* fp_0xd0)
+{
+#if 0
+    fprintf(stderr, "USB_SelectConfiguration: TODO!!!\n");
+#endif
+
+    struct
+    {
+        int fill_0[20]; //0
+        //0x50???
+    } fp_0x68;
+    struct Struct_10bab4 fp_0xcc;
+    struct USB_Controller_Inner_0x7c* fp_0x18; 
+    struct UsbConfiguration* fp_0x14; 
+    struct UsbConfiguration* fp_0x10;
+    int fp_0xc;
+    struct USB_Controller* fp8;
+
+    fp8 = &usb_controllers[fp_0xd0->Data_0x18];
+
+    memset(&fp_0x68, 0, sizeof(fp_0x68));
+
+    fp_0x18 = USB_CheckDevice(fp_0xd0->Data_0x18, fp_0xd0->Data_0x14);
+    if (fp_0x18 == NULL)
+    {
+        fp_0xd0->Data_8 = 0x8204;
+
+        return -1;
+    }
+    //loc_112e1c
+    fp_0x14 = USB_GetConfiguration(fp8, fp_0xd0->Data_0x14, fp_0xd0->Data_0x20);
+    if (fp_0x14 == NULL)
+    {
+        fp_0xd0->Data_8 = 0x8204;
+
+        return -1;
+    }
+    //loc_112e64
+    usb_slogf(12, 2, 1, "USB_SelectConfiguration:  Set config devno %d, cfg %d",
+        fp_0xd0->Data_0x14, fp_0xd0->Data_0x20);
+
+    CLASS_CreateUrb(&fp_0xcc, 
+        fp_0xd0->Data_0x18,
+        fp_0x18->device_address,
+        2,
+        USB_SET_CONFIGURATION,
+        0,
+        0,
+        0,
+        fp_0xd0->Data_0x20,
+        0,
+        0,
+        0,
+        2000);
+
+    fp_0xc = USB_ControlTransfer(&fp_0xcc, &fp_0x18->Data_0x40);
+    if (fp_0xc != 0)
+    {
+        //0x00112f34
+        usb_slogf(12, 2, 1, "USB_SelectConfiguration:  Set config failed %x", fp_0xc);
+
+        fp_0xd0->Data_8 = 0x8204;
+
+        return -1;
+    }
+    //loc_112f68
+    fp_0x10 = USB_GetConfiguration(fp8, fp_0xd0->Data_0x14, fp_0x18->Data_0x14);
+    if (fp_0x10 != NULL)
+    {
+        //0x00112f9c
+        fp_0xc = USB_DisableInterfaces(fp8, fp_0x10);
+    }
+    //loc_112fb0
+    fp_0xc = USB_EnableInterfaces(fp8, fp_0x14);
+
+    fp_0x18->Data_0x14 = fp_0xd0->Data_0x20;
+
+    return fp_0xc;
+}
+
+
+/* 10cdec - todo */
+int CLASS_SelectDefaultConfiguration(struct USB_Controller* fp_0x78, 
+        struct USB_Controller_Inner_0x7c* fp_0x7c)
+{
+#if 0
     fprintf(stderr, "CLASS_SelectDefaultConfiguration: TODO!!!\n");
 #endif
 
+    struct Struct_112d94 fp_0x74; 
+    usbd_device_descriptor_t* fp_0x10;
+    usbd_configuration_descriptor_t* fp_0xc;
+    struct UsbConfiguration* fp8;
 
-    return 0;
+    fp_0x10 = &fp_0x7c->device_descriptor;
+
+    fp8 = USB_GetConfiguration(fp_0x78, 
+        fp_0x7c->device_address,
+        fp_0x7c->Data_0x14);
+
+    if ((fp8 == NULL) && 
+        ((fp8 = fp_0x7c->Data_0x84) == NULL))
+    {
+        return 2;
+    }
+    //loc_10ce60
+    fp_0xc = &fp8->configuration_descriptor;
+
+    fp_0x74.Data_0x18/*fp_0x5c*/ = fp_0x7c->Data_0x88;
+    fp_0x74.Data_0x14/*fp_0x60*/ = fp_0x7c->device_address;
+    fp_0x74.Data_0x10/*fp_0x64*/ = 5;
+    fp_0x74.Data_0x20/*fp_0x54*/ = fp_0xc->bConfigurationValue;
+
+    return USB_SelectConfiguration(&fp_0x74);
 }
 
 
@@ -1600,9 +1996,9 @@ int CLASS_EnumerateDevice(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
     //loc_10d4a8: Extract Device Descriptor data (max packet size)
     CLASS_CreateDeviceDescriptor(fp_0xc, &fp_0x18->device_descriptor);
     //0x0010d4c0
-    fp_0x18->Data_0x40.wData_4 = fp_0x18->device_descriptor.bMaxPacketSize0;
+    fp_0x18->Data_0x40.endpoint_descriptor.wMaxPacketSize = fp_0x18->device_descriptor.bMaxPacketSize0;
 
-    if (fp_0x18->Data_0x40.wData_4 == 0)
+    if (fp_0x18->Data_0x40.endpoint_descriptor.wMaxPacketSize == 0)
     {
         //0x0010d4e4
         usb_slogf(12, 2, 1, "CLASS_EnumerateDevice: Control Endpoint MPS is zero");

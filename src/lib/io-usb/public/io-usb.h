@@ -99,13 +99,9 @@ struct Struct_1047a8
 };
 
 
-struct Struct_112b08
+struct Struct_112b08 //TODO: struct UsbEndpoint
 {
-    uint16_t fill_0; //0
-    uint8_t bData_2; //2
-    uint8_t bData_3; //3
-    uint16_t wData_4; //4
-    uint8_t bData_6; //6
+    usbd_endpoint_descriptor_t endpoint_descriptor; //0
     int fill_8; //8
     struct Struct_0xa4* Data_0xc; //0xc
     int fill_0x10; //0x10
@@ -128,7 +124,7 @@ struct USB_Controller_Inner_0x7c
     uint8_t bData_0xc; //0xc
     uint8_t bData_0xd; //0xd
     int Data_0x10; //0x10
-    int fill_0x14; //0x14
+    int Data_0x14; //0x14
     struct ArrayClass* Data_0x18; //0x18
     void* Data_0x1c; //0x1c
     int Data_0x20; //0x20
@@ -167,7 +163,7 @@ struct USB_Controller
     uint32_t Data_0x6c; //0x6c
     int Data_0x70; //0x70
     int fill_0x74; //0x74
-    void** Data_0x78; //0x78
+    struct USB_Controller_Inner_0x7c** Data_0x78; //0x78
     struct USB_Controller_Inner_0x7c* Data_0x7c; //0x7c
     struct UsbdiGlobals_Inner_0x178* Data_0x80; //0x80
     USB_CONTROLLER_PRIV_T* Data_0x84; //0x84
@@ -203,7 +199,7 @@ struct io_usb_controller_methods_t
 struct io_usb_ctrl_pipe_methods_t
 {
     int (*ctrl_endpoint_enable)(struct USB_Controller*, struct USB_Controller_Inner_0x7c*, struct Struct_112b08*); //0
-    int fill_4; //4
+    int (*ctrl_endpoint_disable)(struct USB_Controller*, struct Struct_112b08*); //4
     int (*ctrl_transfer)(struct USB_Controller*, struct Struct_10bab4*, struct Struct_112b08*, void*, int, int); //8
     int (*ctrl_transfer_abort)(struct USB_Controller*, struct Struct_10bab4*, struct Struct_112b08*); //12
     int Data_16; //16

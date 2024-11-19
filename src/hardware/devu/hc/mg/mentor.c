@@ -1798,11 +1798,12 @@ int MENTOR_InitializeEndpoint(struct Mentor_Controller* r7,
         r1->Data_0x28 = -1;
     }
     //9a50
-    r1->bData_0x1a = r4->bData_3 & 0x03;
-    r1->wData_0x18 = r4->wData_4;
-    r1->bData_0x1b = r4->bData_2 & ~0x7f;
+    r1->bData_0x1a = r4->endpoint_descriptor.bmAttributes & 0x03;
+    r1->wData_0x18 = r4->endpoint_descriptor.wMaxPacketSize;
+    r1->bData_0x1b = r4->endpoint_descriptor.bEndpointAddress & ~0x7f;
     r1->Data_0x20 = 0;
-    r1->Data_0x14 = ((r5->device_address & 0x7f) << 4) | (r4->bData_2 & 0x0f);
+    r1->Data_0x14 = ((r5->device_address & 0x7f) << 4) | 
+            (r4->endpoint_descriptor.bEndpointAddress & 0x0f);
 
     switch (r5->bData_0xc & 0x03)
     {
@@ -1819,7 +1820,7 @@ int MENTOR_InitializeEndpoint(struct Mentor_Controller* r7,
             break;
     }
     //9ac4
-    r1->Data_0x24 = r4->bData_6;
+    r1->Data_0x24 = r4->endpoint_descriptor.bInterval;
 
     if ((r1->bData_0x1c != 0x40) &&
         (r5->Data_0x1c != NULL))
@@ -2442,6 +2443,17 @@ int mentor_ctrl_transfer_abort(struct USB_Controller* a,
 }
 
 
+int mentor_ctrl_endpoint_disable(struct USB_Controller* a, struct Struct_112b08* b)
+{
+#if 1
+    fprintf(stderr, "mentor_ctrl_endpoint_disable: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+
 
 static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
 static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
@@ -2483,7 +2495,7 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
 static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
 {
     mentor_ctrl_endpoint_enable,
-    0, //mentor_ctrl_endpoint_disable,
+    mentor_ctrl_endpoint_disable,
     mentor_ctrl_transfer,
     mentor_ctrl_transfer_abort,
     NULL

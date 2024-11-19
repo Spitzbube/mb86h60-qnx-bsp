@@ -102,7 +102,6 @@ const resmgr_connect_funcs_t ResmgrCFuncs = //0x0011f488
 };
 
 extern struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c
-extern struct USB_Controller* ausb_controllers[]; //0x001201c0
 extern pthread_mutex_t usb_mmutex; //0x120210
 extern int usb_coid; //0x00121578
 extern int usb_priority; //0x0012157c
