@@ -105,7 +105,8 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
         int Data_0; //0
         uint16_t wData_4; //4
         uint16_t wData_6; //6
-
+        int fill_8[26]; //8
+        //0x70
     } sp_0x90;
     pthread_t sp_0x8c;
     int sp_0x88;
@@ -238,7 +239,7 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
         return res;
     }
     //0x000084e0
-    sp_0x8c = 0;
+    sp_0x8c = -1;
 
     usbdi_memory_info(r4);
 

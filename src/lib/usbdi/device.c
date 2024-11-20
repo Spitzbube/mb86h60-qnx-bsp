@@ -31,6 +31,8 @@ struct Struct_5a24
     int Data_0x60; //0x60
     int fill_0x64; //0x64
     uint16_t wData_0x68; //0x68
+    int fill_0x6c; //0x6c
+    //0x70
 };
 
 struct Struct_5a24_d
@@ -160,7 +162,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
             r5 = 2;
             //->loc_5bbc
         }
-    }
+    } //(sl != NULL)
     //loc_5bbc
     if (r7 != NULL)
     {
@@ -180,64 +182,48 @@ int usbdi_sendcmd(int sp_0xc, int r8,
             &sp_0x18, (r7 != NULL)? 1: 0);
     }
     //loc_5bfc
-#if 0
-    int r1 = (sl != 0)? 1: 0;
-    if (r8 != 5)
-    {
-        r1 = 0;
-    }
-    r8 = r1;
-    if (r1 == 0)
-    {
-        //loc_5ca0
-        return r6;
-    }
-#else
     if ((sl != NULL) && (r8 == 5))
     {
-#endif
-    //0x00005c18
-    if (r6 != 0)
-    {
-        if (sl == 0)
+        //0x00005c18
+        if (r6 != 0)
         {
+            if (sl != NULL)
+            {
+                //0x00005c28
+                r4 = 1;
+
+                while ((sl != NULL) && (r4 < 0x41))
+                {
+                    //loc_5c30
+                    if (sl->Data_0x10 != NULL)
+                    {
+                        atomic_sub(&sl->Data_0x10->Data_0xc, 1);
+                    }
+                    //loc_5c48
+                    if (sl->Data_0x24 & 0x200000)
+                    {
+                        r4++;
+                    }
+
+                    if ((sl->Data_0x24 & 0x100000) == 0)
+                    {
+                        //->loc_5ca0
+                        break;
+                    }
+                    //0x00005c60
+                    sl = sl->Data_4;
+                    r4++;
+                } //while ((sl != NULL) && (r4 < 0x41))
+                //loc_5ca0
+            }
             //loc_5ca0
-            return r6;
-        }
-        //0x00005c28
-        r4 = 1;
-        r5 = 1;
-
-        while ((sl != NULL) && (r4 < 0x41))
+        } //if (r6 != 0)
+        //loc_5c88
+        else if (r4 != 0)
         {
-            //loc_5c30
-            if (sl->Data_0x10 != NULL)
-            {
-                atomic_sub(&sl->Data_0x10->Data_0xc, 1);
-            }
-            //loc_5c48
-            if (sl->Data_0x24 & 0x200000)
-            {
-                r4++;
-            }
-
-            if ((sl->Data_0x24 & 0x100000) == 0)
-            {
-                //->loc_5ca0
-                break;
-            }
-            //0x00005c60
-            sl = sl->Data_4;
-            r4++;
-        } //while ((sl != NULL) && (r4 < 0x41))
-        //loc_5ca0
-    }
-    //loc_5c88
-    else if (r4 != 0)
-    {
-        //0x00005c90
-        atomic_sub(&sl->Data_0x10->Data_0xc, 1);
-    }
+            //0x00005c90
+            atomic_sub(&sl->Data_0x10->Data_0xc, 1);
+        }
     }
     //loc_5ca0
     return r6;
