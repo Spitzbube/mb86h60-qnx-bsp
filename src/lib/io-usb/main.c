@@ -1790,6 +1790,7 @@ void udi_in_out(struct Struct_114828_a* sp_0x14,
         if (r6_->Data_8.bAlternateSetting == 0)
         {
             //0x00108c08
+            fprintf(stderr, "udi_in_out: 0x00108c08: TODO!!!%d\n");
 
             //TODO!!!
 
