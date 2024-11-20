@@ -117,7 +117,7 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
 
     struct usbd_connection* r4;
     
-    if ((parm->vusbd != 0) && (parm->vusbd != 0x101))
+    if ((parm->vusbd != 0) && (parm->vusbd != USBD_VERSION))
     {
         return 0x113;
     }
