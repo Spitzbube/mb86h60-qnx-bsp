@@ -92,13 +92,6 @@ int usbdi_resmgr_utime()
 }
 
 
-int usbdi_resmgr_msg()
-{
-    fprintf(stderr, "usbdi_resmgr_msg\n");
-
-}
-
-
 void hub_start_driver(int a, int b)
 {
     fprintf(stderr, "hub_start_driver\n");

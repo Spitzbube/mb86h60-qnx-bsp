@@ -123,6 +123,7 @@
 # Programs require the runtime linker (ldqnx.so) to be at a fixed location
 
 libc.so
+libmy-usbdi.so
 
 [data=copy]
 [data=c]
@@ -148,6 +149,7 @@ cat
 #devu-ehci-mx28.so
 my-io-usb
 devu-mb86h60-mg.so
+my-usb
 
 ###########################################################################
 ## END OF BUILD SCRIPT

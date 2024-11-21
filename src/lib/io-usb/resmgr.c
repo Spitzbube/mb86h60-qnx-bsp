@@ -48,6 +48,16 @@ IOFUNC_OCB_T* usbdi_ocb_calloc(resmgr_context_t *ctp,
 
 
 
+/* 0x00115648 - todo */
+int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/, 
+                    io_msg_t *msg/*r1*/,
+                     RESMGR_OCB_T *ocb/*r5*/)
+{
+    fprintf(stderr, "usbdi_resmgr_msg\n");
+
+}
+
+
 /* 0x00115b70 - complete */
 int _iofunc_callout(int (*func)(), 
         resmgr_context_t *ctp, io_stat_t *msg, iofunc_ocb_t *ocb)

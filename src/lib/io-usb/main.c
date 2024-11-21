@@ -40,7 +40,8 @@ extern int usbdi_resmgr_pathconf();
 extern int usbdi_resmgr_chmod();
 extern int usbdi_resmgr_chown();
 extern int usbdi_resmgr_utime();
-extern int usbdi_resmgr_msg();
+extern int usbdi_resmgr_msg(resmgr_context_t *ctp, io_msg_t *msg,
+                     RESMGR_OCB_T *ocb);
 extern int udi_memory_info(uint32_t*);
 extern void hub_start_driver(int argc, char* const argv[]);
 extern void udi_start_driver(int argc, char* const argv[]);
