@@ -118,7 +118,7 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
 
     struct usbd_connection* r4;
 
-#if 1
+#if 0
     fprintf(stderr, "usbd_connect: TODO!!!\n");
 #endif
     
@@ -303,6 +303,11 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
 
     Data_b698.Data_0x38++;
 
+#if 1
+    fprintf(stderr, "usbd_connect: r4=%p, r4->Data_0x30=%d\n", 
+        r4, r4->Data_0x30);
+#endif
+
     pthread_mutex_unlock(&conn_mutex);
     //->loc_8674
     return res;
@@ -319,34 +324,66 @@ int usbd_disconnect(struct usbd_connection *connection)
 }
 
 
-/* 0x00007934 - todo */
-int usbd_hcd_ext_info(struct usbd_connection *connection, 
-        _Uint32t cindex, usbd_hcd_info_t *info/*r4*/)
+/* 0x00007934 - complete */
+int usbd_hcd_ext_info(struct usbd_connection* connection, 
+        _Uint32t cindex, usbd_hcd_info_t* info/*r4*/)
 {
-#if 1
-    fprintf(stderr, "usbd_hcd_ext_info: cindex=%d: TODO!!!\n", cindex);
+#if 0
+    fprintf(stderr, "usbd_hcd_ext_info: connection=%p, connection->Data_0x30=%d, cindex=%d\n", 
+        connection, connection->Data_0x30, cindex);
 #endif
 
-    struct 
+    struct Struct_5a24 sp_0x70;
+    struct
     {
-        usbd_hcd_info_t sp_0xc; //?
-        int fill[16]; //?
-        struct Struct_5a24 Data_0;
-    } sp_0x70;
-    struct Struct_5a24_d sp4;
+        struct Struct_5a24_d Data_0; //0
+        usbd_hcd_info_t Data_8; //8 +0x24
+        int fill[16]; //0x2c +0x40
+        //0x6c
+    } sp4;    
  
-    sp_0x70.Data_0.Data_0 = cindex;
-    sp4.wData_2 = 0x6c;
+    sp_0x70.Data_0 = cindex;
+    sp4.Data_0.wData_2 = sizeof(sp4);
 
     int res = usbdi_sendcmd(connection->Data_0x30,
-                7, &sp_0x70.Data_0, &sp4);
-#if 1
-    fprintf(stderr, "usbd_hcd_ext_info: res=%d: TODO!!!\n", res);
-#endif
+                7, &sp_0x70, &sp4);
 
     if (res == 0)
     {
-        memcpy(info, &sp_0x70.sp_0xc, sizeof(usbd_hcd_info_t));
+        memcpy(info, &sp4.Data_8, sizeof(usbd_hcd_info_t));
+    }
+
+    return res;
+}
+
+
+/* 0x000078c4 - complete */
+int usbd_topology_ext(struct usbd_connection *connection, 
+        _Uint8t busno, usbd_bus_topology_t *tp)
+{
+#if 0
+    fprintf(stderr, "usbd_topology_ext: connection=%p: TODO!!!\n", 
+        connection);
+#endif
+
+    struct Struct_5a24 sp_0x270;
+    struct
+    {
+        struct Struct_5a24_d Data_0; //0
+        int fill_8[25]; //8 +0x64
+        usbd_bus_topology_t Data_0x6c; //0x6c +0x200
+        //0x26c
+    } sp4;    
+
+    sp_0x270.Data_0 = busno;
+    sp4.Data_0.wData_2 = sizeof(sp4);
+
+    int res = usbdi_sendcmd(connection->Data_0x30,
+                10, &sp_0x270, &sp4);
+    
+    if (res == 0)
+    {
+        memcpy(tp, &sp4.Data_0x6c, sizeof(usbd_bus_topology_t));
     }
 
     return res;

@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <sys/neutrino.h>
+#include <sys/resmgr.h>
 #include <sys/usbdi.h>
 #include "device.h"
 
@@ -21,14 +22,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
     uint16_t r5;
     uint16_t r4;
 
-    struct
-    {
-        uint16_t wData_0; //0
-        uint16_t wData_2; //2
-        uint16_t wData_4; //4
-        uint16_t wData_6; //6
-        //8???
-    } sp_0x230;    
+    io_msg_t sp_0x230;
     iov_t sp_0x28[66]; //0x28/0x2c
     iov_t sp_0x18; //0x18/0x1c
     struct Struct_5a24* sp_0x14;
@@ -39,10 +33,10 @@ int usbdi_sendcmd(int sp_0xc, int r8,
         sp_0xc, r8, sl, r7, (r7 != NULL)? r7->wData_2: 0);
 #endif
 
-    sp_0x230.wData_0 = 0x113;
-    sp_0x230.wData_2 = 8;
-    sp_0x230.wData_4 = 0x12;
-    sp_0x230.wData_6 = r8;
+    sp_0x230.i.type = 0x113;
+    sp_0x230.i.combine_len = 8;
+    sp_0x230.i.mgrid = _IOMGR_USB;
+    sp_0x230.i.subtype = r8;
 
     SETIOV(&sp_0x28[0], &sp_0x230, 8);
 
@@ -77,7 +71,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
                 //loc_5ab8
                 SETIOV(&r6[r5], r4_, 0x70/*sb*/);
 
-                sp_0x230.wData_2 += 0x70;
+                sp_0x230.i.combine_len += 0x70;
 
                 r5++;
 
@@ -86,7 +80,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
                     //0x00005ae8
                     SETIOV(&r6[r5], r4_->Data_0x60, r4_->wData_0x5e);
 
-                    sp_0x230.wData_2 += r4_->wData_0x5e;
+                    sp_0x230.i.combine_len += r4_->wData_0x5e;
 
                     r5++;
                 }
@@ -106,7 +100,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
                 }
                 else
                 {
-                    r4_->wData_0x68 = sp_0x230.wData_2 - 8;
+                    r4_->wData_0x68 = sp_0x230.i.combine_len - 8;
                     r4_ = r3;
                 }
                 //loc_5b4c
@@ -128,7 +122,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
         else
         {
             //loc_5b94
-            sp_0x230.wData_2 = 0x78;
+            sp_0x230.i.combine_len = 0x78;
             
             SETIOV(&sp_0x28[1], sl, 0x70);
 

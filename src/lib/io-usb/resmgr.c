@@ -27,8 +27,8 @@ void usbdi_ocb_free(IOFUNC_OCB_T *ocb)
 
 
 /* 0x00115610 - todo */
-IOFUNC_OCB_T* usbdi_ocb_calloc(resmgr_context_t *ctp,
-                     iofunc_attr_t *attr)
+IOFUNC_OCB_T* usbdi_ocb_calloc(resmgr_context_t* ctp,
+                     iofunc_attr_t* attr)
 {
 #if 1
     fprintf(stderr, "usbdi_ocb_calloc: sizeof(iofunc_ocb_t)=%d / %d TODO!!!\n",
@@ -52,15 +52,66 @@ int udi_enumerate(int a)
 {
     fprintf(stderr, "udi_enumerate: TODO!!!\n");
 
+    return 0;
+}
+
+
+
+/* 106bac - complete */
+int udi_hcd_info(int a, usbd_hcd_info_t* b)
+{
+#if 0
+    fprintf(stderr, "udi_hcd_info: TODO!!!\n");
+#endif
+
+    struct USB_Controller* cntrl;
+
+    if (ausb_controllers[a] == NULL)
+    {
+        return 2;
+    }
+
+    b->vusb = 0x110;
+    b->vusbd = 0x101;
+    b->vhcd = 0x101;
+
+    cntrl = &usb_controllers[a];
+
+    b->capabilities = cntrl->Data_0x6c | 0x1000;
+    b->cindex = cntrl->Data_8;
+    b->max_td_io = cntrl->Data_0x60;
+    strcpy(&b->controller[0], cntrl->Data_0);
+
+    return 0;
+}
+
+
+/* 105ed8 - todo */
+int udi_topology()
+{
+#if 1
+    fprintf(stderr, "udi_topology: TODO!!!\n");
+#endif
+
+    return 0;
 }
 
 
 /* 0x00115648 - todo */
-int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/, 
-                    io_msg_t *msg/*r1*/,
-                     RESMGR_OCB_T *ocb/*r5*/)
+int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/, 
+                    io_msg_t* msg/*r1*/,
+                     RESMGR_OCB_T* ocb/*r5*/)
 {
     int r4;
+
+    usbd_hcd_info_t sp_0x274;
+    struct
+    {
+        uint16_t wData_0; //0
+        uint16_t wData_2; //2
+        int fill_4; //4
+        //8???
+    } sp_0x26c;
 
     struct
     {
@@ -69,10 +120,10 @@ int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/,
         uint16_t wData_6; //6
 
     }* r8;
-    int r6 = ocb->Data_0x18;
+    void* r6 = ocb->Data_0x18;
 
 #if 1
-    fprintf(stderr, "usbdi_resmgr_msg: r6=%d, msg->i.mgrid=%d, msg->i.subtype=%d\n",
+    fprintf(stderr, "usbdi_resmgr_msg: r6=%p, msg->i.mgrid=%d, msg->i.subtype=%d\n",
         r6, msg->i.mgrid, msg->i.subtype);
 #endif
 
@@ -82,7 +133,7 @@ int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/,
         return 0x59;
     }
 
-    if (r6 == 0)
+    if (r6 == NULL)
     {
         //0x00115670
         if (msg->i.subtype != 1)
@@ -167,8 +218,7 @@ int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/,
                 //0x00115738
                 udi_enumerate(ocb->Data_0x18);
                 //->loc_115b48
-                return r4;
-//                break;
+                break;
 
 #if 0
             case 2:
@@ -194,11 +244,38 @@ int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/,
             case 14:
                 //loc_1158b8
                 break;
+#endif
                 
             case 7:
-                //loc_1158cc
+                {
+                    //loc_1158cc
+                    struct Struct_1158cc
+                    {
+                        uint8_t bData_0;
+                    };
+
+                    r4 = udi_hcd_info(((struct Struct_1158cc*)r8)->bData_0,
+                            &sp_0x274);
+                    if (r4 == 0)
+                    {
+                        sp_0x26c.wData_0 = 4;
+                        sp_0x26c.wData_2 = 0x6c;
+
+                        int r0 = MsgReply_r(ctp->rcvid, 0, &sp_0x26c, 0x6c);
+                        if (r0 != 0)
+                        {
+                            r4 = -r0;
+                        }
+                        else
+                        {
+                            r4 |= 0x80000000;
+                        }
+                    }
+                }
+                //->loc_115b48
                 break;
-                
+
+#if 0          
             case 8:
                 //loc_115914
                 break;
@@ -206,11 +283,23 @@ int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/,
             case 9:
                 //loc_11597c
                 break;
+#endif
                 
             case 10:
                 //loc_115990
+                //TODO!!!
+
+                r4 = udi_topology();
+                if (r4 == 0)
+                {
+                    //0x001159e4
+
+                    //TODO!!!
+                }
+                //loc_115b48
                 break;
-                
+
+#if 0          
             case 11:
                 //loc_115a14
                 break;
@@ -234,8 +323,8 @@ int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/,
                 //break;
         }
     }
-
-    return 0;
+    //loc_115b48
+    return r4;
 }
 
 
