@@ -1527,7 +1527,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 {
     struct Mentor_Controller* r4 = a->Data_0x84;
 
-#if 1
+#if 0
     fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x\n", r4->Data_0x6c);
 #endif
 

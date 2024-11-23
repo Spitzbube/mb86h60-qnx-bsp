@@ -389,7 +389,7 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
     int l/*fp_0x20*/, 
     int o/*fp_0x24*/)
 {
-#if 1
+#ifdef USB_DEBUG_ENUMERATION
     fprintf(stderr, "CLASS_CreateUrb: request_type=%d: TODO!!!\n",
         request_type);
 #endif
@@ -2168,7 +2168,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
 /* 110b74 - todo */
 void sub_110b74(int fp_0x28)
 {
-#if 1
+#ifdef USB_DEBUG_ENUMERATION
     fprintf(stderr, "sub_110b74: %d: TODO!!!\n", fp_0x28);
 #endif
 
@@ -2232,7 +2232,7 @@ void sub_110b74(int fp_0x28)
 /* 10a51c - todo */
 int sub_10a51c(int a)
 {
-#if 1
+#ifdef USB_DEBUG_ENUMERATION
     fprintf(stderr, "sub_10a51c: %d: TODO!!!\n", a);
 #endif
 
@@ -2340,10 +2340,10 @@ static void* usb_port_enum_handler(void* a)
 
     delay(20);
 
-    fp_0x2c.it_value.tv_sec = 5;
-    fp_0x2c.it_value.tv_nsec = 0; //1000000000; //100000000;
-    fp_0x2c.it_interval.tv_sec = 5;
-    fp_0x2c.it_interval.tv_nsec = 0; //1000000000; //100000000;
+    fp_0x2c.it_value.tv_sec = 0;
+    fp_0x2c.it_value.tv_nsec = 100000000;
+    fp_0x2c.it_interval.tv_sec = 0;
+    fp_0x2c.it_interval.tv_nsec = 100000000;
 
     timer_settime(fp_0x1c, 0, &fp_0x2c, 0);
 
@@ -2356,7 +2356,7 @@ static void* usb_port_enum_handler(void* a)
         fprintf(stderr, "usb_port_enum_handler: before MsgReceivev\n");
 #endif
         int fp_0x10 = MsgReceivev(Data_1273b0, &fp_0x54, 1, 0);
-#if 1
+#ifdef USB_DEBUG_ENUMERATION
         fprintf(stderr, "usb_port_enum_handler: after MsgReceivev\n");
 #endif
         if (fp_0x10 == -1)
