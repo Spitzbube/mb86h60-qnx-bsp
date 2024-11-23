@@ -8,39 +8,8 @@
 #include <pthread.h>
 #include <sys/neutrino.h>
 #include <sys/usbdi.h>
+#include "device.h"
 
-
-struct Struct_5a24
-{
-    int fill_0; //4
-    struct Struct_5a24* Data_4; //4
-    int fill_8[2]; //8
-    struct
-    {
-        int fill_0[3]; //0
-        int Data_0xc; //0xc
-        int fill_0x10; //0x10
-        int Data_0x14; //0x14
-        //???
-    }* Data_0x10; //0x10
-    int fill_0x14[4]; //0x14
-    int Data_0x24; //0x24
-    int fill_0x28[13]; //0x28
-    uint16_t fill_0x5c; //0x5c
-    uint16_t wData_0x5e; //0x5e
-    int Data_0x60; //0x60
-    int fill_0x64; //0x64
-    uint16_t wData_0x68; //0x68
-    int fill_0x6c; //0x6c
-    //0x70
-};
-
-struct Struct_5a24_d
-{
-    uint16_t fill_0; //0
-    uint16_t wData_2; //2
-
-};
 
 
 /* 0x00005a24 - todo */
@@ -64,6 +33,11 @@ int usbdi_sendcmd(int sp_0xc, int r8,
     iov_t sp_0x18; //0x18/0x1c
     struct Struct_5a24* sp_0x14;
 //    int sp_0x10;
+
+#if 1
+    fprintf(stderr, "usbdi_sendcmd: sp_0xc=%d, r8=%d, sl=%p, r7=%p(%d)\n", 
+        sp_0xc, r8, sl, r7, (r7 != NULL)? r7->wData_2: 0);
+#endif
 
     sp_0x230.wData_0 = 0x113;
     sp_0x230.wData_2 = 8;

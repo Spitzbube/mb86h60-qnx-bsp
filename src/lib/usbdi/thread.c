@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <sys/usbdi.h>
+#include "device.h"
 
 
 //_GLOBAL_OFFSET_TABLE_:
@@ -94,7 +95,7 @@ int usbdi_open(struct usbd_connection* r4, int r8)
 }
 
 
-/* 0x000009ac - todo */
+/* 0x00008308 - todo */
 int	usbd_connect(usbd_connect_parm_t *parm/*r5*/, 
         struct usbd_connection **connection/*fp*/)
 {
@@ -116,6 +117,10 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
     pthread_attr_t sp4;
 
     struct usbd_connection* r4;
+
+#if 1
+    fprintf(stderr, "usbd_connect: TODO!!!\n");
+#endif
     
     if ((parm->vusbd != 0) && (parm->vusbd != USBD_VERSION))
     {
@@ -227,7 +232,7 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
 
     pthread_mutex_lock(&conn_mutex);
 
-    res = usbdi_sendcmd(r4->Data_0x30, 1, &sp_0x90, 0);
+    res = usbdi_sendcmd(r4->Data_0x30, 1, &sp_0x90, NULL);
     if (res != 0)
     {
         //loc_8630
@@ -302,4 +307,50 @@ int	usbd_connect(usbd_connect_parm_t *parm/*r5*/,
     //->loc_8674
     return res;
 }
+
+
+
+/* 0x00007a64 - todo */
+int usbd_disconnect(struct usbd_connection *connection)
+{
+    fprintf(stderr, "usbd_disconnect: TODO!!!\n");
+
+    return 0;
+}
+
+
+/* 0x00007934 - todo */
+int usbd_hcd_ext_info(struct usbd_connection *connection, 
+        _Uint32t cindex, usbd_hcd_info_t *info/*r4*/)
+{
+#if 1
+    fprintf(stderr, "usbd_hcd_ext_info: cindex=%d: TODO!!!\n", cindex);
+#endif
+
+    struct 
+    {
+        usbd_hcd_info_t sp_0xc; //?
+        int fill[16]; //?
+        struct Struct_5a24 Data_0;
+    } sp_0x70;
+    struct Struct_5a24_d sp4;
+ 
+    sp_0x70.Data_0.Data_0 = cindex;
+    sp4.wData_2 = 0x6c;
+
+    int res = usbdi_sendcmd(connection->Data_0x30,
+                7, &sp_0x70.Data_0, &sp4);
+#if 1
+    fprintf(stderr, "usbd_hcd_ext_info: res=%d: TODO!!!\n", res);
+#endif
+
+    if (res == 0)
+    {
+        memcpy(info, &sp_0x70.sp_0xc, sizeof(usbd_hcd_info_t));
+    }
+
+    return res;
+}
+
+
 

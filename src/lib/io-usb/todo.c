@@ -106,3 +106,17 @@ void udi_transfer_done()
 }
 
 
+void dequeue()
+{
+    fprintf(stderr, "dequeue: TODO!!!\n");
+
+}
+
+
+void udi_detach()
+{
+    fprintf(stderr, "udi_detach: TODO!!!\n");
+
+}
+
+

@@ -47,14 +47,195 @@ IOFUNC_OCB_T* usbdi_ocb_calloc(resmgr_context_t *ctp,
 }
 
 
+/* 108dd0 - todo */
+int udi_enumerate(int a)
+{
+    fprintf(stderr, "udi_enumerate: TODO!!!\n");
+
+}
+
 
 /* 0x00115648 - todo */
 int usbdi_resmgr_msg(resmgr_context_t *ctp/*r7*/, 
                     io_msg_t *msg/*r1*/,
                      RESMGR_OCB_T *ocb/*r5*/)
 {
-    fprintf(stderr, "usbdi_resmgr_msg\n");
+    int r4;
 
+    struct
+    {
+        int Data_0; //0
+        uint16_t wData_4; //4
+        uint16_t wData_6; //6
+
+    }* r8;
+    int r6 = ocb->Data_0x18;
+
+#if 1
+    fprintf(stderr, "usbdi_resmgr_msg: r6=%d, msg->i.mgrid=%d, msg->i.subtype=%d\n",
+        r6, msg->i.mgrid, msg->i.subtype);
+#endif
+
+    if (msg->i.mgrid != _IOMGR_USB)
+    {
+        //->loc_115b34
+        return 0x59;
+    }
+
+    if (r6 == 0)
+    {
+        //0x00115670
+        if (msg->i.subtype != 1)
+        {
+            //->loc_115b3c
+            return 0x09;
+        }
+        else
+        {
+            //->loc_115b68
+            r8 = msg + 1;
+            //->loc_1156d8
+            if (((r8->wData_4 != 0) && (r8->wData_4 != 0x110)) ||
+                ((r8->wData_6 != 0) && (r8->wData_6 != 0x101)))
+            {
+                //->loc_115b44
+                return 0x113;
+            }
+            //0x001156fc
+            pthread_mutex_lock(&UsbdiGlobals.Data_0);
+
+            r4 = usbdi_client_create(r8->Data_0, &ocb->Data_0x18);
+
+            pthread_mutex_unlock(&UsbdiGlobals.Data_0);
+
+            if (r4 != 0)
+            {
+                //->loc_115b48
+                return r4;
+            }
+
+            if ((r8->Data_0 & 0x04) == 0)
+            {
+                //->loc_115b48
+                return r4;
+            }
+            //0x00115738
+            udi_enumerate(ocb->Data_0x18);
+            //->loc_115b48
+            return r4;
+        }
+    }
+    else
+    {
+        //loc_115680
+        if (msg->i.subtype == 1)
+        {
+            //->loc_115b3c
+            return 0x09;
+        }
+        //0x0011568c
+        r8 = msg + 1;
+
+        switch (msg->i.subtype)
+        {
+            case 1:
+                //loc_1156d8
+                if (((r8->wData_4 != 0) && (r8->wData_4 != 0x110)) ||
+                    ((r8->wData_6 != 0) && (r8->wData_6 != 0x101)))
+                {
+                    //->loc_115b44
+                    return 0x113;
+                }
+                //0x001156fc
+                pthread_mutex_lock(&UsbdiGlobals.Data_0);
+
+                r4 = usbdi_client_create(r8->Data_0, &ocb->Data_0x18);
+
+                pthread_mutex_unlock(&UsbdiGlobals.Data_0);
+
+                if (r4 != 0)
+                {
+                    //->loc_115b48
+                    return r4;
+                }
+
+                if ((r8->Data_0 & 0x04) == 0)
+                {
+                    //->loc_115b48
+                    return r4;
+                }
+                //0x00115738
+                udi_enumerate(ocb->Data_0x18);
+                //->loc_115b48
+                return r4;
+//                break;
+
+#if 0
+            case 2:
+                //loc_115744
+                break;
+                
+            case 3:
+                //loc_11575c
+                break;
+                
+            case 4:
+                //loc_1157f0
+                break;
+                
+            case 5:
+                //loc_11581c
+                break;
+                
+            case 6:
+                //loc_1158a4
+                break;
+                
+            case 14:
+                //loc_1158b8
+                break;
+                
+            case 7:
+                //loc_1158cc
+                break;
+                
+            case 8:
+                //loc_115914
+                break;
+                
+            case 9:
+                //loc_11597c
+                break;
+                
+            case 10:
+                //loc_115990
+                break;
+                
+            case 11:
+                //loc_115a14
+                break;
+                
+            case 12:
+                //loc_115ab4
+                break;
+                
+            case 13:
+                //loc_115afc
+                break;
+#endif
+
+            default:
+                //loc_115b34
+#if 1
+                fprintf(stderr, "usbdi_resmgr_msg: msg->i.subtype=%d: TODO!!!\n",
+                    msg->i.subtype);
+#endif
+                return 0x59;
+                //break;
+        }
+    }
+
+    return 0;
 }
 
 
