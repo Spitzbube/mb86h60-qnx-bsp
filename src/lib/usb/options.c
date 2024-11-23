@@ -22,5 +22,19 @@
 
 /*
 #ifdef __USAGE
+%C - Display USB device configuration
+
+Usage:
+%C [options]*
+
+Options:
+  -N name       Name of the USB manager to query (e.g. "/dev/io-usb/io-usb" )
+  -b busno      Display devices on specific 'busno' only
+  -d devno      Display device 'devno' only
+  -D            Get descriptor data from device, instead of stored data.
+                (io-usb by default stores standard descriptor information)
+  -t            Alternative output format (tree-like)
+  -v            Increase level of verbosity
+  -V            Display vendor-unique descriptors (at given verbosity level)
 #endif
 */
