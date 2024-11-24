@@ -470,6 +470,325 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
 }
 
 
+void* usbd_alloc(size_t size)
+{
+#if 1
+    fprintf(stderr, "usbd_alloc: a=%d: TODO!!!\n", size);
+#endif
+
+    return malloc(size);
+}
+
+
+void usbd_free(void *ptr)
+{
+#if 1
+    fprintf(stderr, "usbd_free: ptr=%p: TODO!!!\n", ptr);
+#endif
+
+}
+
+
+paddr_t usbd_mphys(const void *ptr)
+{
+#if 1
+    fprintf(stderr, "usbd_mphys: ptr=%p: TODO!!!\n", ptr);
+#endif
+
+    return ptr;
+}
+
+
+
+/* 0x00009384 - todo */
+struct usbd_urb* usbd_alloc_urb(struct usbd_urb *link/*r4*/)
+{
+#if 0
+    fprintf(stderr, "usbd_alloc_urb: TODO!!!\n");
+#endif
+
+    struct Struct_5a24* r0 = usbdi_memchunk_calloc(0/*TODO!!!*/, 1, 0x70);
+
+    if (r0 != NULL)
+    {
+        r0->Data_0 = r0;
+        r0->wData_0x20 = 0x70;
+
+        if (link != NULL)
+        {
+            struct Struct_5a24* link1 = link;
+
+            link1->Data_4 = r0;
+            link1->Data_0x24 |= 0x100000;
+            r0->Data_0x24 |= 0x100000;
+        }
+    }
+
+    return r0;
+}
+
+
+
+/* 0x000093f0 - todo */
+int usbdi_sync_io(struct usbd_device *device/*r5*/, 
+        int b/*r7*/, 
+        int c/*r8*/, 
+        int d/*fp*/, 
+        int e, 
+        int f, 
+        int g,
+        int h, 
+        void* i, 
+        int* j)
+{
+#if 1
+    fprintf(stderr, "usbdi_sync_io: TODO!!!\n");
+#endif
+
+    struct Struct_5a24 sp_0x78; //+0x70 = 0xe8
+    struct
+    {
+        struct Struct_5a24_d1 Data_0;
+        int fill_4[26]; //4
+        //0x6c;
+    } sp_0xc;
+
+    struct usbd_urb* r4 = usbd_alloc_urb(NULL);
+
+    memcpy(&sp_0x78/*r6*/, r4, 0x70);
+
+    sp_0xc.Data_0.wData_2 = 0x6c;
+
+    int r6_ = usbdi_sendcmd(device->Data_8->Data_0x30,
+                5, &sp_0x78/*r6*/, &sp_0xc);
+
+#if 1
+    fprintf(stderr, "usbdi_sync_io: r6_=%d: TODO!!!\n", r6_);
+#endif
+
+    //TODO!!!
+
+    return 0;
+}
+
+
+
+/* 0x00009644 - todo */
+int usbd_descriptor(struct usbd_device *device/*sl*/, 
+    int set/*r8*/, 
+    _Uint8t type/*fp*/, 
+    _Uint16t rtype/*sb*/, 
+    _Uint8t index/*arg0: sp_0x1c*/, 
+    _Uint16t langid/*arg4: sp_0x20*/, 
+    _Uint8t *desc/*arg8*/, 
+    size_t len/*argc: r6*/)
+{
+#if 1
+    fprintf(stderr, "usbd_descriptor: type=%d, index=%d: TODO!!!\n", 
+        type, index);
+#endif
+
+    int sp_0x2c;
+    int sp_0x24;
+
+    int r5;
+    void* r7;
+
+    if (len == 0)
+    {
+        return 0xf0; //->loc_977c
+    }
+
+    sp_0x2c = len;
+    r7 = usbd_alloc(len);
+    if (r7 == NULL)
+    {
+        return 12;
+    }
+
+    if (set == 0)
+    {
+        //0x000096a4
+        r5 = 0x20005;
+        sp_0x24 = 6;
+        //->loc_96d8
+    }
+    else
+    {
+        //loc_96b8
+        memcpy(r7, desc, sp_0x2c);
+
+        r5 = 0x20006;
+        sp_0x24 = 7;
+    }
+    //loc_96d8
+    int r5_ = usbdi_sync_io(device/*sl*/, 
+            5, r5, sp_0x24, 
+            rtype/*sb*/, 
+            index/*sp_0x1c*/ | (type/*fp*/ << 8),
+            langid/*sp_0x20*/,
+            0, usbd_mphys(r7), &sp_0x2c);
+    if (r5_ == 0)
+    {
+        if (set/*r8*/ != 0)
+        {
+            //0x00009730
+            fprintf(stderr, "usbd_descriptor: 0x00009730: TODO!!!\n");
+
+            //TODO!!!
+
+            //->loc_9774
+        }
+        else
+        {
+            //loc_9750
+            if (len/*r6*/ < ((uint8_t*)r7)[0])
+            {
+                r5_ = 0xf0;
+            }
+
+            memcpy(desc, r7, (len < sp_0x2c)? len: sp_0x2c);
+        }
+    }
+    //loc_9774
+    usbd_free(r7);
+
+    return r5_;    
+}
+
+
+
+/* 0x0000485c - todo */
+usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/, 
+    struct usbd_desc_node* root, 
+    _Uint8t type/*r6*/, 
+    int index/*r4*/, 
+    struct usbd_desc_node** node)
+{
+#if 1
+    fprintf(stderr, "usbd_parse_descriptors: index=%d: TODO!!!\n", 
+        index);
+#endif
+
+    if (device->Data_0x40 == 0)
+    {
+        //0x00004884
+//        fprintf(stderr, "usbd_parse_descriptors: 0x00004884: TODO!!!\n"); 
+        if (root == NULL)
+        {
+            //0x0000488c
+            uint32_t r5 = 0x1f6;
+            int sp_0x8c;
+            int sp_0x88;
+            int sp_0x84;
+            int sp_0x78;
+            int sp_0x58;
+            int sp_0x54;
+            int sp_0x48;
+            int sp_0x44;
+            int sp_0x24;
+            int sp_0x20;
+            int sp_0x1c;
+            uint32_t sp_0x18;
+            void* sp_0x14;
+            void* r7;
+            
+            sp_0x18 = 0xf6;
+            r7 = NULL;
+            sp_0x14 = NULL; //r7
+
+            sp_0x1c = 0x2ac;
+            sp_0x24 = &sp_0x84;
+            sp_0x20 = &sp_0x54;
+            sp_0x44 = &sp_0x58;
+            sp_0x48 = &sp_0x78;
+            int fp = type;
+            int r6 = index;
+            //->loc_48e8
+//            while (1) //???
+            {
+                //->loc_48e8
+                if (sp_0x14 == NULL)
+                {
+                    //0x000048f4
+                    sp_0x14 = usbdi_memchunk_malloc(
+                                0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
+                                sp_0x18);
+                    if (sp_0x14 == NULL)
+                    {
+                        //->loc_50a8
+                        usbdi_memchunk_free(
+                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
+                            r7);
+                        usbdi_memchunk_free(
+                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
+                            sp_0x14);
+                        //sl = 12;
+                        //->loc_4ffc
+                        errno = 12;
+                        return NULL;
+                    }
+                }
+                //loc_4914
+                if (r7 == NULL)
+                {
+                    //0x0000491c
+                    r7 = usbdi_memchunk_malloc(
+                                0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
+                                r5);
+                    if (r7 == NULL)
+                    {
+                        //->loc_50a8
+                        usbdi_memchunk_free(
+                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
+                            r7);
+                        usbdi_memchunk_free(
+                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
+                            sp_0x14);
+                        //sl = 12;
+                        //->loc_4ffc
+                        errno = 12;
+                        return NULL;
+                    }
+                }
+                //loc_4938
+                sp_0x8c = r7;
+                sp_0x88 = r5;
+
+                if (sp_0x18 > 0x11)
+                {
+                    //0x0000494c
+                    int r0 = usbd_descriptor(device/*sb*/, 
+                                0, 1, 0, 0, 0, sp_0x14, 0x12);
+                    if (r0 != 0)
+                    {
+                        //->loc_4f50
+                        fprintf(stderr, "usbd_parse_descriptors: loc_4f50: TODO!!!\n");
+                    }
+                    //0x0000498c
+                    fprintf(stderr, "usbd_parse_descriptors: 0x0000498c: TODO!!!\n");
+                }
+                //loc_4f74
+
+            } //while (1) //???
+        }
+        else
+        {
+            //loc_48d4
+            errno = 0x7a;
+            return NULL; //->loc_5080
+        }
+        //loc_48e8
+    }
+    else
+    {
+        //loc_500c
+        fprintf(stderr, "usbd_parse_descriptors: loc_500c: TODO!!!\n"); 
+
+    }
+
+    return 0;
+}
 
 
 

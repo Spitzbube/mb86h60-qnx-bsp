@@ -42,6 +42,17 @@ struct ocb
 
 struct USB_Controller;
 
+struct UsbdiGlobals_Inner_0x24
+{
+    struct UsbdiGlobals_Inner_0x24* Data_0; //0
+    int fill_4; //4
+    pthread_mutex_t Data_8; //8
+    int Data_0x10; //0x10
+    int fill_0x14[2]; //0x14
+    int Data_0x1c; //0x1c
+    //???
+};
+
 struct UsbdiGlobals_Inner_0x178
 {
     void* hDll; //0
@@ -74,7 +85,7 @@ struct UsbdiGlobals
     int fill_0x18; //0x18
     dispatch_t* dpp; //0x1c
     void* Data_0x20; //0x20
-    int Data_0x24; //0x24
+    struct UsbdiGlobals_Inner_0x24* Data_0x24; //0x24
     void* Data_0x28; //0x28
     int Data_0x2c; //0x2c
     int Data_0x30; //0x30
@@ -231,6 +242,15 @@ struct Struct_120220
 };
 
 
+struct Struct_114194
+{
+    struct Struct_114194* Data_0; //0
+    struct Struct_114194** Data_4; //4
+    usbd_device_instance_t Data_8; //8
+    //0x2c
+};
+
+
 struct USB_Client
 {
     struct 
@@ -248,8 +268,8 @@ struct USB_Client
     int Data_0x10; //0x10
     int Data_0x14; //0x14
     int fill_0x18; //0x18
-    int Data_0x1c; //0x1c
-    int* Data_0x20; //0x20
+    struct Struct_114194* Data_0x1c; //0x1c
+    struct Struct_114194* Data_0x20; //0x20
     int Data_0x24; //0x24
     int* Data_0x28; //0x28
     //0x2c = 44

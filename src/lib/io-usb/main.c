@@ -1666,7 +1666,7 @@ struct Struct_114828_a
 
 
 /* 114828 - todo */
-int sub_114828(struct Struct_114828_a* a, 
+int sub_114828(struct Struct_114828_a/*struct UsbdiGlobals_Inner_0x24???*/* a, 
         void* r6, int r7, int r8, int sl)
 {
 #if 1
@@ -1680,7 +1680,7 @@ int sub_114828(struct Struct_114828_a* a,
         pthread_mutex_lock(&UsbdiGlobals.Data_0);
 
         r4 = 0;
-        struct Struct_114828_a* r5 = UsbdiGlobals.Data_0x24;
+        struct UsbdiGlobals_Inner_0x24* r5 = UsbdiGlobals.Data_0x24;
         while (r5 != NULL)
         {
             //loc_11486c

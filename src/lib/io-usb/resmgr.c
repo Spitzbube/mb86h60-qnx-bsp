@@ -316,11 +316,136 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
 }
 
 
-/* 1143a4 - todo */
-int sub_1143a4(struct USB_Client* a, void* b)
+/* 114194 - todo */
+int conflict(struct Struct_114194* r4, struct USB_Client* r7)
+{
+#if 0
+    fprintf(stderr, "conflict: TODO!!!\n");
+#endif
+
+    if (r7->Data_0x10 & 0x02)
+    {
+        //0x001141ac
+        pthread_mutex_lock(&UsbdiGlobals.Data_0);
+
+        struct UsbdiGlobals_Inner_0x24* r5 = UsbdiGlobals.Data_0x24;
+        while (r5 != NULL)
+        {
+            //loc_1141c8
+            pthread_mutex_lock(&r5->Data_8/*r6*/);
+
+            struct
+            {
+                void* Data_0; //0
+                int fill_4; //4
+                int Data_8; //8
+                int fill_0xc[6]; //0xc
+                int Data_0x24; //0x24
+                //???
+            }* r3 = r5->Data_0x1c;
+            //0x001141e0
+            while (r3 != NULL)
+            {
+                //loc_1141e8
+#if 1
+                fprintf(stderr, "conflict: loc_1141e8: TODO!!!\n");
+#endif
+                if (((r5->Data_0x10 & 0x02) != 0) && 
+                    (r3->Data_8 == *((int*)&r4->Data_8) /*TODO!!!*/) &&
+                    (r3->Data_0x24 == r4->Data_8.iface /*0x24*/))
+                {
+                    pthread_mutex_unlock(&r5->Data_8/*r6*/);
+                    pthread_mutex_unlock(&UsbdiGlobals.Data_0);
+
+                    return 0x10;
+                }
+                //loc_11422c
+                r3 = r3->Data_0;
+                //->loc_1141e8
+            }
+            //loc_114238
+            pthread_mutex_unlock(&r5->Data_8/*r6*/);
+
+            r5 = r5->Data_0;
+        }
+        //loc_11424c
+        pthread_mutex_lock(&r7->Data_8);
+
+        if ((r4->Data_0 = r7->Data_0x1c) != 0)
+        {
+            r7->Data_0x1c->Data_4 = &r4->Data_0;
+        }
+        else
+        {
+            r7->Data_0x20 = r4;
+        }
+
+        r7->Data_0x1c = r4;
+        r4->Data_4 = &r7->Data_0x1c;
+
+        pthread_mutex_unlock(&r7->Data_8);
+
+        pthread_mutex_unlock(&UsbdiGlobals.Data_0);
+
+        return 0;
+    }
+    else
+    {
+        //loc_114294
+        pthread_mutex_lock(&r7->Data_8);
+
+        if ((r4->Data_0 = r7->Data_0x1c) != 0)
+        {
+            r7->Data_0x1c->Data_4 = &r4->Data_0;
+        }
+        else
+        {
+            r7->Data_0x20 = r4;
+        }
+
+        r7->Data_0x1c = r4;
+        r4->Data_4 = &r7->Data_0x1c;
+
+        pthread_mutex_unlock(&r7->Data_8);
+    }
+
+    return 0;
+}
+
+
+/* 1143a4 - complete */
+int usbdi_client_attach(struct USB_Client* a, usbd_device_instance_t* b)
+{
+#if 0
+    fprintf(stderr, "usbdi_client_attach: TODO!!!\n");
+#endif
+
+    int res;
+    struct Struct_114194* r5;
+    
+    r5 = usbdi_memchunk_malloc(UsbdiGlobals.Data_0xc, sizeof(struct Struct_114194));
+    if (r5 == NULL)
+    {
+        return 12;
+    }
+
+    memcpy(&r5->Data_8, b, sizeof(usbd_device_instance_t));
+
+    res = conflict(r5, a);
+    if (res != 0)
+    {
+        usbdi_memchunk_free(UsbdiGlobals.Data_0xc, r5);
+    }
+
+    return res;
+}
+
+
+/* 107a90 - todo */
+int sub_107a90()
 {
 #if 1
-    fprintf(stderr, "sub_1143a4: TODO!!!\n");
+    fprintf(stderr, "sub_107a90: TODO!!!\n");
 #endif
 
     return 0;
@@ -489,7 +614,7 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                     if (r4 == 0)
                     {
                         //0x001157a0
-                        r4 = sub_1143a4(r6, &sp_0x26c.u.device_instance);
+                        r4 = usbdi_client_attach(r6, &sp_0x26c.u.device_instance);
                         if (r4 == 0)
                         {
                             //0x001157b4
@@ -518,11 +643,48 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
             case 4:
                 //loc_1157f0
                 break;
+#endif
                 
             case 5:
                 //loc_11581c
+                {
+                    struct loc_11581c
+                    {   
+                        int fill_0[9]; //0
+                        int Data_0x24; //0x24
+                    };
+
+                    if ((((struct loc_11581c*)r8)->Data_0x24 & 0x80000) == 0)
+                    {
+                        //0x00115828
+                        if ((r6->Data_0x10 & 0x01) == 0)
+                        {
+                            r4 = 0x16;
+                            //->loc_115b48
+                        }
+                        else
+                        {
+                            //loc_115b54
+                            r4 = sub_107a90(r6, r8);
+                        }
+                    }
+                    else
+                    {
+                        //loc_11583c
+                        r4 = sub_107a90(r6, r8);
+                        if ((r4 == 5) || (r4 == 0))
+                        {
+                            //0x00115858
+                            fprintf(stderr, "usbdi_resmgr_msg: 0x00115858: TODO!!!\n");
+
+                            //TODO
+                        }
+                        //loc_115b48
+                    }
+                }
                 break;
-                
+
+#if 0          
             case 6:
                 //loc_1158a4
                 break;

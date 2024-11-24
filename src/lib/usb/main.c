@@ -38,6 +38,7 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
 {
     struct usbd_connection* sp_0xd4;
     struct usbd_device* sp_0xd0;
+    struct usbd_desc_node* sp_0xcc;
     usbd_device_instance_t sp_0x9c;
     usbd_hcd_info_t sp_0x78;
     usbd_connect_parm_t sp_0x48 = {0};
@@ -231,6 +232,26 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
                     fprintf(stderr, "device: generation=%d, ident.vendor=0x%x, ident.device=0x%x\n", 
                         sp_0x9c.generation, sp_0x9c.ident.vendor, sp_0x9c.ident.device);
 #endif
+
+                    usbd_descriptors_t* r4;
+                    r4 = usbd_parse_descriptors(sp_0xd0, NULL, 1, 0, &sp_0xcc);
+                    if (r4 != NULL)
+                    {
+                        //0x001047ac
+                        usbd_descriptors_t* r2;
+                        r2 = usbd_parse_descriptors(sp_0xd0, NULL, 3, 0, NULL);
+                        if (r2 != NULL)
+                        {
+                            //0x001047cc
+
+                            //TODO
+
+                        }
+                        //loc_1049b0
+
+                        //TODO
+                    }
+                    //loc_1048e0
 
                     //TODO
                 }
