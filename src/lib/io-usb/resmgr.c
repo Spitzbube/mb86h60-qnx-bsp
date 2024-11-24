@@ -290,10 +290,18 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
     if (r0->Data_8.bAlternateSetting == 0)
     {
         //0x001067d0
-        fprintf(stderr, "udi_attach: 0x001067d0: TODO!!!\n");
-
-        //TODO!!!
-
+        r4->ident.dclass = r0->Data_8.bInterfaceClass;
+        r4->ident.subclass = r0->Data_8.bInterfaceSubClass;
+        r4->ident.protocol = r0->Data_8.bInterfaceProtocol;
+        r4->config = r7_->configuration_descriptor.bConfigurationValue;
+        r4->iface = r0->Data_8.bInterfaceNumber;
+        r4->alternate = r0->Data_0x14;
+#if 1
+        fprintf(stderr, "udi_attach: r4->ident.dclass=0x%x, r4->ident.subclass=0x%x, r4->ident.protocol=0x%x\n", 
+            r4->ident.dclass, r4->ident.subclass, r4->ident.protocol);
+        fprintf(stderr, "udi_attach: r4->config=%d, r4->iface=%d, r4->alternate=%d\n", 
+            r4->config, r4->iface, r4->alternate);
+#endif
     }
     //loc_106800
     if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
@@ -326,14 +334,36 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
 {
     int r4;
 
-    usbd_hcd_info_t sp_0x274;
     struct
     {
         uint16_t wData_0; //0
         uint16_t wData_2; //2
-        int fill_4; //4
-        //8???
+        union
+        {
+            usbd_device_instance_t device_instance; //4
+            struct
+            {
+                int fill_4; //0
+                usbd_hcd_info_t hcd_info; //4
+            } hcd_info; //4
+            
+        } u;
+        
     } sp_0x26c;
+
+    struct
+    {
+        struct 
+        {
+            uint16_t wData_0; //0
+            uint16_t wData_2; //2
+            int fill_4; //4
+            //8
+        } Data_0;                        
+        int fill_8[25]; //8
+        usbd_bus_topology_t Data_0x6c; //0x6c
+        //0x26c
+    } sp;                    
 
     struct
     {
@@ -451,23 +481,20 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
             case 3:
                 //loc_11575c: Attach
                 {
-                    usbd_device_instance_t sp_0x270;
-
                     sp_0x26c.wData_0 = 1;
                     sp_0x26c.wData_2 = 0x6c;
+                    memcpy(&sp_0x26c.u.device_instance, r8, sizeof(usbd_device_instance_t));
 
-                    memcpy(&sp_0x270, r8, sizeof(usbd_device_instance_t));
-
-                    r4 = udi_attach(&sp_0x270, r6->Data_0x10);
+                    r4 = udi_attach(&sp_0x26c.u.device_instance, r6->Data_0x10);
                     if (r4 == 0)
                     {
                         //0x001157a0
-                        r4 = sub_1143a4(r6, &sp_0x270);
+                        r4 = sub_1143a4(r6, &sp_0x26c.u.device_instance);
                         if (r4 == 0)
                         {
                             //0x001157b4
                             int r0 = MsgReply_r(ctp->rcvid, 0, 
-                                        &sp_0x26c, sp_0x26c.wData_0);
+                                        &sp_0x26c, sp_0x26c.wData_2);
                             if (r0 != 0)
                             {
                                 r4 = -r0;
@@ -480,7 +507,7 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                         else
                         {
                             //loc_1157dc
-                            udi_detach(r6, &sp_0x270, 0);
+                            udi_detach(r6, &sp_0x26c.u.device_instance, 0);
                         }
                     }
                     //loc_115b48
@@ -514,7 +541,7 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                     };
 
                     r4 = udi_hcd_info(((struct Struct_1158cc*)r8)->bData_0,
-                            &sp_0x274);
+                            &sp_0x26c.u.hcd_info.hcd_info);
                     if (r4 == 0)
                     {
                         sp_0x26c.wData_0 = 4;
@@ -551,20 +578,6 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                     {
                         uint32_t Data_0;
                     };
-
-                    struct
-                    {
-                        struct 
-                        {
-                            uint16_t wData_0; //0
-                            uint16_t wData_2; //2
-                            int fill_4; //4
-                            //8
-                        } Data_0;                        
-                        int fill_8[25]; //8
-                        usbd_bus_topology_t Data_0x6c; //0x6c
-                        //0x26c
-                    } sp;                    
 
                     memset(&sp/*r5*/, 0xff, 0x26c);
 

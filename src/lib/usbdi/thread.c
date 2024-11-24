@@ -433,13 +433,13 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
         r4->Data_0x14 = 0;
         r4->Data_0x18 = 0;
 
-#if 1
-        fprintf(stderr, "usbd_attach: generation=%d, ident.vendor=0x%x, ident.device=0x%x\n", 
-            sp4.Data_4.generation, sp4.Data_4.ident.vendor, sp4.Data_4.ident.device);
-#endif
-
         memcpy(instance, &sp4.Data_4, sizeof(usbd_device_instance_t));
         memcpy(&r4->Data_0x1c, &sp4.Data_4, sizeof(usbd_device_instance_t));
+
+#if 1
+        fprintf(stderr, "usbd_attach: generation=%d, ident.vendor=0x%x, ident.device=0x%x\n", 
+            instance->generation, instance->ident.vendor, instance->ident.device);
+#endif
 
         r4->Data_0x40 = 0; //r7
         r4->Data_0x44 = (extra != 0)? r4 + 1: NULL;

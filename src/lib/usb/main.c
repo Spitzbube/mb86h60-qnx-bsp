@@ -227,6 +227,10 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
                 if (r0 == 0)
                 {
                     //0x00104788
+#if 0
+                    fprintf(stderr, "device: generation=%d, ident.vendor=0x%x, ident.device=0x%x\n", 
+                        sp_0x9c.generation, sp_0x9c.ident.vendor, sp_0x9c.ident.device);
+#endif
 
                     //TODO
                 }
