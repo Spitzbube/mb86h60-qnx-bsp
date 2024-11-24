@@ -380,6 +380,10 @@ int usbd_topology_ext(struct usbd_connection *connection,
 
     int res = usbdi_sendcmd(connection->Data_0x30,
                 10, &sp_0x270, &sp4);
+
+#if 0
+    fprintf(stderr, "usbd_topology_ext: res=%d\n", res);
+#endif
     
     if (res == 0)
     {
@@ -388,6 +392,84 @@ int usbd_topology_ext(struct usbd_connection *connection,
 
     return res;
 }
+
+
+/* 0x00005f34 - todo */
+int usbd_attach(struct usbd_connection* connection/*r6*/, 
+        usbd_device_instance_t* instance/*sl*/, 
+        size_t extra/*r8*/, 
+        struct usbd_device** device/*fp*/)
+{
+#if 1
+    fprintf(stderr, "usbd_attach: connection=%p: TODO!!!\n", 
+        connection);
+#endif
+
+    struct usbd_device* r4 = calloc(1, sizeof(struct usbd_device) + extra);
+    if (r4 == NULL)
+    {
+        return 12;
+    }
+
+    struct Struct_5a24 sp_0x70;
+    struct
+    {
+        struct Struct_5a24_d1 Data_0; //0
+        usbd_device_instance_t Data_4; //4 +0x24
+        int fill[17]; //0x28 +0x44
+        //0x6c
+    } sp4;    
+ 
+    memcpy(&sp_0x70, instance, sizeof(usbd_device_instance_t));
+    sp4.Data_0.wData_2 = sizeof(sp4);
+
+    int res = usbdi_sendcmd(connection->Data_0x30,
+                3, &sp_0x70, &sp4);
+    if (res == 0)
+    {
+        r4->Data_8 = connection;
+        r4->Data_0xc = 0; //r7
+        r4->Data_0x10 = &r4->Data_0xc;
+        r4->Data_0x14 = 0;
+        r4->Data_0x18 = 0;
+
+#if 1
+        fprintf(stderr, "usbd_attach: generation=%d, ident.vendor=0x%x, ident.device=0x%x\n", 
+            sp4.Data_4.generation, sp4.Data_4.ident.vendor, sp4.Data_4.ident.device);
+#endif
+
+        memcpy(instance, &sp4.Data_4, sizeof(usbd_device_instance_t));
+        memcpy(&r4->Data_0x1c, &sp4.Data_4, sizeof(usbd_device_instance_t));
+
+        r4->Data_0x40 = 0; //r7
+        r4->Data_0x44 = (extra != 0)? r4 + 1: NULL;
+
+#if 0 //TODO!!!
+        pthread_mutex_lock(&r5->Data_0x2ac/*B698*/);
+#endif
+
+        r4->Data_0 = 0;
+        r4->Data_4 = connection->Data_0x3c;
+        *(r4->Data_4) = r4;
+        connection->Data_0x3c = r4;
+
+#if 0 //TODO!!!
+        pthread_mutex_unlock(&r5->Data_0x2ac/*B698*/);
+#endif
+
+        *device = r4;
+    }
+    else
+    {
+        //loc_6058
+        free(r4);
+        return res;
+    }
+
+    return res;
+}
+
+
 
 
 

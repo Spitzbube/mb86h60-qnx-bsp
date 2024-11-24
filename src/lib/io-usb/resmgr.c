@@ -87,10 +87,232 @@ int udi_hcd_info(int a, usbd_hcd_info_t* b)
 
 
 /* 105ed8 - todo */
-int udi_topology()
+int udi_topology(int r6, usbd_bus_topology_t* b)
+{
+#if 0
+    fprintf(stderr, "udi_topology: TODO!!!\n");
+#endif
+
+    uint32_t i;
+    usbd_port_attachment_t* r5 = &b->ports[0];
+
+    struct USB_Controller* cntrl = CTRL_HCLookup(r6);
+    if (cntrl == NULL)
+    {
+        return 0x13;
+    }
+
+    if (pthread_mutex_lock(&cntrl->Data_0x24) != 0)
+    {
+        usb_slogf(12, 2, 0, "udi_topology:  error acquiring mutex, %d", errno);
+    }
+
+    for (i = 1; i < 21; i++)
+    {
+        //loc_105f38
+        struct USB_Controller_Inner_0x7c* r0 = USB_CheckDevice(r6, i);
+        if ((r0 != NULL) && (r0->bData_0xd & 1))
+        {
+            r5[1].upstream_hc = r0->Data_0x88;
+            r5[1].upstream_devno = 
+                (r0->Data_0x1c != NULL)? ((uint8_t*)r0->Data_0x1c)[0]: 0;
+            r5[1].upstream_port = r0->Data_0x20;
+            r5[1].upstream_port_speed = r0->bData_0xc;
+#if 1
+        fprintf(stderr, "udi_topology[%d]: hc=%d, devno=%d, port=%d, port_speed=%d\n",
+            i, r5[1].upstream_hc, r5[1].upstream_devno, 
+            r5[1].upstream_port, r5[1].upstream_port_speed);
+#endif
+        }
+        //loc_105f84
+        r5++;
+    } //for (i = 1; i < 21; i++)
+    //0x00105f94
+    if (pthread_mutex_unlock(&cntrl->Data_0x24) != 0)
+    {
+        usb_slogf(12, 2, 0, "udi_topology:  error releasing mutex, %d", errno);
+    }
+
+    return 0;
+}
+
+
+/* 1113ec - todo */
+int sub_1113ec(int a, int b, int c)
 {
 #if 1
-    fprintf(stderr, "udi_topology: TODO!!!\n");
+    fprintf(stderr, "sub_1113ec: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 0x00106300 - todo */
+int udi_attach(usbd_device_instance_t* r4, int r8)
+{
+#if 1
+    fprintf(stderr, "udi_attach: r8=0x%x: TODO!!!\n", r8);
+#endif
+
+    struct UsbInterface* r0;
+    struct UsbConfiguration* r7_;
+    struct USB_Controller_Inner_0x7c* r6;
+    struct USB_Controller* r7 = CTRL_HCLookup(r4->path);
+    if (r7 == NULL)
+    {
+        //->loc_106858
+        return 0x13;
+    }
+
+    usb_slogf(12, 2, 5, "%s(%d): devno %d",
+        "udi_attach", 0x6c1, r4->devno);
+
+    if (pthread_mutex_lock(&r7->Data_0x24/*r5*/) != 0)
+    {
+        //0x00106364
+        usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, %d",
+            "udi_attach", 0x6c4, errno);
+    }
+    //loc_106398
+    r6 = USB_CheckDevice(r4->path, r4->devno);
+    if ((r6 == NULL) || ((r6->bData_0xd & 1) == 0))
+    {
+        //loc_1063b8
+        if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+        {
+            //0x001063c8
+            usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                "udi_attach", 0x6c4, errno);
+
+            //->loc_10685c
+        }
+        //loc_106858
+        return 0x13;
+    }
+    //loc_106404
+    if (r8 & 0x02)
+    {
+        //0x0010640c
+        fprintf(stderr, "udi_attach: 0x0010640c: TODO!!!\n");
+
+        //TODO!!!
+    }
+    //loc_106560
+#if 1
+    fprintf(stderr, "udi_attach: r4->config=%d, r6->Data_0x14=%d, x=%d\n", 
+        r4->config, r6->Data_0x14,
+        r6->Data_0x84->configuration_descriptor.bConfigurationValue);
+#endif
+    if ((r4->config == -1) && (r6->Data_0x14 != 0))
+    {
+        r4->config = r6->Data_0x14;
+        //->loc_106590
+    }
+    //loc_10657c
+    else if (r4->config != r6->Data_0x14)
+    {
+        r4->config = r6->Data_0x84->configuration_descriptor.bConfigurationValue;
+    }
+    //loc_106590
+    r7_ = USB_GetConfiguration(r7, r4->devno, r4->config);
+    if (r7_ == NULL)
+    {
+        //0x001065a8
+        if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+        {
+            //0x001065b8
+            usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                "udi_attach", 0x704, errno);
+
+            //->loc_10685c
+        }
+        //loc_106858
+        return 0x13;
+    }
+    //loc_1065f4
+    if ((r4->iface != -1) && (r6->Data_0x14 != 0))
+    {
+        r0 = sub_1113ec(r4->path, r4->devno, r4->config);
+        if (r0 == NULL)
+        {
+            //0x00106624
+            if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+            {
+                //0x00106634
+                usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                    "udi_attach", 0x70c, errno);
+            }
+            //loc_106664
+            usb_slogf(12, 2, 4, 
+                "%s(%d):  unable to find matching interface, path %d, devno %d, cfg %d, iface %d, ",
+                "udi_attach", 0x70f, 
+                r4->path, r4->devno, r4->config, r4->iface);
+            return 0x13;
+        }
+        //loc_1066b8
+    }
+    else
+    {
+        //loc_1066b4
+        r0 = r7_->interfaces;
+    }
+    //loc_1066b8
+    if (((r4->ident.dclass != -1) &&  (r4->ident.dclass != r0->Data_8.bInterfaceClass)) ||
+        ((r4->ident.subclass != -1) && (r4->ident.subclass != r0->Data_8.bInterfaceSubClass)) ||
+        ((r4->ident.protocol != -1) && (r4->ident.protocol != r0->Data_8.bInterfaceProtocol)))
+    {
+        //loc_106700
+        if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+        {
+            //0x00106710
+            usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                "udi_attach", 0x71f, errno);
+        }
+        //loc_106744
+        usb_slogf(12, 2, 4, 
+            "%s(%d):  unable to find matching class, path %d, devno %d, cfg %d, iface %d (%x %x %x) ",
+            "udi_attach", 0x722, 
+            r4->path, r4->devno, r4->config, r4->iface,
+            r4->ident.dclass, r4->ident.subclass, r4->ident.protocol);
+        return 0x13;
+    }
+    //loc_1067ac
+    r4->generation = r6->wData_0xe;
+    r4->ident.vendor = r6->device_descriptor.idVendor; //wData_0x34;
+    r4->ident.device = r6->device_descriptor.idProduct; //wData_0x36;
+
+#if 1
+    fprintf(stderr, "udi_attach: r4->generation=%d, r4->ident.vendor=0x%x, r4->ident.device=0x%x\n", 
+        r4->generation, r4->ident.vendor, r4->ident.device);
+#endif
+
+    if (r0->Data_8.bAlternateSetting == 0)
+    {
+        //0x001067d0
+        fprintf(stderr, "udi_attach: 0x001067d0: TODO!!!\n");
+
+        //TODO!!!
+
+    }
+    //loc_106800
+    if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+    {
+        usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+            "udi_attach", 0x737, errno);
+
+        //->loc_10685c
+    }
+
+    return 0;
+}
+
+
+/* 1143a4 - todo */
+int sub_1143a4(struct USB_Client* a, void* b)
+{
+#if 1
+    fprintf(stderr, "sub_1143a4: TODO!!!\n");
 #endif
 
     return 0;
@@ -120,7 +342,7 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
         uint16_t wData_6; //6
 
     }* r8;
-    void* r6 = ocb->Data_0x18;
+    struct USB_Client* r6 = ocb->Data_0x18;
 
 #if 1
     fprintf(stderr, "usbdi_resmgr_msg: r6=%p, msg->i.mgrid=%d, msg->i.subtype=%d\n",
@@ -224,11 +446,48 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
             case 2:
                 //loc_115744
                 break;
+#endif
                 
             case 3:
-                //loc_11575c
+                //loc_11575c: Attach
+                {
+                    usbd_device_instance_t sp_0x270;
+
+                    sp_0x26c.wData_0 = 1;
+                    sp_0x26c.wData_2 = 0x6c;
+
+                    memcpy(&sp_0x270, r8, sizeof(usbd_device_instance_t));
+
+                    r4 = udi_attach(&sp_0x270, r6->Data_0x10);
+                    if (r4 == 0)
+                    {
+                        //0x001157a0
+                        r4 = sub_1143a4(r6, &sp_0x270);
+                        if (r4 == 0)
+                        {
+                            //0x001157b4
+                            int r0 = MsgReply_r(ctp->rcvid, 0, 
+                                        &sp_0x26c, sp_0x26c.wData_0);
+                            if (r0 != 0)
+                            {
+                                r4 = -r0;
+                            }
+                            else
+                            {
+                                r4 |= 0x80000000;
+                            }
+                        }
+                        else
+                        {
+                            //loc_1157dc
+                            udi_detach(r6, &sp_0x270, 0);
+                        }
+                    }
+                    //loc_115b48
+                }
                 break;
-                
+
+#if 0          
             case 4:
                 //loc_1157f0
                 break;
@@ -287,14 +546,46 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                 
             case 10:
                 //loc_115990
-                //TODO!!!
-
-                r4 = udi_topology();
-                if (r4 == 0)
                 {
-                    //0x001159e4
+                    struct Struct_115990
+                    {
+                        uint32_t Data_0;
+                    };
 
-                    //TODO!!!
+                    struct
+                    {
+                        struct 
+                        {
+                            uint16_t wData_0; //0
+                            uint16_t wData_2; //2
+                            int fill_4; //4
+                            //8
+                        } Data_0;                        
+                        int fill_8[25]; //8
+                        usbd_bus_topology_t Data_0x6c; //0x6c
+                        //0x26c
+                    } sp;                    
+
+                    memset(&sp/*r5*/, 0xff, 0x26c);
+
+                    sp.Data_0.wData_0 = 7;
+                    sp.Data_0.wData_2 = 0x26c;
+
+                    r4 = udi_topology(((struct Struct_115990*)r8)->Data_0,
+                            &sp.Data_0x6c);
+                    if (r4 == 0)
+                    {
+                        //0x001159e4
+                        int r0 = MsgReply_r(ctp->rcvid, 0, &sp, sp.Data_0.wData_2);
+                        if (r0 != 0)
+                        {
+                            r4 = -r0;
+                        }
+                        else
+                        {
+                            r4 |= 0x80000000;
+                        }
+                    }
                 }
                 //loc_115b48
                 break;

@@ -37,8 +37,11 @@ int display(int v, const char* fmt, ...)
 int main(int argc/*r5*/, char *argv/*r4*/[])
 {
     struct usbd_connection* sp_0xd4;
+    struct usbd_device* sp_0xd0;
+    usbd_device_instance_t sp_0x9c;
     usbd_hcd_info_t sp_0x78;
     usbd_connect_parm_t sp_0x48 = {0};
+    uint32_t sp_0x40;
     uint32_t sp_0x3c;
     uint32_t sp_0x38;
     uint32_t sp_0x34;
@@ -48,6 +51,8 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
 
     sp_0x48.vusb = 0x110;
     sp_0x48.vusbd = USBD_VERSION;
+    sp_0x2c = 64;
+    sp_0x3c = 1;
     sp_0x34 = 9;
     sp_0x30 = 0;
 
@@ -109,6 +114,8 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
         }
     }
     //0x00104454
+    sp_0x40 = sp_0x3c;
+
     r0 = usbd_connect(&sp_0x48, &sp_0xd4);
     if (r0 != 0)
     {
@@ -204,6 +211,34 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
             sp_0x38 = sp_0x30;
 
             usbd_topology_ext(sp_0xd4, sp_0x30, &bus_topology);
+
+            if (sp_0x2c >= sp_0x40)
+            {
+                //0x0010473c
+                //r7 = sp_0x3c;
+
+                //loc_10474c
+                memset(&sp_0x9c/*r4*/, -1, sizeof(usbd_device_instance_t));
+
+                sp_0x9c.path = sp_0x38;
+                sp_0x9c.devno = sp_0x3c; //r7
+
+                int r0 = usbd_attach(sp_0xd4, &sp_0x9c, 0, &sp_0xd0);
+                if (r0 == 0)
+                {
+                    //0x00104788
+
+                    //TODO
+                }
+                else
+                {
+                    //loc_104930
+                    fprintf(stderr, "device %d - attach - %s\n",
+                        sp_0x3c/*r7*/, strerror(r0));
+                }
+                //loc_104974
+            }
+            //loc_104984
         }
         //loc_104984
         sp_0x30++;

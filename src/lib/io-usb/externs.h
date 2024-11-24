@@ -231,6 +231,31 @@ struct Struct_120220
 };
 
 
+struct USB_Client
+{
+    struct 
+    {
+        int fill_0; //0
+        void* Data_4; //4
+        //???
+    }* Data_0; 
+    struct
+    {
+        int Data_0; //0
+        //???
+    }* Data_4; //4
+    pthread_mutex_t Data_8; //8
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14
+    int fill_0x18; //0x18
+    int Data_0x1c; //0x1c
+    int* Data_0x20; //0x20
+    int Data_0x24; //0x24
+    int* Data_0x28; //0x28
+    //0x2c = 44
+};
+
+
 extern int sub_1047a8(struct Struct_1047a8**, int);
 extern int usb_slogf(int opcode, int severity, int v, const char* fmt, ...);
 
