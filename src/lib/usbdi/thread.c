@@ -528,22 +528,47 @@ struct usbd_urb* usbd_alloc_urb(struct usbd_urb *link/*r4*/)
 }
 
 
+struct usbd_urb* usbd_free_urb(struct usbd_urb *urb)
+{
+#if 1
+    fprintf(stderr, "usbd_free_urb: TODO!!!\n");
+#endif
+
+
+    return 0;
+}
+
+
+
+int usbdi_synchronise(struct usbd_device *device, int b, int c)
+{
+#if 1
+    fprintf(stderr, "usbdi_synchronise: TODO!!!\n");
+#endif
+
+
+    return 0;
+}
+
+
 
 /* 0x000093f0 - todo */
-int usbdi_sync_io(struct usbd_device *device/*r5*/, 
+int usbdi_sync_io(struct usbd_device* device/*r5*/, 
         int b/*r7*/, 
         int c/*r8*/, 
         int d/*fp*/, 
-        int e, 
-        int f, 
-        int g,
-        int h, 
-        void* i, 
-        int* j)
+        uint16_t e, //arg0 = sp_0x110?
+        uint16_t f, //arg4 = sp_0x114?
+        uint16_t g, //arg8 = sp_0x118?
+        int arg_0xc, //argc
+        void* arg_0x10, //arg_0x10 = sp_0x120?
+        int* arg_0x14) //arg_0x14 = sp_0x124
 {
-#if 1
+#if 0
     fprintf(stderr, "usbdi_sync_io: TODO!!!\n");
 #endif
+
+    int r6_;
 
     struct Struct_5a24 sp_0x78; //+0x70 = 0xe8
     struct
@@ -553,13 +578,46 @@ int usbdi_sync_io(struct usbd_device *device/*r5*/,
         //0x6c;
     } sp_0xc;
 
-    struct usbd_urb* r4 = usbd_alloc_urb(NULL);
+    /*struct usbd_urb*/struct Struct_5a24* r4 = usbd_alloc_urb(NULL);
+    if (r4 == NULL)
+    {
+        return 12; //->loc_9540
+    }
+    //0x00009434
+    r6_ = usbdi_synchronise(device, 1, 1);
+    if (r6_ != 0)
+    {
+        //->loc_9538
+        usbd_free_urb(r4);
+
+        return r6_;
+    }
+    //0x0000944c
+    r4->wData_0x22 = b/*r7*/;
+
+    c/*r8*/ |= 0xc0000;
+    r4->Data_0x24 = c/*r8*/;
+    r4->bData_0x28 = device/*r5*/->Data_0x1c.path;
+    r4->bData_0x29 = device/*r5*/->Data_0x1c.devno;
+    r4->wData_0x2a = device/*r5*/->Data_0x1c.generation;
+    r4->Data_0x2c = device/*r5*/->Data_0x1c.config;
+    r4->Data_0x30 = device/*r5*/->Data_0x1c.iface;
+    r4->Data_0x34 = device/*r5*/->Data_0x1c.alternate;
+    r4->Data_0x38 = 0;
+    r4->wData_0x58 = f; //sl; //TODO!!!
+    r4->wData_0x5a = g; //sb; //TODO!!!
+    r4->bData_0x5c = d/*fp*/; 
+    r4->bData_0x5d = e; //sp4; //TODO!!!
+    r4->Data_0x54 = 0;
+    r4->Data_0x44 = arg_0x10;
+    r4->Data_0x48 = (arg_0x14 != NULL)? *(arg_0x14): 0;
+    r4->Data_0x40 = arg_0xc;
 
     memcpy(&sp_0x78/*r6*/, r4, 0x70);
 
     sp_0xc.Data_0.wData_2 = 0x6c;
 
-    int r6_ = usbdi_sendcmd(device->Data_8->Data_0x30,
+    r6_ = usbdi_sendcmd(device->Data_8->Data_0x30,
                 5, &sp_0x78/*r6*/, &sp_0xc);
 
 #if 1
@@ -623,7 +681,9 @@ int usbd_descriptor(struct usbd_device *device/*sl*/,
     }
     //loc_96d8
     int r5_ = usbdi_sync_io(device/*sl*/, 
-            5, r5, sp_0x24, 
+            5, 
+            r5, 
+            sp_0x24, 
             rtype/*sb*/, 
             index/*sp_0x1c*/ | (type/*fp*/ << 8),
             langid/*sp_0x20*/,
