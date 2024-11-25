@@ -29,7 +29,7 @@ struct Struct_5a24
         int Data_0x14; //0x14
         //???
     }* Data_0x10; //0x10
-    void* Data_0x14; //0x14
+    struct Struct_107288* Data_0x14; //0x14
     int fill_0x18[2]; //0x18
     uint16_t wData_0x20; //0x20
     uint16_t wData_0x22; //0x22
@@ -45,7 +45,8 @@ struct Struct_5a24
     int Data_0x40; //0x40
     int Data_0x44; //0x44
     int Data_0x48; //0x48
-    int fill_0x4c[2]; //0x4c
+    int fill_0x4c; //0x4c
+    int Data_0x50; //0x50
     int Data_0x54; //0x54
     uint16_t wData_0x58; //0x58
     uint16_t wData_0x5a; //0x5a
@@ -933,14 +934,310 @@ void sub_107a0c(struct Struct_112b08* a)
 }
 
 
-/* 107758 - todo */
-int sub_107758(struct Struct_5a24* a, struct Struct_112b08* b)
+/* 1099a8 - todo */
+void sub_1099a8()
 {
 #if 1
-    fprintf(stderr, "sub_107758: TODO!!!\n");
+    fprintf(stderr, "sub_1099a8: TODO!!!\n");
+#endif
+
+}
+
+
+/* 117148 - todo */
+void usbdi_timeout(int a, void (*b)(), struct Struct_5a24* c)
+{
+#if 1
+    fprintf(stderr, "usbdi_timeout: TODO!!!\n");
+#endif
+
+}
+
+
+/* 11266c - todo */
+int sub_11266c(struct Struct_107288* a)
+{
+#if 1
+    fprintf(stderr, "sub_11266c: TODO!!!\n");
 #endif
 
     return 0;
+}
+
+
+int usb_find_data_key()
+{
+#if 1
+    fprintf(stderr, "usb_find_data_key: TODO!!!\n");
+#endif
+
+
+    return 0;
+}
+
+
+/* 106c90 - todo */
+int udi_descriptor(struct Struct_5a24* r4)
+{
+#if 1
+    fprintf(stderr, "udi_descriptor: TODO!!!\n");
+#endif
+
+    int r6;
+    struct USB_Client* r2;
+    struct Struct_107288* r5;
+    struct USB_Controller_Inner_0x7c* r7;
+
+    r7 = USB_CheckDevice(r4->bData_0x28, r4->bData_0x29);
+    if (r7 == NULL)
+    {
+        return 0x13; //->loc_106e34
+    }
+
+    r5 = r4->Data_0x14;
+    r2 = r5->Data_0x60;
+
+    if (((r4->Data_0x24 & 0x3) == 0) || 
+        (r4->bData_0x5d != 0) ||
+        (r2->Data_0x10 & 0x08))
+    {
+        //loc_106ce0
+        r6 = USB_SendCommand(r5);
+        //->loc_106e34
+    }
+    else
+    {
+        //loc_106cf0
+        if (r4->bData_0x5c == 0x06)
+        {
+            //0x00106cfc
+#if 0
+                void addr[.length], size_t length, int prot, int flags,
+                  int fd, off_t offset
+#endif
+            void* r8 = mmap(0, r4->Data_0x48, 
+                        0xb00, 0x10001, -1, r4->Data_0x44);
+            if (r8 != NULL)
+            {
+                //0x00106d2c
+                int sp_0x14 = r4->Data_0x48;
+
+                struct
+                {
+                    int fill_0[2]; //0
+                    int Data_8; //8
+                    //???
+                }* r0;
+
+                r0 = usb_find_data_key(r7->Data_0x8c,
+                        1, 
+                        r4->wData_0x58,
+                        r4->wData_0x5a,
+                        0, //sp
+                        r8, //sp4
+                        &sp_0x14);
+
+                if ((r0 != NULL) &&
+                    //0x00106d64
+                    ((r4->Data_0x48 == sp_0x14) ||
+                        ((r0->Data_8 & 0x01) != 0)))
+                {
+                    //loc_106d80
+                    r6 = 0;
+                    r5->Data_8 = r6; //0
+                    r5->Data_0x34 = sp_0x14;
+                    //->loc_106e04
+                }
+                else
+                {
+                    //loc_106d94
+                    r6 = USB_SendCommand(r4->Data_0x14);
+                    if (r6 == 0)
+                    {
+                        //0x00106da4
+#if 1
+                        fprintf(stderr, "udi_descriptor: 0x00106da4: TODO!!!\n");
+#endif
+                        //TODO!!!
+                    }
+                }
+                //loc_106e04
+                munmap(r8, r4->Data_0x48);
+                //->loc_106e34
+            } //if (r8 != NULL)
+            else
+            {
+                //loc_106e14
+                r6 = 12;
+                r5->Data_8 = r6; //12
+                r5->Data_0x34 = 0;
+                //->loc_106e34
+            }
+        }
+        else
+        {
+            //loc_106e28
+            r6 = USB_SendCommand(r5);
+        }
+    }
+    //loc_106e34
+    return r6;
+}
+
+
+/* 106f6c - todo */
+int udi_control_transfer(struct Struct_5a24* r0)
+{
+#if 1
+    fprintf(stderr, "udi_control_transfer: TODO!!!\n");
+#endif
+
+    switch (r0->wData_0x22)
+    {
+#if 0 //TODO!!!
+        case 8:
+            //loc_106f98
+            break;
+
+        case 9:
+            //loc_106fa0
+            break;
+
+        case 6:
+            //loc_106fa8
+            break;
+#endif
+
+        case 5:
+            //loc_106fc8
+            return udi_descriptor(r0);
+            //break;
+
+#if 0
+        case 7:
+        default:
+            //loc_106fd0
+            break;
+#else
+        default:
+            fprintf(stderr, "udi_control_transfer: r0->wData_0x22=%d: TODO!!!\n",
+                    r0->wData_0x22);
+            break;
+#endif
+    }
+
+    return 0;
+}
+
+
+/* 105c64 - todo */
+int udi_xlat_status(int a)
+{
+#if 1
+    fprintf(stderr, "udi_xlat_status: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 107758 - todo */
+int udi_transfer(struct Struct_5a24* r4, struct Struct_112b08* r5)
+{
+#if 1
+    fprintf(stderr, "udi_transfer: TODO!!!\n");
+#endif
+
+    struct Struct_107288* r8 = r4->Data_0x14;
+    int r7 = r4->Data_0x38 & 0x0f;
+    int r6;
+    int r0;
+
+    if (r4->Data_0x3c != 0)
+    {
+        r6 = 0x16;
+        //->loc_1078b8
+    }
+    else
+    {
+        //0x00107784
+        r5->Data_0x24 |= 0x02;
+
+        if (r7 != 0)
+        {
+            //0x00107798
+            if (r4->Data_0x40 == 0)
+            {
+                r4->Data_0x40 = 2000;
+                //->loc_1077b4
+            }
+            if (r4->Data_0x40 != -1)
+            {
+                usbdi_timeout(r4->Data_0x40, sub_1099a8, r4);
+            }
+            //loc_1077c4
+            r0 = pthread_mutex_unlock(&r5->Data_0x30);
+            if (r0 != 0)
+            {
+                //0x001077d4
+                usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                    "udi_transfer", 0x555, r0);
+            }
+            //loc_107800
+            r6 = sub_11266c(r8);
+            //->loc_107858
+        }
+        else
+        {
+            //loc_107810
+            r0 = pthread_mutex_unlock(&r5->Data_0x30);
+            if (r0 != 0)
+            {
+                //0x00107820
+                usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                    "udi_transfer", 0x55c, r0);
+            }
+            //loc_10784c
+            r6 = udi_control_transfer(r4);
+        }
+        //loc_107858
+        r0 = pthread_mutex_lock(&r5->Data_0x30);
+        if (r0 != 0)
+        {
+            //0x00107868
+            usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, %d",
+                "udi_transfer", 0x564, r0);
+        }
+        //loc_107894
+        int r3 = r5->Data_0x24;
+        r5->Data_0x24 = r3 & ~0x02;
+
+        if (r3 & 0x01)
+        {
+            //0x001078a8
+            pthread_cond_signal(&r5->Data_0x38);
+        }
+        //loc_1078b0
+    }
+    //loc_1078b0
+    if (r6 != 0)
+    {
+        //loc_1078b8
+
+        fprintf(stderr, "udi_transfer: loc_1078b8: TODO!!!\n");
+
+        //TODO!!!
+    }
+    //loc_1079e0
+    if (r7 == 0)
+    {
+        //0x001079e8
+        r4->Data_0x3c = udi_xlat_status(r8->Data_8);
+
+        r4->Data_0x50 = r8->Data_0x34;
+    }
+    //loc_1079fc
+    return r6;
 }
 
 
@@ -1081,7 +1378,7 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
         sp_0x18->Data_0x20->Data_0 = r4_;
         sp_0x18->Data_0x20 = &r4_->Data_8;
 
-        r5 = sub_107758(r4_, sp_0x18);
+        r5 = udi_transfer(r4_, sp_0x18);
 
         if (r4_->Data_8 != NULL)
         {

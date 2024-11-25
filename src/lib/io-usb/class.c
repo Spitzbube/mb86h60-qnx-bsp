@@ -724,6 +724,31 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
 }
 
 
+/* 0x001125f0 - todo */
+int USB_SendCommand(struct /*Struct_107288*/Struct_10bab4* fp_0x10)
+{
+#if 1
+    fprintf(stderr, "USB_SendCommand: TODO!!!\n");
+#endif
+
+    struct Struct_112b08* fp_0xc;
+    struct USB_Controller_Inner_0x7c* fp8;
+
+    fp8 = USB_CheckDevice(fp_0x10->Data_0x18, fp_0x10->Data_0x14);
+    if (fp8 == NULL)
+    {
+        //0x00112630
+        fp_0x10->Data_8 = 0x8204;
+
+        return 0x16; //->loc_112660
+    }
+    //loc_112644
+    fp_0xc = &fp8->Data_0x40;
+    
+    return USB_ControlTransfer(fp_0x10, fp_0xc);
+}
+
+
 /* 10cc08 - todo */
 void CLASS_CreateDeviceDescriptor(uint8_t* fp8, usbd_device_descriptor_t* fp_0xc)
 {

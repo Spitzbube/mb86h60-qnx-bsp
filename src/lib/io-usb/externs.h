@@ -14,6 +14,7 @@
 #include <sys/slog.h>
 //#include <sys/resmgr.h>
 #include <sys/procmgr.h>
+#include <sys/mman.h>
 #include <hw/pci.h>
 #include <pthread.h>
 #include <sys/usb100.h>
