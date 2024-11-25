@@ -20,7 +20,17 @@ struct Struct_5a24
 {
     int Data_0; //4
     struct Struct_5a24* Data_4; //4
-    int fill_8[2]; //8
+    struct
+    {
+        int fill_0[3]; //0
+        int Data_0xc; //0xc
+        //???
+    }* Data_8; //8
+    struct
+    {
+        int Data_0; //0
+        //???
+    }* Data_0xc; //0xc
     struct
     {
         int fill_0[3]; //0

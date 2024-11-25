@@ -10,7 +10,17 @@ struct Struct_5a24
 {
     int Data_0; //4
     struct Struct_5a24* Data_4; //4
-    int fill_8[2]; //8
+    struct
+    {
+        int fill_0[3]; //0
+        int Data_0xc; //0xc
+        //???
+    }* Data_8; //8
+    struct
+    {
+        int Data_0; //0
+        //???
+    }* Data_0xc; //0xc
     struct
     {
         int fill_0[3]; //0
@@ -913,6 +923,27 @@ loc_107518:
 }
 
 
+/* 107a0c - todo */
+void sub_107a0c(struct Struct_112b08* a)
+{
+#if 1
+    fprintf(stderr, "sub_107a0c: TODO!!!\n");
+#endif
+
+}
+
+
+/* 107758 - todo */
+int sub_107758(struct Struct_5a24* a, struct Struct_112b08* b)
+{
+#if 1
+    fprintf(stderr, "sub_107758: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
 /* 107a90 - todo */
 int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
 {
@@ -979,11 +1010,9 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
         return r5;
     }
     //loc_107c34
-#if 0    
-    r4_ = sp_0x1c->Data_0x5c;
+    struct Struct_5a24* r4_ = sp_0x1c->Data_0x5c;
     sp_0x1c->Data_0x60 = r8;
-    int r7 = r4_->Data_0x38;
-#endif
+    int r7_ = r4_->Data_0x38;
 
     r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
     if (r0 != 0)
@@ -993,14 +1022,92 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
             "udi_io", 0x663, r0);
     }
     //loc_107c80
+    pthread_mutex_lock(&sp_0x14->Data_0x94);
 
-#if 1
-    fprintf(stderr, "udi_io: loc_107c34: TODO!!!\n");
-#endif
+    while (sp_0x14->bData_0xd & 0x08)
+    {
+        //loc_107c9c
+        pthread_cond_wait(&sp_0x14->Data_0x9c, &sp_0x14->Data_0x94);
+    }
+    //loc_107cb8
+    pthread_mutex_unlock(&sp_0x14->Data_0x94);
 
-    //TODO!!!
+    r0 = pthread_mutex_lock(&sp_0x18->Data_0x30);
+    if (r0 != 0)
+    {
+        //0x00107cd4
+        usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, %d",
+            "udi_io", 0x66e, r0);
+    }
+    //loc_107d00
+    if (r7_ & 0xf)
+    {
+        //0x00107d08
+        while (sp_0x18->Data_0x24 & 0x01)
+        {
+            //loc_107d18
+            pthread_cond_wait(&sp_0x18->Data_0x38, &sp_0x18->Data_0x30);
+        }
+        //loc_107d34
+        r4_->Data_8 = 0;
+        r4_->Data_0xc = sp_0x18->Data_0x18;
+        sp_0x18->Data_0x18->Data_0 = r4_;
+        r4_ = &r4_->Data_8;
+        sp_0x18->Data_0x18 = r4_;
 
-    return 0;
+        sub_107a0c(sp_0x18);
+
+        r0 = pthread_mutex_unlock(&sp_0x18->Data_0x30);
+        if (r0 != 0)
+        {
+            //0x00107d7c
+            usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                "udi_io", 0x679, r0);
+        }
+        //->loc_107e9c
+    }
+    else
+    {
+        //loc_107db8
+        while ((sp_0x18->Data_0x1c != 0) ||
+            (sp_0x18->Data_0x24 & 1))
+        {
+            //loc_107dac
+            pthread_cond_wait(&sp_0x18->Data_0x38, &sp_0x18->Data_0x30);
+        }
+        //0x00107dd4
+        r4_->Data_8 = NULL;
+        r4_->Data_0xc = sp_0x18->Data_0x20;
+        sp_0x18->Data_0x20->Data_0 = r4_;
+        sp_0x18->Data_0x20 = &r4_->Data_8;
+
+        r5 = sub_107758(r4_, sp_0x18);
+
+        if (r4_->Data_8 != NULL)
+        {
+            r4_->Data_8->Data_0xc = r4_->Data_0xc;
+        }
+        else
+        {
+            sp_0x18->Data_0x20 = r4_->Data_0xc;
+        }
+
+        r4_->Data_0xc->Data_0 = r4_->Data_8;
+
+        pthread_cond_signal(&sp_0x18->Data_0x38);
+        r0 = pthread_mutex_unlock(&sp_0x18->Data_0x30);
+        if (r0 != 0)
+        {
+            usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+                "udi_io", 0x68a, r0);
+        }
+        //loc_107e84
+        atomic_sub(&sp_0x14->Data_0xa8, 1);
+
+        usbd_free_cached(sp_0x1c);
+    }
+    //loc_107e9c
+    return r5;
 }
 
 

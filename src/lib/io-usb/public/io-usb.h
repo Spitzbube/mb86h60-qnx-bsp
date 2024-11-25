@@ -106,13 +106,23 @@ struct Struct_112b08 //TODO: struct UsbEndpoint
     struct Struct_0xa4* Data_0xc; //0xc
     int fill_0x10; //0x10
     int Data_0x14; //0x14
-    void* Data_0x18; //0x18
+    struct 
+    {
+        int Data_0; //0
+        //???
+    }* Data_0x18; //0x18
     int Data_0x1c; //0x1c
-    void* Data_0x20; //0x20
-    int fill_0x24; //0x24
+    struct 
+    {
+        int Data_0; //0
+        //???
+    }* Data_0x20; //0x20
+    int Data_0x24; //0x24
     int Data_0x28; //0x28
     int fill_0x2c; //0x2c
-    //0x30???
+    pthread_mutex_t Data_0x30; //0x30
+    pthread_cond_t Data_0x38; //0x38
+    //0x40
 };
 
 
@@ -132,8 +142,10 @@ struct USB_Controller_Inner_0x7c
     int fill_0x24[2]; //0x24
     usbd_device_descriptor_t device_descriptor; //0x2c +0x12 = 0x3e
     struct Struct_112b08 Data_0x40; //0x40
+#if 0
     pthread_mutex_t Data_0x70; //0x70
     pthread_cond_t Data_0x78; //0x78
+#endif
     int fill_0x80; //0x80
     struct UsbConfiguration* Data_0x84; //0x84
     int Data_0x88; //0x88

@@ -189,10 +189,18 @@ struct UsbEndpoint
     struct Struct_0xa4* Data_0xc; //0xc
     struct UsbInterface* interface; //0x10
     int Data_0x14; //0x14
-    int* Data_0x18; //0x18
+    struct 
+    {
+        int Data_0; //0
+        //???
+    }* Data_0x18; //0x18
     int Data_0x1c; //0x1c
-    int* Data_0x20; //0x20
-    int fill_0x24; //0x24
+    struct 
+    {
+        int Data_0; //0
+        //???
+    }* Data_0x20; //0x20
+    int Data_0x24; //0x24
     int Data_0x28; //0x28
     int fill_0x2c; //0x2c
     pthread_mutex_t Data_0x30; //0x30

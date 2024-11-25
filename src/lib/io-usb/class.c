@@ -266,15 +266,27 @@ struct USB_Controller_Inner_0x7c* sub_10afc4(struct USB_Controller* fp_0x10)
             fp8->Data_0x40.Data_0x1c = 0;
             fp8->Data_0x40.Data_0x20 = &fp8->Data_0x40.Data_0x1c;
 
+#if 0
             pthread_mutex_init(&fp8->Data_0x70, 0);
             pthread_cond_init(&fp8->Data_0x78, 0);
+#else            
+            pthread_mutex_init(&fp8->Data_0x40.Data_0x30, 0);
+            pthread_cond_init(&fp8->Data_0x40.Data_0x38, 0);
+#endif
             pthread_mutex_init(&fp8->Data_0x94, 0);
             pthread_cond_init(&fp8->Data_0x9c, 0);
 
+#if 0
             usb_slogf(12, 2, 1, "%s(%d): devno %d, dmutexp %p, emutexp %p",
                 "CLASS_MakeNewDeviceEntry", 0x162, 
                 fp8->new_device_address, 
                 &fp8->Data_0x94, &fp8->Data_0x70);
+#else
+            usb_slogf(12, 2, 1, "%s(%d): devno %d, dmutexp %p, emutexp %p",
+                "CLASS_MakeNewDeviceEntry", 0x162, 
+                fp8->new_device_address, 
+                &fp8->Data_0x94, &fp8->Data_0x40.Data_0x30);
+#endif
 
             usb_data_store_init(&fp8->Data_0x8c, 0);
 
