@@ -19,7 +19,8 @@ struct Struct_5a24
         int Data_0x14; //0x14
         //???
     }* Data_0x10; //0x10
-    int fill_0x14[3]; //0x14
+    void* Data_0x14; //0x14
+    int fill_0x18[2]; //0x18
     uint16_t wData_0x20; //0x20
     uint16_t wData_0x22; //0x22
     int Data_0x24; //0x24
@@ -30,7 +31,7 @@ struct Struct_5a24
     int Data_0x30; //0x30
     int Data_0x34; //0x34
     int Data_0x38; //0x38
-    int fill_0x3c; //0x3c
+    int Data_0x3c; //0x3c
     int Data_0x40; //0x40
     int Data_0x44; //0x44
     int Data_0x48; //0x48
@@ -42,13 +43,44 @@ struct Struct_5a24
     uint8_t bData_0x5d; //0x5d
     uint16_t wData_0x5e; //0x5e
     int Data_0x60; //0x60
-    int fill_0x64; //0x64
+    int Data_0x64; //0x64
     uint16_t wData_0x68; //0x68
     int fill_0x6c; //0x6c
     //0x70
 };
 
 #endif
+
+struct Struct_107288
+{
+    int Data_0; //0
+    int fill_4; //4
+    int Data_8; //8
+    int fill_0xc; //0xc
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14
+    int Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    int Data_0x20; //0x20
+    int Data_0x24; //0x24
+    int Data_0x28; //0x28
+    int Data_0x2c; //0x2c
+    int Data_0x30; //0x30
+    int Data_0x34; //0x34
+    int Data_0x38; //0x38
+    int Data_0x3c; //0x3c
+    int Data_0x40; //0x40
+    int Data_0x44; //0x44
+    int Data_0x48; //0x48
+    int Data_0x4c; //0x4c
+    int Data_0x50; //0x50
+    int Data_0x54; //0x54
+    void (*Data_0x58)(); //0x58
+    struct Struct_5a24* Data_0x5c; //0x5c
+    struct USB_Client* Data_0x60; //0x60
+    int Data_0x64; //0x64
+    //???
+};
 
 
 extern int usbdi_memchunk_init();
@@ -570,15 +602,312 @@ int udi_endpoint_descriptor(struct Struct_5a24* r4,
 }
 
 
-int udi_alloc_surb(struct USB_Controller* a,
-        struct USB_Client* b, 
-        struct Struct_5a24* c,
-        int* d)
+/* 11779c - todo */
+void usbd_free_cached(void* a)
+{
+ #if 1
+    fprintf(stderr, "usbd_free_cached: TODO!!!\n");
+#endif
+   
+}
+
+
+/* 117af8 - todo */
+void* usbd_alloc_cached(size_t size)
+{
+#if 0
+    fprintf(stderr, "usbd_alloc_cached: TODO!!!\n");
+#endif
+
+    return usbdi_memchunk_malloc(UsbdiGlobals.Data_0xc, size);
+}
+
+
+/* 107eac - todo */
+void sub_107eac()
 {
 #if 1
+    fprintf(stderr, "sub_107eac: TODO!!!\n");
+#endif
+
+}
+
+
+/* 108340 - todo */
+void sub_108340()
+{
+#if 1
+    fprintf(stderr, "sub_108340: TODO!!!\n");
+#endif
+
+}
+
+
+/* 10a110 - todo */
+int sub_10a110(struct Struct_112b08* a, void* b, int c, int d, struct USB_Client* e)
+{
+#if 1
+    fprintf(stderr, "sub_10a110: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 0x00107288 - todo */
+int udi_alloc_surb(struct USB_Controller* sb,
+        struct USB_Client* sp_0x1c, 
+        struct Struct_5a24* r8,
+        struct Struct_107288** sp_0x2c)
+{
+#if 0
     fprintf(stderr, "udi_alloc_surb: TODO!!!\n");
 #endif
 
+    int r5_res;
+    int r7_;
+    int r0;
+    struct Struct_5a24* r3;
+    struct Struct_112b08* sp_0x34;
+    int sp_0x28;
+    struct Struct_107288* sp_0x18;
+    int sp_0x14;
+
+    *sp_0x2c = 0;
+
+    if ((r8->Data_0x38 & 0x0f) &&
+        ((r8->Data_0x24 & 0x80000) == 0))
+    {
+        sp_0x14 = 0x70;
+        //->loc_1072d4
+    }
+    else
+    {
+        //loc_1072cc
+        sp_0x14 = 0;
+    }
+    //loc_1072d4
+#if 1
+    if (r8 == NULL)
+    {
+        r0 = 0; 
+        r7_ = 0;
+        //->loc_107324
+    }
+    else
+    {
+        r3 = r8;
+        r0 = 0;
+        r7_ = 0;
+#else
+    {
+        r0 = r7_ = 0;
+        r3 = r8;
+#endif
+        while (r3 != NULL)
+        {
+            //loc_1072f0
+            r7_++;
+            int r2 = r3->Data_0x24;
+            if (r2 & 0x200000)
+            {
+                r0 = r0 + r3->wData_0x5e;
+            }
+            if (r3->Data_4 == NULL)
+            {
+                //->loc_107324
+                break;
+            }
+            if ((r2 & 0x100000) == 0)
+            {
+                //->loc_107324
+                break;
+            }
+
+            r3 = ((uint8_t*)r8) + r3->wData_0x68;
+        }
+    }
+    //loc_107324
+    sp_0x28 = sp_0x14;
+    sp_0x18 = usbd_alloc_cached((sp_0x28 + 0x64) * r7_ + r0);
+    if (sp_0x18 == NULL)
+    {
+        return 0/*r5_res*/; //->loc_107620
+    }
+    //0x00107348
+    if (r8 != 0)
+    {
+        //0x00107350
+        struct Struct_5a24* r4 = r8;
+        //r6 = sp_0x18;
+        struct
+        {
+            int fill_0; //0
+            int Data_4; //4
+            //???
+        }* sl = 0;
+        //fp = 0;
+        //sp_0x20 = sub_108340;
+        //sp_0x24 = sub_107eac;
+        //struct USB_Controller* r5 = sb;
+        //struct Struct_5a24* sb = r8;
+        //r8 = r7_;
+        //r7 = r6;
+        //r6 = r4;
+
+        struct Struct_107288* r7 = sp_0x18; //r6;
+        struct Struct_5a24* r6 = r8; //r4;
+
+        while (1)
+        {
+            //loc_10738c
+            r7->Data_0x10 = 7;
+            r7->Data_0x18 = r6->bData_0x28;
+            r7->Data_0x14 = r6->bData_0x29;
+            r7->Data_0x1c = (r6->Data_0x40 == 0)? 2000: r8/*sb*/->Data_0x40;
+            r7->Data_8 = r6->Data_0x3c;
+            r7->Data_0x20 = r6->Data_0x2c;
+            r7->Data_0x24 = r6->Data_0x30;
+            r7->Data_0x28 = r6->Data_0x38 & 0x0f;
+            r7->Data_0 = r6->Data_0x24 | 0x20000;
+            r7->Data_0x34 = 0; //fp;
+            r7->Data_0x2c = r6->Data_0x44;
+            r7->Data_0x30 = r6->Data_0x48;
+            r7->Data_0x38 = ((r6->Data_0x24 & 0x03) == 0x01)? 0x80: 0x00;
+            r7->Data_0x54 = r6->Data_0x54;
+            r7->Data_0x3c = r6->bData_0x5c;
+            r7->Data_0x40 = r6->bData_0x5d >> 5;
+            r7->Data_0x44 = r6->bData_0x5d & 0x07;
+            r7->Data_0x48 = r6->wData_0x58 >> 8;
+            r7->Data_0x4c = r6->wData_0x58 & 0xff;
+            r7->Data_0x50 = r6->wData_0x5a;
+            r7->Data_0x58 = (r7_/*r8*/ == 1)? 
+                sub_108340/*sp_0x20*/: sub_107eac/*sp_0x24*/;
+            r7->Data_0x60 = sp_0x1c;
+
+            if (/*r5*/sb->Data_0x6c & 0x40000000)
+            {
+                //0x00107480
+                int r0 = udi_endpoint_descriptor(r6, &sp_0x34, NULL/*fp*/, 1);
+                if (r0 == 0)
+                {
+                    //0x0010749c
+                    if ((r7->Data_0x2c != 0) &&
+                        (r7->Data_0x30 != 0))
+                    {
+                        //0x001074b4
+                        r7->Data_0x2c = sub_10a110(sp_0x34, r7, 
+                                r7->Data_0x2c, r7->Data_0x30, sp_0x1c);
+
+                        if (r7->Data_0x2c == 0)
+                        {
+                            //0x001074d4
+                            //r6 = r7; //TODO!!!
+
+                            usb_slogf(12, 2, 0, "%s(%d): %p, len %d",
+                                "udi_alloc_surb", 0x5fd, NULL, r7->Data_0x30);
+
+                            r5_res = 12;
+                            //->loc_107518
+                            goto loc_107518;
+                        }
+                        //loc_107524
+                    }
+                    //loc_107524
+                }
+                else
+                {
+                    //loc_107514
+                    r5_res = r0;
+loc_107518:                    
+                    //loc_107518
+                    usbd_free_cached(sp_0x18);
+                    //->loc_107620
+                    return r5_res;
+                }
+            }
+            //loc_107524
+            if (sp_0x14 == 0)
+            {
+                r7->Data_0x5c = r6;
+                r4 = r8/*sb*/;
+                //->loc_107594
+            }
+            else
+            {
+                //0x00107538
+                if (r6->Data_0x24 & 0x200000)
+                {
+                    //0x00107544
+                    r6->Data_0x60 = &r7->Data_0x64;
+
+                    memcpy(r6->Data_0x60, r6 + 1, r6->wData_0x5e);
+
+                    r7->Data_0x5c = ((uint8_t*)r6->Data_0x60) + r6->wData_0x5e;
+
+                    memcpy(r7->Data_0x5c, r6, sizeof(struct Struct_5a24)/*0x70*/);
+
+                    r4 = r7->Data_0x5c;
+                    //->loc_107594
+                }
+                else
+                {
+                    //loc_10757c
+                    r4 = &r7->Data_0x64;
+
+                    memcpy(r4, r6, sp_0x28);
+
+                    r7->Data_0x5c = r4;
+                }
+            }
+            //loc_107594
+            r4->Data_0x14 = r7;
+            r4->Data_0x64 = (r7_/*r8*/ <= 1)? 0/*fp*/: sp_0x18->Data_0x5c;
+
+            if (sl != 0)
+            {
+                sl->Data_4 = r4;
+            }
+
+            int r2 = r6->wData_0x5e;
+            if ((r6->Data_0x24 & 0x100000) == 0)
+            {
+                //->loc_1075ec
+                //r8 = sb;
+                break;
+            }
+
+            if (r6->Data_4 == 0)
+            {
+                //->loc_1075f4
+                //r8 = sb;
+                break;
+            }
+
+            r6 = ((uint8_t*)r8/*sb*/) + r6->wData_0x68;
+            if (r6 == 0)
+            {
+                //->loc_1075fc
+                //r8 = sb;
+                break;
+            }
+            //0x001075dc
+            r2 = r2 + 0xd4;
+            r7 = ((uint8_t*)r7) + r2;
+            sl = r4;
+            //->loc_10738c
+        } //while (1)
+        //loc_1075ec
+        //loc_1075f4
+        //loc_1075fc
+    } //if (r8 != 0)
+    //loc_107600
+    if (r8->Data_4 != NULL)
+    {
+        sp_0x18->Data_0x50 = sp_0x18;
+    }
+
+    *sp_0x2c = sp_0x18;
 
     return 0;
 }
@@ -591,7 +920,7 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
     fprintf(stderr, "udi_io: TODO!!!\n");
 #endif
 
-    int sp_0x1c;
+    struct Struct_107288* sp_0x1c;
     struct Struct_112b08* sp_0x18;
     struct USB_Controller_Inner_0x7c* sp_0x14;
     int r5;
@@ -617,7 +946,7 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
         usb_slogf(12, 2, 4, "%s(%d): devno %d status %d ",
             "udi_io", 0x64b, r4->bData_0x29, r5);
 
-        int r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
+        r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
         if (r0 != 0)
         {
             //0x00107b54
@@ -636,7 +965,7 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
         //0x00107bb0
         atomic_sub(&sp_0x14->Data_0xa8, 1);
 
-        int r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
+        r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
         if (r0 != 0)
         {
             //0x00107bd0
@@ -650,6 +979,20 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
         return r5;
     }
     //loc_107c34
+#if 0    
+    r4_ = sp_0x1c->Data_0x5c;
+    sp_0x1c->Data_0x60 = r8;
+    int r7 = r4_->Data_0x38;
+#endif
+
+    r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
+    if (r0 != 0)
+    {
+        //0x00107c54
+        usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
+            "udi_io", 0x663, r0);
+    }
+    //loc_107c80
 
 #if 1
     fprintf(stderr, "udi_io: loc_107c34: TODO!!!\n");
