@@ -11,18 +11,18 @@
 
 
 
+int usbdi_status_errno()
+{
+    fprintf(stderr, "usbdi_status_errno: TODO!!!\n");
+
+    return 0;
+}
+
+
 void usbdi_memory_info()
 {
     fprintf(stderr, "usbdi_memory_info: TODO!!!\n");
 
-}
-
-
-int usbdi_init_client_globals()
-{
-    fprintf(stderr, "usbdi_init_client_globals: TODO!!!\n");
-
-    return 0;
 }
 
 

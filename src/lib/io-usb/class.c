@@ -734,7 +734,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
 
 
 /* 0x001125f0 - todo */
-int USB_SendCommand(struct /*Struct_107288*/Struct_10bab4* fp_0x10)
+int USB_SendCommand(struct Struct_10bab4* fp_0x10)
 {
 #if 1
     fprintf(stderr, "USB_SendCommand: TODO!!!\n");

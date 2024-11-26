@@ -1,5 +1,24 @@
 
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <signal.h>
+#include <pthread.h>
+#include <atomic.h>
+#include <sys/usbdi.h>
+#include "usbdi_priv.h"
+
+
+
+int usbdi_memchunk_init()
+{
+    fprintf(stderr, "usbdi_memchunk_init: TODO!!!\n");
+
+    return 0;
+}
 
 
 void usbdi_memchunk_destroy()
@@ -45,6 +64,17 @@ void* usbdi_memchunk_calloc(int a, int b, int c)
     }
 
     return r4;
+}
+
+
+/* 0x000060a4 - todo */
+paddr_t usbdi_memchunk_mphys(int r5, const void* ptr/*r6*/)
+{
+#if 1
+    fprintf(stderr, "usbdi_memchunk_mphys: TODO!!!\n");
+#endif
+
+    return mphys(ptr);
 }
 
 

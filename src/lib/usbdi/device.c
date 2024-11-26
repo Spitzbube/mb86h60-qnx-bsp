@@ -14,7 +14,7 @@
 
 /* 0x00005a24 - todo */
 int usbdi_sendcmd(int sp_0xc, int r8, 
-    struct Struct_5a24* sl, 
+    struct usbd_urb* sl, 
     struct Struct_5a24_d* r7)
 {
     int r6;
@@ -24,7 +24,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
     io_msg_t sp_0x230;
     iov_t sp_0x28[66]; //0x28/0x2c
     iov_t sp_0x18; //0x18/0x1c
-    struct Struct_5a24* sp_0x14;
+    struct usbd_urb* sp_0x14;
 //    int sp_0x10;
 
 #if 1
@@ -52,7 +52,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
         {
             //0x00005a7c
             sp_0x14 = sl;
-            struct Struct_5a24* r4_ = sl;
+            struct usbd_urb* r4_ = sl;
             //r5 = 1;
             //int fp = 1;
             iov_t* r6 = &sp_0x28[0];
@@ -91,7 +91,7 @@ int usbdi_sendcmd(int sp_0xc, int r8,
                     break;
                 }
                 //0x00005b24
-                struct Struct_5a24* r3 = r4_->Data_4;
+                struct usbd_urb* r3 = r4_->Data_4;
                 if (r3 == NULL)
                 {
                     r4_->wData_0x68 = 0;

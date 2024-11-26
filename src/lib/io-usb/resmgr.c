@@ -3,40 +3,7 @@
 #include "externs.h"
 
 
-struct Struct_107288 //Struct_10bab4
-{
-    int Data_0; //0
-    int fill_4; //4
-    int Data_8; //8
-    int fill_0xc; //0xc
-    int Data_0x10; //0x10
-    int Data_0x14; //0x14
-    int Data_0x18; //0x18
-    int Data_0x1c; //0x1c
-    int Data_0x20; //0x20
-    int Data_0x24; //0x24
-    int Data_0x28; //0x28
-    void* pData; //0x2c
-    uint32_t dwLength; //0x30
-    int Data_0x34; //0x34
-    int direction; //0x38
-    int request; //0x3c //e.g. USB_GET_DESCRIPTOR
-    int request_type; //0x40 //e.g. USB_TYPE_STANDARD
-    int request_recipient; //0x44
-    int value_high; //0x48
-    int value_low; //0x4c
-    int Data_0x50; //0x50
-    int Data_0x54; //0x54
-    void (*Func_0x58)(); //0x58
-    struct Struct_5a24* Data_0x5c; //0x5c
-    struct USB_Client* Data_0x60; //0x60
-    int Data_0x64; //0x64
-    //???
-};
-
-
 extern int usbdi_memchunk_init();
-extern void* usbdi_memchunk_calloc(int a, int b, int c);
 extern void usbdi_memchunk_free(int, void*);
 
 extern void usbdi_client_destroy();
@@ -487,7 +454,7 @@ int sub_1115b4(int a, int b)
 
 
 /* 0x001071c8 - todo */
-int udi_endpoint_descriptor(struct Struct_5a24* r4, 
+int udi_endpoint_descriptor(struct usbd_urb* r4, 
         struct Struct_112b08** r6, 
         struct USB_Controller_Inner_0x7c** r5, 
         int r7)
@@ -609,8 +576,8 @@ int sub_10a110(struct Struct_112b08* a, void* b, int c, int d, struct USB_Client
 /* 0x00107288 - todo */
 int udi_alloc_surb(struct USB_Controller* sb,
         struct USB_Client* sp_0x1c, 
-        struct Struct_5a24* r8,
-        struct Struct_107288** sp_0x2c)
+        struct usbd_urb* r8,
+        struct Struct_10bab4** sp_0x2c)
 {
 #if 0
     fprintf(stderr, "udi_alloc_surb: TODO!!!\n");
@@ -619,10 +586,10 @@ int udi_alloc_surb(struct USB_Controller* sb,
     int r5_res;
     int r7_;
     int r0;
-    struct Struct_5a24* r3;
+    struct usbd_urb* r3;
     struct Struct_112b08* sp_0x34;
     int sp_0x28;
-    struct Struct_107288* sp_0x18;
+    struct Struct_10bab4* sp_0x18;
     int sp_0x14;
 
     *sp_0x2c = 0;
@@ -690,7 +657,7 @@ int udi_alloc_surb(struct USB_Controller* sb,
     if (r8 != 0)
     {
         //0x00107350
-        struct Struct_5a24* r4 = r8;
+        struct usbd_urb* r4 = r8;
         //r6 = sp_0x18;
         struct
         {
@@ -702,13 +669,13 @@ int udi_alloc_surb(struct USB_Controller* sb,
         //sp_0x20 = sub_108340;
         //sp_0x24 = sub_107eac;
         //struct USB_Controller* r5 = sb;
-        //struct Struct_5a24* sb = r8;
+        //struct usbd_urb* sb = r8;
         //r8 = r7_;
         //r7 = r6;
         //r6 = r4;
 
-        struct Struct_107288* r7 = sp_0x18; //r6;
-        struct Struct_5a24* r6 = r8; //r4;
+        struct Struct_10bab4* r7 = sp_0x18; //r6;
+        struct usbd_urb* r6 = r8; //r4;
 
         while (1)
         {
@@ -793,13 +760,13 @@ loc_107518:
                 if (r6->Data_0x24 & 0x200000)
                 {
                     //0x00107544
-                    r6->Data_0x60 = &r7->Data_0x64;
+                    r6->Data_0x60 = r7 + 1; //&r7->Data_0x64;
 
                     memcpy(r6->Data_0x60, r6 + 1, r6->wData_0x5e);
 
                     r7->Data_0x5c = ((uint8_t*)r6->Data_0x60) + r6->wData_0x5e;
 
-                    memcpy(r7->Data_0x5c, r6, sizeof(struct Struct_5a24)/*0x70*/);
+                    memcpy(r7->Data_0x5c, r6, sizeof(struct usbd_urb)/*0x70*/);
 
                     r4 = r7->Data_0x5c;
                     //->loc_107594
@@ -807,7 +774,7 @@ loc_107518:
                 else
                 {
                     //loc_10757c
-                    r4 = &r7->Data_0x64;
+                    r4 = r7 + 1; //&r7->Data_0x64;
 
                     memcpy(r4, r6, sp_0x28);
 
@@ -888,7 +855,7 @@ void sub_1099a8()
 
 
 /* 117148 - todo */
-void usbdi_timeout(int a, void (*b)(), struct Struct_5a24* c)
+void usbdi_timeout(int a, void (*b)(), struct usbd_urb* c)
 {
 #if 1
     fprintf(stderr, "usbdi_timeout: TODO!!!\n");
@@ -898,7 +865,7 @@ void usbdi_timeout(int a, void (*b)(), struct Struct_5a24* c)
 
 
 /* 11266c - todo */
-int sub_11266c(struct Struct_107288* a)
+int sub_11266c(struct Struct_10bab4* a)
 {
 #if 1
     fprintf(stderr, "sub_11266c: TODO!!!\n");
@@ -920,7 +887,7 @@ int usb_find_data_key()
 
 
 /* 106c90 - todo */
-int udi_descriptor(struct Struct_5a24* r4)
+int udi_descriptor(struct usbd_urb* r4)
 {
 #if 1
     fprintf(stderr, "udi_descriptor: TODO!!!\n");
@@ -928,7 +895,7 @@ int udi_descriptor(struct Struct_5a24* r4)
 
     int r6;
     struct USB_Client* r2;
-    struct Struct_107288* r5;
+    struct Struct_10bab4* r5;
     struct USB_Controller_Inner_0x7c* r7;
 
     r7 = USB_CheckDevice(r4->bData_0x28, r4->bData_0x29);
@@ -1029,7 +996,7 @@ int udi_descriptor(struct Struct_5a24* r4)
 
 
 /* 106f6c - todo */
-int udi_control_transfer(struct Struct_5a24* r0)
+int udi_control_transfer(struct usbd_urb* r0)
 {
 #if 1
     fprintf(stderr, "udi_control_transfer: TODO!!!\n");
@@ -1085,13 +1052,13 @@ int udi_xlat_status(int a)
 
 
 /* 107758 - todo */
-int udi_transfer(struct Struct_5a24* r4, struct Struct_112b08* r5)
+int udi_transfer(struct usbd_urb* r4, struct Struct_112b08* r5)
 {
 #if 1
     fprintf(stderr, "udi_transfer: TODO!!!\n");
 #endif
 
-    struct Struct_107288* r8 = r4->Data_0x14;
+    struct Struct_10bab4* r8 = r4->Data_0x14;
     int r7 = r4->Data_0x38 & 0x0f;
     int r6;
     int r0;
@@ -1185,13 +1152,13 @@ int udi_transfer(struct Struct_5a24* r4, struct Struct_112b08* r5)
 
 
 /* 107a90 - todo */
-int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
+int udi_io(struct USB_Client* r8, struct usbd_urb* r4)
 {
 #if 1
     fprintf(stderr, "udi_io: TODO!!!\n");
 #endif
 
-    struct Struct_107288* sp_0x1c;
+    struct Struct_10bab4* sp_0x1c;
     struct Struct_112b08* sp_0x18;
     struct USB_Controller_Inner_0x7c* sp_0x14;
     int r5;
@@ -1250,7 +1217,7 @@ int udi_io(struct USB_Client* r8, struct Struct_5a24* r4)
         return r5;
     }
     //loc_107c34
-    struct Struct_5a24* r4_ = sp_0x1c->Data_0x5c;
+    struct usbd_urb* r4_ = sp_0x1c->Data_0x5c;
     sp_0x1c->Data_0x60 = r8;
     int r7_ = r4_->Data_0x38;
 
@@ -1547,7 +1514,7 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
             case 5:
                 //loc_11581c
                 {
-                    if ((((struct Struct_5a24*)r8)->Data_0x24 & 0x80000) == 0)
+                    if ((((struct usbd_urb*)r8)->Data_0x24 & 0x80000) == 0)
                     {
                         //0x00115828
                         if ((r6->Data_0x10 & 0x01) == 0)

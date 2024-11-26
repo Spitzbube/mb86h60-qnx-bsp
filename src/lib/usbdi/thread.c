@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
 #include <pthread.h>
+#include <atomic.h>
 #include <sys/usbdi.h>
 #include "usbdi_priv.h"
 
@@ -43,16 +45,18 @@ struct usbd_connection
 };
 
 
-struct
+static const struct
 {
-    int fill_0[2]; //0
-    int Data_8; //8
-    int Data_0xc; //12
-    int fill_0x10[10]; //0x10
-    int Data_0x38; //0x38
-    struct usbd_connection* Data_0x3c; //0x3c
+    int fill_0[0];
     //???
-} Data_b698; //0x0000b698
+} memcfg = //0x0000a26c
+{
+    //TODO!!!
+    0x00001068,
+};
+
+
+struct Struct_b698 Data_b698; //0x0000b698
 pthread_mutex_t conn_mutex; //0x0000b780
 
 
@@ -93,6 +97,40 @@ int usbdi_open(struct usbd_connection* r4, int r8)
     } //for (i = 0; i != r7; i++)
 
     return r4->Data_0x30;
+}
+
+
+/* 0x00008280 - todo */
+int usbdi_init_client_globals()
+{
+#if 0
+    fprintf(stderr, "usbdi_init_client_globals: TODO!!!\n");
+#endif
+
+    int res = pthread_mutex_init(&Data_b698.Data_0, NULL);
+    if (res != 0)
+    {
+        if (res == 0x10)
+        {
+            return 0;
+        }
+
+        return res;
+    }
+
+    res = usbdi_memchunk_init(&memcfg, 0x0d, &Data_b698.Data_8, 0);
+    if (res != 0)
+    {
+        return res;
+    }
+
+    res = usbdi_memchunk_init(&memcfg, 0x0d, &Data_b698.Data_0xc, 1);
+    if (res != 0)
+    {
+        return res;
+    }
+
+    return 0;
 }
 
 
@@ -334,7 +372,7 @@ int usbd_hcd_ext_info(struct usbd_connection* connection,
         connection, connection->Data_0x30, cindex);
 #endif
 
-    struct Struct_5a24 sp_0x70;
+    struct usbd_urb sp_0x70;
     struct
     {
         struct Struct_5a24_d Data_0; //0
@@ -367,7 +405,7 @@ int usbd_topology_ext(struct usbd_connection *connection,
         connection);
 #endif
 
-    struct Struct_5a24 sp_0x270;
+    struct usbd_urb sp_0x270;
     struct
     {
         struct Struct_5a24_d Data_0; //0
@@ -412,7 +450,7 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
         return 12;
     }
 
-    struct Struct_5a24 sp_0x70;
+    struct usbd_urb sp_0x70;
     struct
     {
         struct Struct_5a24_d1 Data_0; //0
@@ -445,8 +483,8 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
         r4->Data_0x40 = 0; //r7
         r4->Data_0x44 = (extra != 0)? r4 + 1: NULL;
 
-#if 0 //TODO!!!
-        pthread_mutex_lock(&r5->Data_0x2ac/*B698*/);
+#if 1 //TODO!!!
+        pthread_mutex_lock(&Data_b698.Data_0);
 #endif
 
         r4->Data_0 = 0;
@@ -454,8 +492,8 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
         *(r4->Data_4) = r4;
         connection->Data_0x3c = r4;
 
-#if 0 //TODO!!!
-        pthread_mutex_unlock(&r5->Data_0x2ac/*B698*/);
+#if 1 //TODO!!!
+        pthread_mutex_unlock(&Data_b698.Data_0);
 #endif
 
         *device = r4;
@@ -490,17 +528,6 @@ void usbd_free(void *ptr)
 }
 
 
-paddr_t usbd_mphys(const void *ptr)
-{
-#if 1
-    fprintf(stderr, "usbd_mphys: ptr=%p: TODO!!!\n", ptr);
-#endif
-
-    return ptr;
-}
-
-
-
 /* 0x00009384 - todo */
 struct usbd_urb* usbd_alloc_urb(struct usbd_urb *link/*r4*/)
 {
@@ -508,7 +535,8 @@ struct usbd_urb* usbd_alloc_urb(struct usbd_urb *link/*r4*/)
     fprintf(stderr, "usbd_alloc_urb: TODO!!!\n");
 #endif
 
-    struct Struct_5a24* r0 = usbdi_memchunk_calloc(0/*TODO!!!*/, 1, 0x70);
+    struct usbd_urb* r0 = usbdi_memchunk_calloc(Data_b698.Data_0xc, 1, 
+        sizeof(struct usbd_urb));
 
     if (r0 != NULL)
     {
@@ -517,7 +545,7 @@ struct usbd_urb* usbd_alloc_urb(struct usbd_urb *link/*r4*/)
 
         if (link != NULL)
         {
-            struct Struct_5a24* link1 = link;
+            struct usbd_urb* link1 = link;
 
             link1->Data_4 = r0;
             link1->Data_0x24 |= 0x100000;
@@ -540,13 +568,66 @@ struct usbd_urb* usbd_free_urb(struct usbd_urb *urb)
 }
 
 
-
-int usbdi_synchronise(struct usbd_device *device, int b, int c)
+/* 0x00005900 - todo */
+int usbdi_synchronise(struct usbd_device* device/*r5*/, int r7, int r6)
 {
-#if 1
+#if 0
     fprintf(stderr, "usbdi_synchronise: TODO!!!\n");
 #endif
 
+    pthread_mutex_lock(&Data_b698.Data_0);
+
+    if (r7 == 0)
+    {
+        //0x0000592c
+        atomic_set(&device->Data_0x14, 0x01);
+
+        if (device->Data_0x18 != 0)
+        {
+            //0x00005944
+            pthread_mutex_unlock(&Data_b698.Data_0);
+            return 0x10;
+        }
+        //->loc_5a08
+    }
+    //loc_5958
+    else if (r6 >= 0)
+    {
+        //0x00005960
+        if (device->Data_0x14 & 0x01)
+        {
+            //0x0000596c
+            pthread_mutex_unlock(&Data_b698.Data_0);
+            return 0x13;
+        }
+        //loc_5980
+        else if (device->Data_0x14 & 0x02)
+        {
+            //0x00005988
+            pthread_mutex_unlock(&Data_b698.Data_0);
+            return 0x0b;
+        }
+        //loc_599c
+        device->Data_0x18 += r6;
+        //->loc_5a08
+    }
+    else
+    {
+        //loc_59ac
+        device->Data_0x18 += r6;
+        if ((device->Data_0x18 == 0) && 
+            (device->Data_0x14 & 0x01) &&
+            (device->Data_8->Data_0x1c->removal != NULL))
+        {
+            //0x000059e0
+            pthread_mutex_unlock(&Data_b698.Data_0);
+            (device->Data_8->Data_0x1c->removal)(device->Data_8, &device->Data_0x1c);
+
+            return 0;
+        }
+    }
+    //loc_5a08
+    pthread_mutex_unlock(&Data_b698.Data_0);
 
     return 0;
 }
@@ -569,65 +650,73 @@ int usbdi_sync_io(struct usbd_device* device/*r5*/,
     fprintf(stderr, "usbdi_sync_io: TODO!!!\n");
 #endif
 
-    int r6_;
+    int res;
 
-    struct Struct_5a24 sp_0x78; //+0x70 = 0xe8
+    struct usbd_urb sp_0x78; //+0x70 = 0xe8
     struct
     {
-        struct Struct_5a24_d1 Data_0;
-        int fill_4[26]; //4
-        //0x6c;
+        struct Struct_5a24_d1 Data_0; //0
+        int Data_4; //4
+        int Data_8; //8
+        int fill_0xc[24]; //0xc
+        //0x6c
     } sp_0xc;
 
-    /*struct usbd_urb*/struct Struct_5a24* r4 = usbd_alloc_urb(NULL);
+    struct usbd_urb* r4 = usbd_alloc_urb(NULL);
     if (r4 == NULL)
     {
         return 12; //->loc_9540
     }
     //0x00009434
-    r6_ = usbdi_synchronise(device, 1, 1);
-    if (r6_ != 0)
+    res = usbdi_synchronise(device, 1, 1);
+    if (res == 0)
     {
-        //->loc_9538
-        usbd_free_urb(r4);
+        //0x0000944c
+        r4->wData_0x22 = b/*r7*/;
 
-        return r6_;
+        c/*r8*/ |= 0xc0000;
+        r4->Data_0x24 = c/*r8*/;
+        r4->bData_0x28 = device/*r5*/->Data_0x1c.path;
+        r4->bData_0x29 = device/*r5*/->Data_0x1c.devno;
+        r4->wData_0x2a = device/*r5*/->Data_0x1c.generation;
+        r4->Data_0x2c = device/*r5*/->Data_0x1c.config;
+        r4->Data_0x30 = device/*r5*/->Data_0x1c.iface;
+        r4->Data_0x34 = device/*r5*/->Data_0x1c.alternate;
+        r4->Data_0x38 = 0;
+        r4->wValue = f; //sl; //TODO!!!
+        r4->wData_0x5a = g; //sb; //TODO!!!
+        r4->request = request/*fp*/; 
+        r4->request_type = request_type; //sp4; //TODO!!!
+        r4->Data_0x54 = 0;
+        r4->pData = arg_0x10;
+        r4->dwLength = (arg_0x14 != NULL)? *(arg_0x14): 0;
+        r4->Data_0x40 = arg_0xc;
+
+        memcpy(&sp_0x78, r4, 0x70);
+
+        sp_0xc.Data_0.wData_2 = 0x6c;
+
+        res = usbdi_sendcmd(device->Data_8->Data_0x30,
+                    5, &sp_0x78, &sp_0xc);
+        if (res == 0)
+        {
+            //0x00009508
+            res = usbdi_status_errno(sp_0xc.Data_4);
+            if (res == 0)
+            {
+                if (arg_0x14 != NULL)
+                {
+                    *arg_0x14 = sp_0xc.Data_8;
+                }
+            }
+        }
+        //loc_9528
+        usbdi_synchronise(device, 1, 0);
     }
-    //0x0000944c
-    r4->wData_0x22 = b/*r7*/;
+    //loc_9538
+    usbd_free_urb(r4);
 
-    c/*r8*/ |= 0xc0000;
-    r4->Data_0x24 = c/*r8*/;
-    r4->bData_0x28 = device/*r5*/->Data_0x1c.path;
-    r4->bData_0x29 = device/*r5*/->Data_0x1c.devno;
-    r4->wData_0x2a = device/*r5*/->Data_0x1c.generation;
-    r4->Data_0x2c = device/*r5*/->Data_0x1c.config;
-    r4->Data_0x30 = device/*r5*/->Data_0x1c.iface;
-    r4->Data_0x34 = device/*r5*/->Data_0x1c.alternate;
-    r4->Data_0x38 = 0;
-    r4->wValue = f; //sl; //TODO!!!
-    r4->wData_0x5a = g; //sb; //TODO!!!
-    r4->request = request/*fp*/; 
-    r4->request_type = request_type; //sp4; //TODO!!!
-    r4->Data_0x54 = 0;
-    r4->pData = arg_0x10;
-    r4->dwLength = (arg_0x14 != NULL)? *(arg_0x14): 0;
-    r4->Data_0x40 = arg_0xc;
-
-    memcpy(&sp_0x78/*r6*/, r4, 0x70);
-
-    sp_0xc.Data_0.wData_2 = 0x6c;
-
-    r6_ = usbdi_sendcmd(device->Data_8->Data_0x30,
-                5, &sp_0x78/*r6*/, &sp_0xc);
-
-#if 1
-    fprintf(stderr, "usbdi_sync_io: r6_=%d: TODO!!!\n", r6_);
-#endif
-
-    //TODO!!!
-
-    return 0;
+    return res;
 }
 
 
@@ -772,18 +861,12 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                 if (sp_0x14 == NULL)
                 {
                     //0x000048f4
-                    sp_0x14 = usbdi_memchunk_malloc(
-                                0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
-                                sp_0x18);
+                    sp_0x14 = usbdi_memchunk_malloc(Data_b698.Data_8, sp_0x18);
                     if (sp_0x14 == NULL)
                     {
                         //->loc_50a8
-                        usbdi_memchunk_free(
-                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
-                            r7);
-                        usbdi_memchunk_free(
-                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
-                            sp_0x14);
+                        usbdi_memchunk_free(Data_b698.Data_8, r7);
+                        usbdi_memchunk_free(Data_b698.Data_8, sp_0x14);
                         //sl = 12;
                         //->loc_4ffc
                         errno = 12;
@@ -794,18 +877,12 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                 if (r7 == NULL)
                 {
                     //0x0000491c
-                    r7 = usbdi_memchunk_malloc(
-                                0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
-                                r5);
+                    r7 = usbdi_memchunk_malloc(Data_b698.Data_8, r5);
                     if (r7 == NULL)
                     {
                         //->loc_50a8
-                        usbdi_memchunk_free(
-                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
-                            r7);
-                        usbdi_memchunk_free(
-                            0, //(_GLOBAL_OFFSET_TABLE_ + sp_0x1c = B698)->Data_8,
-                            sp_0x14);
+                        usbdi_memchunk_free(Data_b698.Data_8, r7);
+                        usbdi_memchunk_free(Data_b698.Data_8, sp_0x14);
                         //sl = 12;
                         //->loc_4ffc
                         errno = 12;
@@ -820,7 +897,7 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                 {
                     //0x0000494c
                     int r0 = usbd_descriptor(device/*sb*/, 
-                                0, 1, 
+                                0, 1/*USB_DESC_DEVICE?*/, 
                                 USB_RECIPIENT_DEVICE | USB_TYPE_STANDARD, 
                                 0, 0, sp_0x14, 0x12);
                     if (r0 != 0)

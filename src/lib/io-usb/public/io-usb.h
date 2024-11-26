@@ -25,15 +25,16 @@ struct Struct_10bab4
     uint32_t dwLength; //0x30
     int Data_0x34; //0x34
     int direction; //0x38
-    int request; //0x3c
-    int request_type; //0x40
+    int request; //0x3c //e.g. USB_GET_DESCRIPTOR
+    int request_type; //0x40 //e.g. USB_TYPE_STANDARD
     int request_recipient; //0x44
     int value_high; //0x48
     int value_low; //0x4c
     uint32_t Data_0x50; //0x50
-    int fill_0x54; //0x54
-    int Func_0x58; //0x58
-    int fill_0x5c[2]; //0x5c
+    int Data_0x54; //0x54
+    void (*Func_0x58)(); //0x58
+    struct Struct_5a24* Data_0x5c; //0x5c
+    struct USB_Client* Data_0x60; //0x60
     //0x64
 };
 
