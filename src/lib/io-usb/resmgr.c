@@ -921,12 +921,17 @@ int udi_descriptor(struct usbd_urb* r4)
         if (r4->request == USB_GET_DESCRIPTOR)
         {
             //0x00106cfc
-#if 0
-                void addr[.length], size_t length, int prot, int flags,
-                  int fd, off_t offset
-#endif
             void* r8 = mmap(0, r4->dwLength, 
                         0xb00, 0x10001, -1, (off_t)(r4->pData));
+#if 1
+            fprintf(stderr, "udi_descriptor: r4->pData=%p -> r8=%p\n", 
+                    r4->pData, r8);
+#endif
+#if 0 //Create a buffer in the io-usb process instead of using from the client process
+            r4->Data_0x14->pData = malloc(r4->dwLength);
+            fprintf(stderr, "udi_descriptor: r4->Data_0x14->pData=%p, r4->dwLength=%d\n", 
+                    r4->Data_0x14->pData, r4->dwLength);
+#endif
             if (r8 != NULL)
             {
                 //0x00106d2c

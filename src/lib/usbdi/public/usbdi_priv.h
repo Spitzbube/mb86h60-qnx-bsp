@@ -52,7 +52,7 @@ struct usbd_urb
         int Data_0x14; //0x14
         //???
     }* Data_0x10; //0x10
-    struct Struct_107288* Data_0x14; //0x14
+    struct Struct_10bab4* Data_0x14; //0x14
     int fill_0x18[2]; //0x18
     uint16_t wData_0x20; //0x20
     uint16_t wData_0x22; //0x22

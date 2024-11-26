@@ -692,6 +692,11 @@ int usbdi_sync_io(struct usbd_device* device/*r5*/,
         r4->dwLength = (arg_0x14 != NULL)? *(arg_0x14): 0;
         r4->Data_0x40 = arg_0xc;
 
+#if 1
+        fprintf(stderr, "usbdi_sync_io: r4->pData=%p, r4->dwLength=%d\n",
+            r4->pData, r4->dwLength);
+#endif
+
         memcpy(&sp_0x78, r4, 0x70);
 
         sp_0xc.Data_0.wData_2 = 0x6c;
