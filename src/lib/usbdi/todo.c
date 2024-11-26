@@ -8,7 +8,6 @@
 #include <signal.h>
 #include <pthread.h>
 #include <sys/usbdi.h>
-#include "device.h"
 
 
 

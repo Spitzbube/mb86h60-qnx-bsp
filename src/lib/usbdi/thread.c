@@ -7,7 +7,8 @@
 #include <signal.h>
 #include <pthread.h>
 #include <sys/usbdi.h>
-#include "device.h"
+#include "usbdi_priv.h"
+
 
 
 //_GLOBAL_OFFSET_TABLE_:
@@ -556,8 +557,8 @@ int usbdi_synchronise(struct usbd_device *device, int b, int c)
 int usbdi_sync_io(struct usbd_device* device/*r5*/, 
         int b/*r7*/, 
         int c/*r8*/, 
-        int d/*fp*/, 
-        uint16_t e, //arg0 = sp_0x110?
+        int request/*fp*/, 
+        uint16_t request_type, //arg0 = sp_0x110?
         uint16_t f, //arg4 = sp_0x114?
         uint16_t g, //arg8 = sp_0x118?
         int arg_0xc, //argc
@@ -604,13 +605,13 @@ int usbdi_sync_io(struct usbd_device* device/*r5*/,
     r4->Data_0x30 = device/*r5*/->Data_0x1c.iface;
     r4->Data_0x34 = device/*r5*/->Data_0x1c.alternate;
     r4->Data_0x38 = 0;
-    r4->wData_0x58 = f; //sl; //TODO!!!
+    r4->wValue = f; //sl; //TODO!!!
     r4->wData_0x5a = g; //sb; //TODO!!!
-    r4->bData_0x5c = d/*fp*/; 
-    r4->bData_0x5d = e; //sp4; //TODO!!!
+    r4->request = request/*fp*/; 
+    r4->request_type = request_type; //sp4; //TODO!!!
     r4->Data_0x54 = 0;
-    r4->Data_0x44 = arg_0x10;
-    r4->Data_0x48 = (arg_0x14 != NULL)? *(arg_0x14): 0;
+    r4->pData = arg_0x10;
+    r4->dwLength = (arg_0x14 != NULL)? *(arg_0x14): 0;
     r4->Data_0x40 = arg_0xc;
 
     memcpy(&sp_0x78/*r6*/, r4, 0x70);
@@ -647,7 +648,7 @@ int usbd_descriptor(struct usbd_device *device/*sl*/,
 #endif
 
     int sp_0x2c;
-    int sp_0x24;
+    int request; //sp_0x24;
 
     int r5;
     void* r7;
@@ -668,7 +669,7 @@ int usbd_descriptor(struct usbd_device *device/*sl*/,
     {
         //0x000096a4
         r5 = 0x20005;
-        sp_0x24 = 6;
+        request = USB_GET_DESCRIPTOR;
         //->loc_96d8
     }
     else
@@ -677,13 +678,13 @@ int usbd_descriptor(struct usbd_device *device/*sl*/,
         memcpy(r7, desc, sp_0x2c);
 
         r5 = 0x20006;
-        sp_0x24 = 7;
+        request = USB_SET_DESCRIPTOR;
     }
     //loc_96d8
     int r5_ = usbdi_sync_io(device/*sl*/, 
             5, 
             r5, 
-            sp_0x24, 
+            request, 
             rtype/*sb*/, 
             index/*sp_0x1c*/ | (type/*fp*/ << 8),
             langid/*sp_0x20*/,
@@ -819,7 +820,9 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                 {
                     //0x0000494c
                     int r0 = usbd_descriptor(device/*sb*/, 
-                                0, 1, 0, 0, 0, sp_0x14, 0x12);
+                                0, 1, 
+                                USB_RECIPIENT_DEVICE | USB_TYPE_STANDARD, 
+                                0, 0, sp_0x14, 0x12);
                     if (r0 != 0)
                     {
                         //->loc_4f50

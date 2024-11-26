@@ -2,67 +2,8 @@
 
 #include "externs.h"
 
-#if 0
-#include "device.h"
-#else
 
-struct Struct_5a24
-{
-    int Data_0; //4
-    struct Struct_5a24* Data_4; //4
-    struct
-    {
-        int fill_0[3]; //0
-        int Data_0xc; //0xc
-        //???
-    }* Data_8; //8
-    struct
-    {
-        int Data_0; //0
-        //???
-    }* Data_0xc; //0xc
-    struct
-    {
-        int fill_0[3]; //0
-        int Data_0xc; //0xc
-        int fill_0x10; //0x10
-        int Data_0x14; //0x14
-        //???
-    }* Data_0x10; //0x10
-    struct Struct_107288* Data_0x14; //0x14
-    int fill_0x18[2]; //0x18
-    uint16_t wData_0x20; //0x20
-    uint16_t wData_0x22; //0x22
-    int Data_0x24; //0x24
-    uint8_t bData_0x28; //0x28
-    uint8_t bData_0x29; //0x29
-    uint8_t wData_0x2a; //0x2a
-    int Data_0x2c; //0x2c
-    int Data_0x30; //0x30
-    int Data_0x34; //0x34
-    int Data_0x38; //0x38
-    int Data_0x3c; //0x3c
-    int Data_0x40; //0x40
-    int Data_0x44; //0x44
-    int Data_0x48; //0x48
-    int fill_0x4c; //0x4c
-    int Data_0x50; //0x50
-    int Data_0x54; //0x54
-    uint16_t wData_0x58; //0x58
-    uint16_t wData_0x5a; //0x5a
-    uint8_t bData_0x5c; //0x5c
-    uint8_t bData_0x5d; //0x5d
-    uint16_t wData_0x5e; //0x5e
-    int Data_0x60; //0x60
-    int Data_0x64; //0x64
-    uint16_t wData_0x68; //0x68
-    int fill_0x6c; //0x6c
-    //0x70
-};
-
-#endif
-
-struct Struct_107288
+struct Struct_107288 //Struct_10bab4
 {
     int Data_0; //0
     int fill_4; //4
@@ -75,18 +16,18 @@ struct Struct_107288
     int Data_0x20; //0x20
     int Data_0x24; //0x24
     int Data_0x28; //0x28
-    int Data_0x2c; //0x2c
-    int Data_0x30; //0x30
+    void* pData; //0x2c
+    uint32_t dwLength; //0x30
     int Data_0x34; //0x34
-    int Data_0x38; //0x38
-    int Data_0x3c; //0x3c
-    int Data_0x40; //0x40
-    int Data_0x44; //0x44
-    int Data_0x48; //0x48
-    int Data_0x4c; //0x4c
+    int direction; //0x38
+    int request; //0x3c //e.g. USB_GET_DESCRIPTOR
+    int request_type; //0x40 //e.g. USB_TYPE_STANDARD
+    int request_recipient; //0x44
+    int value_high; //0x48
+    int value_low; //0x4c
     int Data_0x50; //0x50
     int Data_0x54; //0x54
-    void (*Data_0x58)(); //0x58
+    void (*Func_0x58)(); //0x58
     struct Struct_5a24* Data_0x5c; //0x5c
     struct USB_Client* Data_0x60; //0x60
     int Data_0x64; //0x64
@@ -782,17 +723,19 @@ int udi_alloc_surb(struct USB_Controller* sb,
             r7->Data_0x28 = r6->Data_0x38 & 0x0f;
             r7->Data_0 = r6->Data_0x24 | 0x20000;
             r7->Data_0x34 = 0; //fp;
-            r7->Data_0x2c = r6->Data_0x44;
-            r7->Data_0x30 = r6->Data_0x48;
-            r7->Data_0x38 = ((r6->Data_0x24 & 0x03) == 0x01)? 0x80: 0x00;
+            r7->pData = r6->pData;
+            r7->dwLength = r6->dwLength;
+            r7->direction = ((r6->Data_0x24 & 0x03) == 0x01)? 
+                USB_DIRECTION_HOST: //Device to Host
+                USB_DIRECTION_DEVICE; //Host to Device
             r7->Data_0x54 = r6->Data_0x54;
-            r7->Data_0x3c = r6->bData_0x5c;
-            r7->Data_0x40 = r6->bData_0x5d >> 5;
-            r7->Data_0x44 = r6->bData_0x5d & 0x07;
-            r7->Data_0x48 = r6->wData_0x58 >> 8;
-            r7->Data_0x4c = r6->wData_0x58 & 0xff;
+            r7->request = r6->request; //e.g. USB_GET_DESCRIPTOR
+            r7->request_type = r6->request_type >> 5; //e.g. USB_TYPE_STANDARD
+            r7->request_recipient = r6->request_type & 0x07; //e.g. USB_RECIPIENT_DEVICE
+            r7->value_high = r6->wValue >> 8; //e.g. Descriptor Type 
+            r7->value_low = r6->wValue & 0xff; //e.g. Index
             r7->Data_0x50 = r6->wData_0x5a;
-            r7->Data_0x58 = (r7_/*r8*/ == 1)? 
+            r7->Func_0x58 = (r7_/*r8*/ == 1)? 
                 sub_108340/*sp_0x20*/: sub_107eac/*sp_0x24*/;
             r7->Data_0x60 = sp_0x1c;
 
@@ -803,20 +746,20 @@ int udi_alloc_surb(struct USB_Controller* sb,
                 if (r0 == 0)
                 {
                     //0x0010749c
-                    if ((r7->Data_0x2c != 0) &&
-                        (r7->Data_0x30 != 0))
+                    if ((r7->pData != NULL) &&
+                        (r7->dwLength != 0))
                     {
                         //0x001074b4
-                        r7->Data_0x2c = sub_10a110(sp_0x34, r7, 
-                                r7->Data_0x2c, r7->Data_0x30, sp_0x1c);
+                        r7->pData = sub_10a110(sp_0x34, r7, 
+                                r7->pData, r7->dwLength, sp_0x1c);
 
-                        if (r7->Data_0x2c == 0)
+                        if (r7->pData == NULL)
                         {
                             //0x001074d4
                             //r6 = r7; //TODO!!!
 
                             usb_slogf(12, 2, 0, "%s(%d): %p, len %d",
-                                "udi_alloc_surb", 0x5fd, NULL, r7->Data_0x30);
+                                "udi_alloc_surb", 0x5fd, NULL, r7->dwLength);
 
                             r5_res = 12;
                             //->loc_107518
@@ -998,7 +941,7 @@ int udi_descriptor(struct Struct_5a24* r4)
     r2 = r5->Data_0x60;
 
     if (((r4->Data_0x24 & 0x3) == 0) || 
-        (r4->bData_0x5d != 0) ||
+        (r4->request_type != 0) ||
         (r2->Data_0x10 & 0x08))
     {
         //loc_106ce0
@@ -1008,19 +951,19 @@ int udi_descriptor(struct Struct_5a24* r4)
     else
     {
         //loc_106cf0
-        if (r4->bData_0x5c == 0x06)
+        if (r4->request == USB_GET_DESCRIPTOR)
         {
             //0x00106cfc
 #if 0
                 void addr[.length], size_t length, int prot, int flags,
                   int fd, off_t offset
 #endif
-            void* r8 = mmap(0, r4->Data_0x48, 
-                        0xb00, 0x10001, -1, r4->Data_0x44);
+            void* r8 = mmap(0, r4->dwLength, 
+                        0xb00, 0x10001, -1, (off_t)(r4->pData));
             if (r8 != NULL)
             {
                 //0x00106d2c
-                int sp_0x14 = r4->Data_0x48;
+                int sp_0x14 = r4->dwLength;
 
                 struct
                 {
@@ -1031,7 +974,7 @@ int udi_descriptor(struct Struct_5a24* r4)
 
                 r0 = usb_find_data_key(r7->Data_0x8c,
                         1, 
-                        r4->wData_0x58,
+                        r4->wValue,
                         r4->wData_0x5a,
                         0, //sp
                         r8, //sp4
@@ -1039,7 +982,7 @@ int udi_descriptor(struct Struct_5a24* r4)
 
                 if ((r0 != NULL) &&
                     //0x00106d64
-                    ((r4->Data_0x48 == sp_0x14) ||
+                    ((r4->dwLength == sp_0x14) ||
                         ((r0->Data_8 & 0x01) != 0)))
                 {
                     //loc_106d80
@@ -1062,7 +1005,7 @@ int udi_descriptor(struct Struct_5a24* r4)
                     }
                 }
                 //loc_106e04
-                munmap(r8, r4->Data_0x48);
+                munmap(r8, r4->dwLength);
                 //->loc_106e34
             } //if (r8 != NULL)
             else

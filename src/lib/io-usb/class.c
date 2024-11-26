@@ -391,14 +391,14 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
     int fp_0x14, 
     int fp_0x18, 
     int fp_0x1c,
-    int request_type/*fp4*/, //e.g. USB_GET_DESCRIPTOR 
-    int f/*fp8*/, 
-    int g/*fp_0xc*/, 
-    int h/*fp_0x10*/, 
-    int i/*fp_0x14*/, 
+    int request/*fp4*/, //e.g. USB_GET_DESCRIPTOR 
+    int value_high/*fp8*/, 
+    int request_recipient/*fp_0xc*/, //e.g. USB_RECIPIENT_DEVICE
+    int request_type/*fp_0x10*/, //e.g. USB_TYPE_STANDARD
+    int value_low/*fp_0x14*/, 
     int j/*fp_0x18*/, 
     void* buffer/*fp_0x1c*/, 
-    int l/*fp_0x20*/, 
+    int length/*fp_0x20*/, 
     int o/*fp_0x24*/)
 {
 #ifdef USB_DEBUG_ENUMERATION
@@ -419,27 +419,29 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
     fp_0x10->Data_0x24 = 0;
     fp_0x10->Data_0x28 = 0;
     fp_0x10->Data_0 = 0;
-    fp_0x10->Data_0x38 = (fp_0x1c == 1)? 0x80: 0x00;
-    fp_0x10->Data_0x3c = request_type; //fp4;
-    fp_0x10->Data_0x40 = h; //fp_0x10;
-    fp_0x10->Data_0x44 = g; //fp_0xc;
-    fp_0x10->Data_0x48 = f; //fp8;
-    fp_0x10->Data_0x4c = i; //fp_0x14;
+    fp_0x10->direction = (fp_0x1c == 1)? 
+        USB_DIRECTION_HOST: //Device to Host
+        USB_DIRECTION_DEVICE; //Host to Device
+    fp_0x10->request = request; //fp4;
+    fp_0x10->request_type = request_type; //fp_0x10;
+    fp_0x10->request_recipient = request_recipient; //fp_0xc;
+    fp_0x10->value_high = value_high; //fp8;
+    fp_0x10->value_low = value_low; //fp_0x14;
     fp_0x10->Data_0x50 = j; //fp_0x18
-    fp_0x10->Data_0x58 = 0;
-    fp_0x10->Data_0x30 = l; //fp_0x20
+    fp_0x10->Func_0x58 = NULL;
+    fp_0x10->dwLength = length; //fp_0x20
 
-    if (l/*fp_0x20*/ != 0)
+    if (length/*fp_0x20*/ != 0)
     {
         if (fp8->Data_0x6c & 0x40000000)
         {
-            fp_0x10->Data_0x2c = buffer/*fp_0x1c*/;
+            fp_0x10->pData = buffer/*fp_0x1c*/;
             //->loc_10bc14
         }
         else
         {
             //loc_10bbfc
-            fp_0x10->Data_0x2c = sub_117854(buffer/*fp_0x1c*/);
+            fp_0x10->pData = sub_117854(buffer/*fp_0x1c*/);
         }
     }
     //loc_10bc14
@@ -447,20 +449,27 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
 
 
 /* 11199c - todo */
-void sub_11199c(struct Struct_10bab4* fp8, uint8_t* fp_0xc)
+void USB_CreateSetupRequest(struct Struct_10bab4* fp8, uint8_t* fp_0xc)
 {
 #if 1
-    fprintf(stderr, "sub_11199c: fp_0xc=0x%x: TODO!!!\n", fp_0xc);
+    fprintf(stderr, "USB_CreateSetupRequest: fp_0xc=0x%x: TODO!!!\n", fp_0xc);
 #endif
 
-    fp_0xc[0] = ((uint8_t)(fp8->Data_0x40) << 5) | (fp8->Data_0x38) | (fp8->Data_0x44);
-    fp_0xc[1] = fp8->Data_0x3c;
-    fp_0xc[2] = fp8->Data_0x4c;
-    fp_0xc[3] = fp8->Data_0x48;
+    /* bmRequestType */
+    fp_0xc[0] = ((uint8_t)(fp8->request_type) << 5) | 
+                (fp8->direction) | 
+                (fp8->request_recipient);
+    /* bRequest */
+    fp_0xc[1] = fp8->request;
+    /* wValue */
+    fp_0xc[2] = fp8->value_low;
+    fp_0xc[3] = fp8->value_high;
+    /* wIndex */
     fp_0xc[4] = fp8->Data_0x50;
     fp_0xc[5] = fp8->Data_0x50 >> 8;
-    fp_0xc[6] = fp8->Data_0x30;
-    fp_0xc[7] = fp8->Data_0x30 >> 8;
+    /* wLength */
+    fp_0xc[6] = fp8->dwLength;
+    fp_0xc[7] = fp8->dwLength >> 8;
 }
 
 
@@ -544,7 +553,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
     uint32_t fp_0x1c = 0;
     int fp_0x18;
     int fp_0x14;
-    void* fp_0x10 = fp_0x40->Data_0x2c;
+    void* fp_0x10 = fp_0x40->pData;
     struct USB_Controller* fp_0xc = &usb_controllers[fp_0x40->Data_0x18];
     struct USB_Controller_Inner_0x7c* fp8;
 
@@ -561,11 +570,11 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
     while (fp_0x34--)
     {
         //loc_111b80: Fill Setup Packet
-        sub_11199c(fp_0x40, fp_0x38);
+        USB_CreateSetupRequest(fp_0x40, fp_0x38);
 
         fp_0x40->Data_0x34 = 0;
         fp_0x30 = 0;
-        fp_0x2c = fp_0x40->Data_0x30;
+        fp_0x2c = fp_0x40->dwLength;
 
         if (fp_0x18 != 0)
         {
@@ -595,10 +604,10 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
         fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer)(fp_0xc, 
             fp_0x40, fp_0x44, fp_0x10, 8, fp_0x14 | 1);
 
-        if ((fp_0x3c == 0) && (fp_0x40->Data_0x30 != 0))
+        if ((fp_0x3c == 0) && (fp_0x40->dwLength != 0))
         {
             //0x00111c64
-            fp_0x10 = fp_0x40->Data_0x2c;
+            fp_0x10 = fp_0x40->pData;
             fp_0x40->Data_0x34 = 0;
             //->loc_111dd4
             while ((fp_0x1c < fp_0x2c) && (fp_0x30 == 0) && (fp_0x3c == 0))
@@ -608,14 +617,14 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
                 fp_0x28 = (((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/ > (fp_0x2c - fp_0x1c)/*r2*/)? (fp_0x2c - fp_0x1c)/*r2*/: 
                     ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/;
 
-                fp_0x40->Data_0x30 = fp_0x28;
+                fp_0x40->dwLength = fp_0x28;
                 fp_0x24 = fp_0x40->Data_0x34;
 
                 fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer/*ip*/)(fp_0xc,
                     fp_0x40, fp_0x44, 
                     ((char*)fp_0x10 + fp_0x1c)/*lr*/,
                     fp_0x28, 
-                    ((fp_0x40->Data_0x38 == 0x80)? 4: 8) | fp_0x14);
+                    ((fp_0x40->direction == 0x80)? 4: 8) | fp_0x14);
 
                 fp_0x20 += fp_0x28;
 
@@ -671,11 +680,11 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
         if (fp_0x3c == 0)
         {
             //0x00111e08
-            fp_0x40->Data_0x30 = 0;
+            fp_0x40->dwLength = 0;
 
             fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer)(fp_0xc,
                 fp_0x40, fp_0x44, 0, 0,
-                (fp_0x40->Data_0x38 == 0x80)? 0x8000000a: 0x80000006);
+                (fp_0x40->direction == 0x80)? 0x8000000a: 0x80000006);
         }
         //loc_111e64
         if (fp_0x3c != 0)
@@ -707,11 +716,11 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
             break;
         }
 
-        fp_0x40->Data_0x30 = fp_0x2c;
+        fp_0x40->dwLength = fp_0x2c;
         //loc_111f20
     } //while (fp_0x34--)
     //loc_111f48
-    fp_0x40->Data_0x30 = fp_0x2c;
+    fp_0x40->dwLength = fp_0x2c;
 
     usbd_free(fp_0x38);
 
@@ -782,7 +791,7 @@ int CLASS_GetDescriptor(struct USB_Controller_Inner_0x7c* fp_0x70,
     int descr_type/*fp_0x74*/, 
     int fp_0x78, 
     void* buffer/*fp_0x7c*/, 
-    int fp4)
+    int length/*fp4*/)
 {
 #if 1
     fprintf(stderr, "CLASS_GetDescriptor: descr_type=%d: TODO!!!\n",
@@ -805,7 +814,7 @@ int CLASS_GetDescriptor(struct USB_Controller_Inner_0x7c* fp_0x70,
         fp_0x78, 
         0, 
         buffer, 
-        fp4, 
+        length, 
         2000);
 
     res = USB_ControlTransfer(&fp_0x6c, &fp_0x70->Data_0x40);

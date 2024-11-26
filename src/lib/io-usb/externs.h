@@ -21,6 +21,7 @@
 #include <sys/usbdi.h>
 
 #include "io-usb.h"
+#include "usbdi_priv.h"
 
 
 /* Define our overrides before including <sys/iofunc.h> */
