@@ -4,7 +4,6 @@
 #include "externs.h"
 
 
-
 /* 0x00114c28 - todo */
 int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
 {
@@ -12,36 +11,20 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
     fprintf(stderr, "usbdi_memchunk_init\n");
 #endif
 
-    int sp_0x10;
+    int res; //sp_0x10;
     int r6;
     int r4 = sb * 12  + 0x24;
 
-    struct
-    {
-        pthread_mutex_t Data_0; //0
-        int Data_8; //8
-        int Data_0xc; //0xc
-        int Data_0x10; //0x10
-        int Data_0x14; //0x14
-        struct Struct_0x18
-        {
-            uint16_t wData_0; //0
-            uint16_t wData_2; //2
-            int Data_4; //4
-            int Data_8; //8
-            //0xc
-        } Data_0x18[]; //0x18
-        //???
-    }* r7 = malloc(r4);
+    struct USB_Memchunk* r7 = malloc(r4);
     
     if (r7 == NULL)
     {
-        sp_0x10 = 12;
+        res = 12;
         goto loc_114f00;
     }
 
-    sp_0x10 = pthread_mutex_init(&r7->Data_0, 0);
-    if (sp_0x10 != 0)
+    res = pthread_mutex_init(&r7->mutex, 0);
+    if (res == 0)
     {
         //0x00114c7c
         r7->Data_8 = sysconf(_SC_PAGE_SIZE);
@@ -51,13 +34,8 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
             r7->Data_8 = _SYSPAGE_ENTRY(_syspage_ptr,system_private)->pagesize;
         }
         //loc_114cac
-        int r3;
-        if (r5_ != 0)
-        {
-            r3 = 0;
-            //->loc_114d14
-        }
-        else
+        int r3 = 0;
+        if (r5_ == 0)
         {
             //0x00114cb8
             struct cacheattr_entry* cacheattr = _SYSPAGE_ENTRY(_syspage_ptr,cacheattr);
@@ -79,18 +57,12 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
         r7->Data_0x10 = 0;
 
         uint32_t sp = r7->Data_8 - 0x10;
-        uint32_t r5 = 0;
-
-        //sp_0xc = &r7->Data_0x18;
-        //sp8 = r7;
-        //r8 = 0; //r6
-        //sl = 0x18;
-        //fp = &UsbdiGlobals
+        int r5_ = 0;
 
         for (r6 = 0; r6 < sb; r6++)
         {
             //loc_114d5c
-            r5 = sp4[r6];
+            uint32_t r5 = sp4[r6];
             if (r5 < 8)
             {
                 r5 = 8;
@@ -121,40 +93,22 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
 
             r7->Data_0x18[r4].Data_4 = 0; //r8
             r7->Data_0x18[r4].Data_8 = 0; //r8
+
+            r5_ = sb;
         } //for (r6 = 0; r6 < sb; r6++)
         //0x00114e58
-        int r5_; // = sb;
-
-#if 0
-        struct Struct_0x18* r6_ = &r7->Data_0x18[r5_];
-        struct Struct_0x18* r8_ = &r7->Data_0x18[r5_ - 1];
-        struct Struct_0x18* r4_ = &r7->Data_0x18[r5_];
-#endif
-
-        //while (r5_ > 0)
-        for (r5_ = sb; r5_ > 0; r5_--)
+        while (--r5_ > 0)
         {
             //loc_114e84
-#if 0            
-            if ((r4_->wData_0 - r8_->wData_0) <= 7)
+            if ((r7->Data_0x18[r5_].wData_0 - r7->Data_0x18[r5_ - 1].wData_0) <= 7)
             {
                 //0x00114e98
-                memmove(r6_, r8_, (sb-- - r5_)*12);
+                memmove(&r7->Data_0x18[r5_ - 1], 
+                    &r7->Data_0x18[r5_], 
+                    (sb-- - r5_) * 12);
             }
-            //loc_114eb4
-            r6_--;
-            r8_--;
-            r4_--;
-#else
-            if ((r7->Data_0x18[r5_ - 1].wData_0 - r7->Data_0x18[r5_ - 2].wData_0) <= 7)
-            {
-                //0x00114e98
-                memmove(&r7->Data_0x18[r5_ - 2], &r7->Data_0x18[r5_ - 1], (sb-- - r5_)*12);
-            }
-#endif            
             //loc_114ec0
-//            r5_--;
-        } //while (r5_-- > 0)
+        } //while (--r5_ > 0)
 
         r7->Data_0x18[sb].wData_2 = 0;
         r7->Data_0x18[sb].wData_0 = 0; 
@@ -172,25 +126,178 @@ loc_114f00:
         *sp_0x14 = 0;
     }
     //loc_114f0c
-    return sp_0x10;
+    return res;
+}
+
+
+/* 114b5c - complete */
+int sub_114b5c(struct USB_Memchunk_Inner_0x18* a,
+        struct USB_Memchunk_Inner_0x18_Inner_8* b)
+{
+#if 0
+    fprintf(stderr, "sub_114b5c: TODO!!!\n");
+#endif
+
+    struct
+    {
+        struct USB_Memchunk_Inner_0x18_Inner_8* Data_0; //0
+
+    }* r0 = b->Data_4;
+    b->Data_4 = r0->Data_0;
+    b->wData_0xc++;
+    r0->Data_0 = b;
+    a->Data_4--;
+
+    return r0;
+}
+
+
+/* 1151dc - todo */
+int alloc_resource(int a, int b, int c)
+{
+#if 1
+    fprintf(stderr, "alloc_resource: TODO!!!\n");
+#endif
+
+    return 0;
 }
 
 
 
-
 /* 0x001153c8 - todo */
-void* usbdi_memchunk_malloc(int a, int b)
+void* usbdi_memchunk_malloc(int h, int r7)
 {
 #if 0
-    if (b == 0)
-    {
-        return a + 16;
-    }
-#else
-    fprintf(stderr, "usbdi_memchunk_malloc: %d\n", b);
+    fprintf(stderr, "usbdi_memchunk_malloc: %d TODO!!!\n", b);
 
     return malloc(b);
 #endif
+
+    struct
+    {
+        int Data_0; //0
+        int Data_4; //4
+        int Data_8[]; //8
+        //0xc
+    }* r5_;
+    struct USB_Memchunk* r5 = h;
+
+    if (r7 == 0)
+    {
+        return &r5->Data_0x10;
+    }
+
+    pthread_mutex_lock(&r5->mutex/*r8*/);
+
+    struct USB_Memchunk_Inner_0x18* r4 = NULL;
+    struct USB_Memchunk_Inner_0x18* r4_ = &r5->Data_0x18[0];
+    while (r4_->wData_0 != 0)
+    {
+        //loc_115410
+        if ((r7 + 4) <= r4_->wData_0)
+        {
+            r4 = r4_;
+            break;
+        }
+
+        r4_++;
+    }
+    //loc_115420
+    if (r4 != NULL)
+    {
+        //0x00115428
+        struct USB_Memchunk_Inner_0x18_Inner_8* r1 = r4->Data_8;
+        while (r1 != NULL)
+        {
+            //0x00115434
+            if (r1->Data_4 != 0)
+            {
+                //loc_115450
+                int r0 = sub_114b5c(r4, r1);
+                //->loc_115544
+                if (r0 != 0)
+                {
+                    r5_ = r0 + 4;
+                    //->loc_115594
+                    goto loc_115594;
+                }
+                //->loc_115550
+                goto loc_115550;
+            }
+            else
+            {
+                //loc_11545c
+                r1 = r1->next;
+            }
+        } //while (r1 != NULL)
+        //loc_115468
+        struct 
+        {
+            int Data_0; //0
+            int Data_4; //4
+            int Data_8; //8
+            uint16_t wData_0xc; //0xc
+            uint16_t wData_0xe; //0xe
+            //0x10???
+        }* r6 = alloc_resource(r4->wData_2 * r4->wData_0 + 0x10, r5->Data_0xc, 0);
+        if (r6 != -1)
+        {
+            //0x00115490
+            memset(r6, 0, r4->wData_2 * r4->wData_0 + 0x10);
+
+            r4->Data_4 += r4->wData_2;
+
+            r6->Data_0 = r4->Data_8;
+            r6->Data_8 = mphys(r6);
+            r6->wData_0xc = 0;
+            r6->wData_0xe = (r4 - &r5->Data_0x18[0]);
+            r4->Data_8 = r6;
+            int* r3 = r6 + 1;
+            r6->Data_4 = r3;
+
+            int r2 = r4->wData_2;
+            while (--r2 > 0)
+            {
+                //loc_115514
+                int* r1 = ((char*)r3) + r4->wData_0;
+                *r3 = r1;
+                r3 = r1;
+            }
+            //loc_115530
+            *r3 = 0;
+
+            int r0 = sub_114b5c(r4, r6);
+            //loc_115544
+            if (r0 != 0)
+            {
+                r5_ = r0 + 4;
+                //->loc_115594
+                goto loc_115594;
+            }
+        }
+        //loc_115550
+    }
+    //loc_115550
+loc_115550:
+    r7 = r7 + 8;
+    r5_ = alloc_resource(r7, r5->Data_0xc, 0);
+    if (r5_ == -1)
+    {
+        r5_ = NULL;
+        //->loc_115594
+    }
+    else
+    {
+        memset(r5_, 0, r7);
+        r5_->Data_0 = r7;
+        r5_->Data_4 = 0;
+        r5_ = &r5_->Data_8[0];
+    }
+    //loc_115594
+loc_115594:
+    pthread_mutex_unlock(&r5->mutex/*r8*/);
+    //loc_11559c
+    return r5_;
 }
 
 

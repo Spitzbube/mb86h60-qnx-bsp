@@ -5,13 +5,42 @@ struct Struct_b698
     pthread_mutex_t Data_0; //0 //b698
     int Data_8; //8
     int Data_0xc; //12
-    int fill_0x10[10]; //0x10
+    int fill_0x10; //0x10
+    int Data_0x14; //0x14
+    int fill_0x18[8]; //0x18
     int Data_0x38; //0x38
     struct usbd_connection* Data_0x3c; //0x3c
     //???
 };
 
 extern struct Struct_b698 Data_b698;
+
+
+struct USB_Memchunk
+{
+    pthread_mutex_t mutex; //0
+    int Data_8; //8
+    int Data_0xc; //0xc
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14
+    struct USB_Memchunk_Inner_0x18
+    {
+        uint16_t wData_0; //0
+        uint16_t wData_2; //2
+        int Data_4; //4
+        struct USB_Memchunk_Inner_0x18_Inner_8
+        {
+            struct USB_Memchunk_Inner_0x18_Inner_8* next; //0
+            struct USB_Memchunk_Inner_0x18_Inner_8* Data_4; //4
+            int Data_8; //8
+            uint16_t wData_0xc; //0xc
+            //0x10???
+        }* Data_8; //8
+        //0xc
+    } Data_0x18[]; //0x18
+    //???
+};
+
 
 struct usbd_device
 {

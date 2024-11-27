@@ -75,11 +75,7 @@ struct UsbdiGlobals_Inner_0x178
 
 struct UsbdiGlobals
 {
-#if 0
-    int fill_0[4]; //0
-#else
     pthread_mutex_t Data_0; //0
-#endif
     int Data_8; //8
     int Data_0xc; //0xc
     int Data_0x10; //0x10
