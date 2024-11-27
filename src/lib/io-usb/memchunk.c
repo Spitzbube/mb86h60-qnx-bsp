@@ -1,6 +1,7 @@
 
 
 #include <sys/syspage.h>
+#include <sys/rsrcdbmgr.h>
 #include "externs.h"
 
 
@@ -85,6 +86,10 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
             //loc_114ddc
             r7->Data_0x18[r4].wData_0 = r5;
             r7->Data_0x18[r4].wData_2 = (sp <= r5)? 1: sp / r5;
+#if 1
+            fprintf(stderr, "usbdi_memchunk_init: r7->Data_0x18[%d].wData_0=%d, wData_2=%d\n",
+                r4, r7->Data_0x18[r4].wData_0, r7->Data_0x18[r4].wData_2);
+#endif
 
             if (UsbdiGlobals.Data_0x14 & 0x02)
             {
@@ -92,7 +97,7 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
             }
 
             r7->Data_0x18[r4].Data_4 = 0; //r8
-            r7->Data_0x18[r4].Data_8 = 0; //r8
+            r7->Data_0x18[r4].Data_8 = NULL; //r8
 
             r5_ = sb;
         } //for (r6 = 0; r6 < sb; r6++)
@@ -112,7 +117,7 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
 
         r7->Data_0x18[sb].wData_2 = 0;
         r7->Data_0x18[sb].wData_0 = 0; 
-        r7->Data_0x18[sb].Data_8 = 0; 
+        r7->Data_0x18[sb].Data_8 = NULL; 
 
         *sp_0x14 = r7;
         //->loc_114f0c
@@ -152,14 +157,137 @@ int sub_114b5c(struct USB_Memchunk_Inner_0x18* a,
 }
 
 
-/* 1151dc - todo */
-int alloc_resource(int a, int b, int c)
+/* 1169e4 - todo */
+int usbdi_get_dma_memory(void* a, int b)
 {
 #if 1
-    fprintf(stderr, "alloc_resource: TODO!!!\n");
+    fprintf(stderr, "usbdi_get_dma_memory: TODO!!!\n");
 #endif
 
     return 0;
+}
+
+
+/* 1151dc - todo */
+void* alloc_resource(int r5, int r3, int* r4)
+{
+#if 1
+    fprintf(stderr, "alloc_resource: r5=%d, r3=0x%x: TODO!!!\n",
+        r5, r3);
+#endif
+
+#if 1
+    fprintf(stderr, "alloc_resource: UsbdiGlobals.Data_0x40=%d, .Data_0x48=%d, .Data_0x14=0x%x\n",
+        UsbdiGlobals.Data_0x40, UsbdiGlobals.Data_0x48, UsbdiGlobals.Data_0x14);
+#endif
+
+    void* r5_;
+    rsrc_request_t sp_0x10;
+    int sp_0xc;                
+
+    if (UsbdiGlobals.Data_0x40 == -1)
+    {
+        //0x00115204
+        if (UsbdiGlobals.Data_0x48 == 0)
+        {
+            //0x00115218
+            if ((UsbdiGlobals.Data_0x14 & 1) == 0)
+            {
+                //0x0011522c
+                r5_ = mmap(NULL, r5, r3 | 0x300, 0x90002, -1, 0);
+
+#if 1
+                fprintf(stderr, "alloc_resource: mmap(1): r5_=%p\n", r5_);
+#endif
+
+                if (r4 != NULL)
+                {
+                    //0x0011525c
+                    *r4 = mphys(r5_);
+                }
+                //->loc_1153a4
+//                goto loc_1153a4;
+            }
+            else
+            {
+                //loc_1153b0
+                if (usbdi_get_dma_memory(&sp_0xc, r5) != 0)
+                {
+                    //loc_11535c
+                    errno = 12;
+                    r5_ = -1;
+                    //->loc_1153a4
+                }
+                else
+                {
+                    //loc_115370
+                    if (r4 != NULL)
+                    {
+                        *r4 = sp_0xc;
+                    }
+                    r5_ = mmap_device_memory(0, r5, 0xb00, 0x10001, sp_0xc);
+#if 1
+                    fprintf(stderr, "alloc_resource: mmap_device_memory(1): r5_=%p\n", r5_);
+#endif
+                }
+                //loc_1153a4
+//                goto loc_1153a4;
+            }
+        }
+        else
+        {
+            //loc_11529c
+            memset(&sp_0x10, 0, sizeof(rsrc_request_t));
+
+            sp_0x10.length = (uint64_t)r5;
+            sp_0x10.align = 4;
+            sp_0x10.start = sp_0x10.end;
+            sp_0x10.flags = r3 | 0x2200;
+            sp_0x10.name = UsbdiGlobals.Data_0x48;
+
+            if (rsrcdbmgr_attach(&sp_0x10, 1) != 0)
+            {
+                //0x00115314
+                errno = 12;
+                r5_ = -1;
+                //->loc_1153a4
+            }
+            else
+            {
+                //loc_115328
+                if (r4 != NULL)
+                {
+                    *r4 = sp_0x10.start;
+                }
+
+                r5_ = mmap_device_memory(0, r5, 0xb00, 0x10001, sp_0x10.start);
+                //->loc_1153a4
+#if 1
+                fprintf(stderr, "alloc_resource: mmap_device_memory(2): r5_=%p\n", r5_);
+#endif
+            }
+        }
+    }
+    else
+    {
+        //loc_115268
+        r5_ = mmap(NULL, r5, r3 | 0x300, 0x0001, 
+                UsbdiGlobals.Data_0x40, 0);
+#if 1
+        fprintf(stderr, "alloc_resource: mmap(2): r5_=%p\n", r5_);
+#endif
+        if (r4 != NULL)
+        {
+            //0x00115290
+            *r4 = mphys(r5_);
+        }
+        //->loc_1153a4
+//        goto loc_1153a4;
+    }
+
+//loc_1153a4:
+    //loc_1153a4
+    return r5_;
 }
 
 
@@ -167,10 +295,10 @@ int alloc_resource(int a, int b, int c)
 /* 0x001153c8 - todo */
 void* usbdi_memchunk_malloc(int h, int r7)
 {
-#if 0
-    fprintf(stderr, "usbdi_memchunk_malloc: %d TODO!!!\n", b);
+#if 1
+    fprintf(stderr, "usbdi_memchunk_malloc: %d TODO!!!\n", r7);
 
-    return malloc(b);
+//    return malloc(b);
 #endif
 
     struct
@@ -239,7 +367,7 @@ void* usbdi_memchunk_malloc(int h, int r7)
             uint16_t wData_0xc; //0xc
             uint16_t wData_0xe; //0xe
             //0x10???
-        }* r6 = alloc_resource(r4->wData_2 * r4->wData_0 + 0x10, r5->Data_0xc, 0);
+        }* r6 = alloc_resource(r4->wData_2 * r4->wData_0 + 0x10, r5->Data_0xc, NULL);
         if (r6 != -1)
         {
             //0x00115490
@@ -276,11 +404,11 @@ void* usbdi_memchunk_malloc(int h, int r7)
             }
         }
         //loc_115550
-    }
+    } //if (r4 != NULL)
     //loc_115550
 loc_115550:
     r7 = r7 + 8;
-    r5_ = alloc_resource(r7, r5->Data_0xc, 0);
+    r5_ = alloc_resource(r7, r5->Data_0xc, NULL);
     if (r5_ == -1)
     {
         r5_ = NULL;
@@ -297,6 +425,11 @@ loc_115550:
 loc_115594:
     pthread_mutex_unlock(&r5->mutex/*r8*/);
     //loc_11559c
+#if 1
+    fprintf(stderr, "usbdi_memchunk_malloc: r5_=%p\n", r5_);
+
+//    return malloc(b);
+#endif
     return r5_;
 }
 

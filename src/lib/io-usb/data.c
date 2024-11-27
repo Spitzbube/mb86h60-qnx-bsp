@@ -6,8 +6,6 @@ int Data_11be40; //11be40
 
 int Data_11c6d0; //11c6d0
 
-int Data_11ddf4; //11ddf4
-
 int _iou_ex; //0x0011f3a4 
 
 struct USB_Controller usb_controllers[20]; //0x0011f590 +0x14*0x8c

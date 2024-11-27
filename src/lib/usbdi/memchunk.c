@@ -95,6 +95,10 @@ int usbdi_memchunk_init(uint32_t* sp4, int sb, int* sp_0x14, int r5_)
             //loc_114ddc
             r7->Data_0x18[r4].wData_0 = r5;
             r7->Data_0x18[r4].wData_2 = (sp <= r5)? 1: sp / r5;
+#if 1
+            fprintf(stderr, "usbdi_memchunk_init(client): r7->Data_0x18[%d].wData_0=%d, wData_2=%d\n",
+                r4, r7->Data_0x18[r4].wData_0, r7->Data_0x18[r4].wData_2);
+#endif
 
             if (Data_b698.Data_0x14 & 0x02)
             {
@@ -156,7 +160,7 @@ void* usbdi_memchunk_malloc(int a, int b)
         return a + 16;
     }
 #else
-    fprintf(stderr, "usbdi_memchunk_malloc: %d\n", b);
+    fprintf(stderr, "usbdi_memchunk_malloc(client): %d\n", b);
 
     return malloc(b);
 #endif

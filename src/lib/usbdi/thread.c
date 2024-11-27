@@ -45,14 +45,9 @@ struct usbd_connection
 };
 
 
-static const struct
+static const uint32_t memcfg[13] = //0x0000a26c
 {
-    int fill_0[0];
-    //???
-} memcfg = //0x0000a26c
-{
-    //TODO!!!
-    0x00001068,
+    4200, 72, 88, 136, 24, 112, 64, 122, 246, 502, 1010, 2032, 8192,
 };
 
 
@@ -118,13 +113,13 @@ int usbdi_init_client_globals()
         return res;
     }
 
-    res = usbdi_memchunk_init(&memcfg, 0x0d, &Data_b698.Data_8, 0);
+    res = usbdi_memchunk_init(&memcfg[0], 13, &Data_b698.Data_8, 0);
     if (res != 0)
     {
         return res;
     }
 
-    res = usbdi_memchunk_init(&memcfg, 0x0d, &Data_b698.Data_0xc, 1);
+    res = usbdi_memchunk_init(&memcfg[0], 13, &Data_b698.Data_0xc, 1);
     if (res != 0)
     {
         return res;
