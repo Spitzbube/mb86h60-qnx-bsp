@@ -12,6 +12,18 @@
 #include "usbdi_priv.h"
 
 
+int usbd_io(struct usbd_urb *urb, 
+        struct usbd_pipe *pipe, 
+        void (*func)(struct usbd_urb *, struct usbd_pipe *, void *), 
+        void *handle, 
+        _Uint32t timeout)
+{
+#if 1
+    fprintf(stderr, "usbd_io: TODO!!!\n");
+#endif
+
+    return 0;
+}
 
 
 /* 0x00008f70 - todo */

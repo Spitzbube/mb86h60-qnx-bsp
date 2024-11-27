@@ -8,7 +8,10 @@ extern void usbdi_memchunk_free(int, void*);
 
 extern void usbdi_client_destroy();
 
-extern int Data_11ddf4; //11ddf4
+const uint32_t Data_11ddf4[8] = //11ddf4
+{
+    20, 44, 112, 246, 502, 1010, 2032, 8192
+};
 
 extern const resmgr_io_funcs_t ResmgrIOFuncs; //0x11f404
 extern const iofunc_funcs_t ResmgrOCBFuncs; //0x0011f470
@@ -1802,13 +1805,13 @@ int usbdi_init_server_globals(char* r5, struct USB_Timer* r6)
         return r4;
     }
     //loc_115e68
-    r4 = usbdi_memchunk_init(&Data_11ddf4, 8, &UsbdiGlobals.Data_8, 0);
+    r4 = usbdi_memchunk_init(&Data_11ddf4[0], 8, &UsbdiGlobals.Data_8, 0);
     if (r4 != 0)
     {
         return r4;
     }
 
-    r4 = usbdi_memchunk_init(&Data_11ddf4, 8, &UsbdiGlobals.Data_0xc, 1);
+    r4 = usbdi_memchunk_init(&Data_11ddf4[0], 8, &UsbdiGlobals.Data_0xc, 1);
     if (r4 != 0)
     {
         return r4;
