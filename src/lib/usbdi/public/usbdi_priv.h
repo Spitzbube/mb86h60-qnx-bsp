@@ -10,34 +10,44 @@ struct Struct_b698
     int fill_0x18[8]; //0x18
     int Data_0x38; //0x38
     struct usbd_connection* Data_0x3c; //0x3c
+    int typed_mem_fd; //0x40
+    char* typed_memory_name; //0x44
+    char* Data_0x48; //0x48
     //???
 };
 
 extern struct Struct_b698 Data_b698;
 
 
+struct USB_Memchunk_Inner_0x18_Inner_8
+{
+    struct USB_Memchunk_Inner_0x18_Inner_8* next; //0
+    struct USB_Memchunk_Inner_0x18_Inner_8* Data_4; //4
+    paddr_t phys; //8
+    uint16_t wData_0xc; //0xc
+    uint16_t wData_0xe; //0xe
+    //0x10???
+};
+
+
+struct USB_Memchunk_Inner_0x18
+{
+    uint16_t size; //0
+    uint16_t count; //2
+    int avail; //4
+    struct USB_Memchunk_Inner_0x18_Inner_8* Data_8; //8
+    //0xc
+};
+
+    
 struct USB_Memchunk
 {
     pthread_mutex_t mutex; //0
-    int Data_8; //8
-    int Data_0xc; //0xc
+    int pagesize; //8
+    int prot; //0xc
     int Data_0x10; //0x10
-    int Data_0x14; //0x14
-    struct USB_Memchunk_Inner_0x18
-    {
-        uint16_t wData_0; //0
-        uint16_t wData_2; //2
-        int Data_4; //4
-        struct USB_Memchunk_Inner_0x18_Inner_8
-        {
-            struct USB_Memchunk_Inner_0x18_Inner_8* next; //0
-            struct USB_Memchunk_Inner_0x18_Inner_8* Data_4; //4
-            int Data_8; //8
-            uint16_t wData_0xc; //0xc
-            //0x10???
-        }* Data_8; //8
-        //0xc
-    } Data_0x18[]; //0x18
+    int size; //0x14
+    struct USB_Memchunk_Inner_0x18 Data_0x18[]; //0x18
     //???
 };
 
@@ -131,5 +141,8 @@ extern int usbdi_sendcmd(int sp_0xc, int r8,
     struct usbd_urb* sl, 
     struct Struct_5a24_d* r7);
 
+extern int usbdi_memchunk_init(uint32_t*, int, int*, int cached);
+extern void* usbdi_memchunk_malloc(int, int size);
 extern void* usbdi_memchunk_calloc(int, int b, int c);
+extern void usbdi_memchunk_free(int, void*);
 extern paddr_t usbdi_memchunk_mphys(int, const void* ptr);

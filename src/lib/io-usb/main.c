@@ -1222,7 +1222,8 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
     UsbdiGlobals.Data_0xdc.hi_water = 4; //wData_0xfc = 4;
     UsbdiGlobals.Data_0xdc.increment = 1; //wData_0xfa = 1;
     UsbdiGlobals.Data_0xdc.maximum = 8; //wData_0xfe = 8;
-    UsbdiGlobals.Data_0x40 = -1;
+    
+    UsbdiGlobals.typed_mem_fd = -1;
 
     usb_prefix = 0;
     usb_priority = 0x15;
@@ -1500,6 +1501,10 @@ int udi_memory_info(uint32_t* a)
     }
 
     *a |= (p->Data_0x6c >> 31);
+
+#if 1
+    fprintf(stderr, "udi_memory_info: *a=0x%x\n", *a);
+#endif
 
     return 0;
 }

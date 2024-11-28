@@ -19,10 +19,3 @@ int usbdi_status_errno()
 }
 
 
-void usbdi_memory_info()
-{
-    fprintf(stderr, "usbdi_memory_info: TODO!!!\n");
-
-}
-
-

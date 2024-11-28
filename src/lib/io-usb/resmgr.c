@@ -1345,7 +1345,12 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                 int fill_4; //0
                 usbd_hcd_info_t hcd_info; //4
             } hcd_info; //4
-            
+            struct 
+            {
+                uint32_t Data_0; //0
+                char bData_4[100]; //4
+            } udi_memory_info; //4
+                        
         } u;
         
     } sp_0x26c;
@@ -1633,11 +1638,45 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                 //loc_115b48
                 break;
 
-#if 0          
             case 11:
-                //loc_115a14
+                //loc_115a14: Memory Info
+                {
+                    sp_0x26c.u.udi_memory_info.bData_4[0] = 0;
+                    sp_0x26c.u.udi_memory_info.Data_0 = 0;
+
+                    udi_memory_info(&sp_0x26c.u.udi_memory_info.Data_0);
+
+                    if (UsbdiGlobals.Data_0x48 != NULL)
+                    {
+                        strcpy(&sp_0x26c.u.udi_memory_info.bData_4[0], 
+                            UsbdiGlobals.Data_0x48);
+                    }
+                    //loc_115a4c
+                    if (UsbdiGlobals.typed_mem_fd != -1)
+                    {
+                        //0x00115a60
+                        strcpy(&sp_0x26c.u.udi_memory_info.bData_4[0], 
+                            UsbdiGlobals.typed_memory_name);
+
+                        sp_0x26c.u.udi_memory_info.Data_0 |= 0x04;
+                    }
+                    //loc_115a80
+                    sp_0x26c.wData_0 = 8;
+                    sp_0x26c.wData_2 = 0x6c;
+
+                    int r0 = MsgReply_r(ctp->rcvid, 0, &sp_0x26c, sp_0x26c.wData_2);
+                    if (r0 != 0)
+                    {
+                        r4 = -r0;
+                    }
+                    else
+                    {
+                        r4 |= 0x80000000;
+                    }
+                }   //loc_115b48
                 break;
                 
+#if 0          
             case 12:
                 //loc_115ab4
                 break;

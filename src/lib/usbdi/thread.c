@@ -8,6 +8,8 @@
 #include <signal.h>
 #include <pthread.h>
 #include <atomic.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/usbdi.h>
 #include "usbdi_priv.h"
 
@@ -59,6 +61,72 @@ pthread_mutex_t conn_mutex; //0x0000b780
 static void* eventloop(void* a)
 {
     fprintf(stderr, "eventloop: TODO\n");
+}
+
+
+/* 0x000080b4 - todo */
+int usbdi_memory_info(struct usbd_connection* r0)
+{
+#if 0
+    fprintf(stderr, "usbdi_memory_info: TODO!!!\n");
+#endif
+
+    int res;
+    struct
+    {
+        struct Struct_5a24_d1 Data_0; //0
+        int Data_4; //4
+        char bData_8[100]; //8, size???
+        //0x6c
+    } sp4;
+        
+    sp4.Data_0.wData_2 = 0x6c;
+
+    res = usbdi_sendcmd(r0->Data_0x30, 11, NULL, &sp4);
+    if (res != 0)
+    {
+        return res;
+    }
+
+    Data_b698.Data_0x14 = sp4.Data_4;
+
+    if (Data_b698.Data_0x14 & 0x04)
+    {
+        if ((sp4.bData_8[0] == 0) ||
+            (Data_b698.typed_memory_name != NULL))
+        {
+            //->loc_81b8
+            return res;
+        }
+        //0x00008118
+        Data_b698.typed_memory_name = strdup(&sp4.bData_8[0]);
+        Data_b698.typed_mem_fd = posix_typed_mem_open(Data_b698.typed_memory_name, 
+            O_RDWR, POSIX_TYPED_MEM_ALLOCATE_CONTIG);
+        if (Data_b698.typed_mem_fd == -1)
+        {
+            //0x00008144
+            free(Data_b698.typed_memory_name);
+            Data_b698.typed_memory_name = NULL;
+            fprintf(stderr, "Unable to open typed memory %s\n", NULL);
+        }
+        //loc_81b8
+    }
+    else
+    {
+        //loc_8174
+        Data_b698.typed_mem_fd = -1;
+
+        if ((sp4.bData_8[0] == 0) ||
+            (Data_b698.Data_0x48 != NULL))
+        {
+            //->loc_81b8
+            return res;
+        }
+        //0x00008118
+        Data_b698.Data_0x48 = strdup(&sp4.bData_8[0]);
+    }
+    //loc_81b8
+    return res;
 }
 
 
