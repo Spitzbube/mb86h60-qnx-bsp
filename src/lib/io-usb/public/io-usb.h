@@ -120,7 +120,15 @@ struct Struct_112b08 //TODO: struct UsbEndpoint
     }* Data_0x20; //0x20
     int Data_0x24; //0x24
     int Data_0x28; //0x28
-    int fill_0x2c; //0x2c
+    struct Struct_10a110
+    {
+        struct Struct_10a110* next; //0
+        void* Data_4; //4
+        uint32_t Data_8; //8
+        struct USB_Client* Data_0xc; //0xc
+        void* Data_0x10; //0x10
+        //0x14 = 20
+    }* Data_0x2c; //0x2c
     pthread_mutex_t Data_0x30; //0x30
     pthread_cond_t Data_0x38; //0x38
     //0x40

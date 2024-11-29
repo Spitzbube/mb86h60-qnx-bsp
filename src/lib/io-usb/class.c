@@ -2,6 +2,7 @@
 #include "externs.h"
 
 
+extern pthread_mutex_t usb_mmutex; //0x120210
 
 struct UsbInterface UsbInterfaces[80]; //0x001215b0
 struct UsbEndpoint UsbEndpoints[320]; //0x00122230
@@ -10,6 +11,81 @@ struct UsbConfiguration UsbConfigurations[40]; //0x001273b4
 
 
 static void* usb_port_enum_handler(void*);
+
+
+/* 10a110 - todo */
+void* ccache_get_addr_cache(struct Struct_112b08* fp_0x10, 
+        struct Struct_10bab4* fp_0x14, 
+        void* fp_0x18, 
+        uint32_t fp_0x1c, 
+        struct USB_Client* fp4/*?*/)
+{
+#if 0
+    fprintf(stderr, "ccache_get_addr_cache: TODO!!!\n");
+#endif
+
+    if ((fp_0x18 == NULL) || (fp_0x1c == 0))
+    {
+        return NULL; //->loc_10a2f4
+    }
+
+    pthread_mutex_lock(&usb_mmutex);
+
+    if ((fp_0x14->Data_0 & 0x20000) == 0)
+    {
+        fp_0x18 = usbd_mphys(fp_0x18);
+    }
+    //loc_10a17c
+    struct Struct_10a110* fp_0xc = fp_0x10->Data_0x2c;
+    //->loc_10a198
+    while ((fp_0xc != NULL) && (fp_0xc->Data_4 != fp_0x18))
+    {
+        //loc_10a18c
+        fp_0xc = fp_0xc->next;
+    }
+    //loc_10a1b8
+    if (fp_0xc != NULL)
+    {
+        //0x0010a1c4
+        if (fp_0xc->Data_8 < fp_0x1c)
+        {
+            //0x0010a1d8
+            munmap(fp_0xc->Data_0x10, fp_0xc->Data_8);
+
+            fp_0xc->Data_0x10 = mmap(NULL, fp_0x1c, 
+                                PROT_NOCACHE|PROT_READ|PROT_WRITE, //0xb00, 
+                                MAP_PHYS|MAP_SHARED, //0x10001, 
+                                -1, 
+                                (off_t)fp_0x18);
+            fp_0xc->Data_8 = fp_0x1c;
+            fp_0xc->Data_0xc = fp4;
+        }
+        //loc_10a240
+        pthread_mutex_unlock(&usb_mmutex);
+
+        return fp_0xc->Data_0x10; //->loc_10a2f4
+    }
+    else
+    {
+        //loc_10a258
+        struct Struct_10a110* fp8 = calloc(1, sizeof(struct Struct_10a110));
+
+        fp8->Data_4 = fp_0x18;
+        fp8->Data_8 = fp_0x1c;
+        fp8->Data_0xc = fp4;
+        fp8->Data_0x10 = mmap(NULL, fp_0x1c, 
+                            PROT_NOCACHE|PROT_READ|PROT_WRITE, //0xb00, 
+                            MAP_PHYS|MAP_SHARED, //0x10001, 
+                            -1, 
+                            (off_t)fp_0x18);
+        fp8->next = fp_0x10->Data_0x2c;
+        fp_0x10->Data_0x2c = fp8;
+
+        pthread_mutex_unlock(&usb_mmutex);
+
+        return fp8->Data_0x10;
+    }
+}
 
 
 /* 0x0010a498 - complete */

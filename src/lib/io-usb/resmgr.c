@@ -565,17 +565,6 @@ void sub_108340()
 }
 
 
-/* 10a110 - todo */
-int sub_10a110(struct Struct_112b08* a, void* b, int c, int d, struct USB_Client* e)
-{
-#if 1
-    fprintf(stderr, "sub_10a110: TODO!!!\n");
-#endif
-
-    return 0;
-}
-
-
 /* 0x00107288 - todo */
 int udi_alloc_surb(struct USB_Controller* sb,
         struct USB_Client* sp_0x1c, 
@@ -720,7 +709,7 @@ int udi_alloc_surb(struct USB_Controller* sb,
                         (r7->dwLength != 0))
                     {
                         //0x001074b4
-                        r7->pData = sub_10a110(sp_0x34, r7, 
+                        r7->pData = ccache_get_addr_cache(sp_0x34, r7, 
                                 r7->pData, r7->dwLength, sp_0x1c);
 
                         if (r7->pData == NULL)
@@ -927,18 +916,13 @@ int udi_descriptor(struct usbd_urb* r4)
         {
             //0x00106cfc
             void* r8 = mmap(NULL, r4->dwLength, 
-                        0xb00, 0x10001, -1, (off_t)(r4->pData));
+                        PROT_NOCACHE|PROT_READ|PROT_WRITE, //0xb00, 
+                        MAP_PHYS|MAP_SHARED, //0x10001, 
+                        -1, 
+                        (off_t)(r4->pData));
 #if 1
             fprintf(stderr, "udi_descriptor: r4->pData=%p -> r8=%p\n", 
                     r4->pData, r8);
-#endif
-#if 0 //Create a buffer in the io-usb process instead of using from the client process
-            r4->Data_0x14->pData = malloc(r4->dwLength);
-            fprintf(stderr, "udi_descriptor: r4->Data_0x14->pData=%p, r4->dwLength=%d\n", 
-                    r4->Data_0x14->pData, r4->dwLength);
-#endif
-#if 0
-            r4->Data_0x14->pData = r8;
 #endif
             if (r8 != NULL)
             {
@@ -1565,14 +1549,12 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                         if ((r4 == 5) || (r4 == 0))
                         {
                             //0x00115858
-                            fprintf(stderr, "usbdi_resmgr_msg: 0x00115858: TODO!!!\n");
-
                             sp_0x26c.wData_0 = 3;
                             sp_0x26c.wData_2 = 0x6c;
 
-                            sp_0x26c.u.type_5.Data_0 = 0; //r8->Data_0x3c;
-                            sp_0x26c.u.type_5.Data_4 = 0; //r8->Data_0x50;
-                            sp_0x26c.u.type_5.Data_8 = 0; //r8->Data_0;
+                            sp_0x26c.u.type_5.Data_0 = ((struct usbd_urb*)r8)->Data_0x3c;
+                            sp_0x26c.u.type_5.Data_4 = ((struct usbd_urb*)r8)->Data_0x50;
+                            sp_0x26c.u.type_5.Data_8 = ((struct usbd_urb*)r8)->Data_0;
 
                             int r0 = MsgReply_r(ctp->rcvid, 0, &sp_0x26c, sp_0x26c.wData_2);
                             if (r0 != 0)
