@@ -18,35 +18,6 @@
 //_GLOBAL_OFFSET_TABLE_:
 //0x0000b3ec
 
-struct usbd_connection
-{
-    const char* Data_0; //0
-    int fill_4; //4
-    int Data_8; //8
-    int Data_0xc; //0xc
-    char** Data_0x10; //0x10
-    int Data_0x14; //0x14
-    usbd_device_ident_t* Data_0x18; //0x18
-    usbd_funcs_t* Data_0x1c; //0x1c
-    uint16_t connect_wait; //0x20
-    uint8_t bData_0x22; //0x22
-    int fill_0x24[3]; //0x24
-    int Data_0x30; //0x30
-    int Data_0x34; //0x34
-    int Data_0x38; //0x38
-    int* Data_0x3c; //0x3c
-    void* Data_0x40; //0x40
-    usbd_device_ident_t Data_0x44;
-    usbd_funcs_t Data_0x58;
-    struct
-    {
-        int fill_0[1]; //0
-        //???
-    } Data_0x68;
-    //???
-};
-
-
 static const uint32_t memcfg[13] = //0x0000a26c
 {
     4200, 72, 88, 136, 24, 112, 64, 122, 246, 502, 1010, 2032, 8192,
@@ -572,13 +543,14 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
 }
 
 
+/* 0x00009324 - todo */
 void* usbd_alloc(size_t size)
 {
 #if 1
-    fprintf(stderr, "usbd_alloc: a=%d: TODO!!!\n", size);
+    fprintf(stderr, "usbd_alloc: size=%d\n", size);
 #endif
 
-    return malloc(size);
+    return usbdi_memchunk_malloc(Data_b698.Data_8, size);
 }
 
 

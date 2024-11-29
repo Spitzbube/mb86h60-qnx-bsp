@@ -1350,7 +1350,13 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                 uint32_t Data_0; //0
                 char bData_4[100]; //4
             } udi_memory_info; //4
-                        
+            struct 
+            {
+                int Data_0; //0
+                int Data_4; //4
+                int Data_8; //8
+            } type_5; //4
+                                    
         } u;
         
     } sp_0x26c;
@@ -1550,7 +1556,22 @@ int usbdi_resmgr_msg(resmgr_context_t* ctp/*r7*/,
                             //0x00115858
                             fprintf(stderr, "usbdi_resmgr_msg: 0x00115858: TODO!!!\n");
 
-                            //TODO
+                            sp_0x26c.wData_0 = 3;
+                            sp_0x26c.wData_2 = 0x6c;
+
+                            sp_0x26c.u.type_5.Data_0 = 0; //r8->Data_0x3c;
+                            sp_0x26c.u.type_5.Data_4 = 0; //r8->Data_0x50;
+                            sp_0x26c.u.type_5.Data_8 = 0; //r8->Data_0;
+
+                            int r0 = MsgReply_r(ctp->rcvid, 0, &sp_0x26c, sp_0x26c.wData_2);
+                            if (r0 != 0)
+                            {
+                                r4 = -r0;
+                            }
+                            else
+                            {
+                                r4 |= 0x80000000;
+                            }
                         }
                         //loc_115b48
                     }

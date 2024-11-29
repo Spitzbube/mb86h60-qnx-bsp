@@ -52,6 +52,35 @@ struct USB_Memchunk
 };
 
 
+struct usbd_connection
+{
+    const char* Data_0; //0
+    int fill_4; //4
+    int Data_8; //8
+    int Data_0xc; //0xc
+    char** Data_0x10; //0x10
+    int Data_0x14; //0x14
+    usbd_device_ident_t* Data_0x18; //0x18
+    usbd_funcs_t* Data_0x1c; //0x1c
+    uint16_t connect_wait; //0x20
+    uint8_t bData_0x22; //0x22
+    int fill_0x24[3]; //0x24
+    int Data_0x30; //0x30
+    int Data_0x34; //0x34
+    int Data_0x38; //0x38
+    int* Data_0x3c; //0x3c
+    void* Data_0x40; //0x40
+    usbd_device_ident_t Data_0x44;
+    usbd_funcs_t Data_0x58;
+    struct
+    {
+        int fill_0[1]; //0
+        //???
+    } Data_0x68;
+    //???
+};
+
+
 struct usbd_device
 {
     int Data_0; //0
@@ -65,6 +94,16 @@ struct usbd_device
     int Data_0x40; //0x40
     void* Data_0x44; //0x44
     //0x48
+};
+
+
+struct usbd_pipe
+{
+    int fill_0[2]; //0
+    struct usbd_device* Data_8;
+    int fill_0xc[2]; //0xc
+    uint8_t bData_0x14; //0x14
+    //???
 };
 
 
@@ -92,7 +131,8 @@ struct usbd_urb
         //???
     }* Data_0x10; //0x10
     struct Struct_10bab4* Data_0x14; //0x14
-    int fill_0x18[2]; //0x18
+    void* Data_0x18; //0x18
+    void (*Data_0x1c)(struct usbd_urb*, struct usbd_pipe*, void*); //0x1c
     uint16_t wData_0x20; //0x20
     uint16_t wData_0x22; //0x22
     int Data_0x24; //0x24
