@@ -156,6 +156,48 @@ int UseFreeEntry(struct USB_Memchunk_Inner_0x18* a,
 }
 
 
+/* 114b8c - todo */
+paddr_t usbdi_memchunk_mphys(int h, const void* ptr)
+{
+#if 1
+    fprintf(stderr, "usbdi_memchunk_mphys(server): ptr=%p\n", ptr);
+#endif
+
+    struct USB_Memchunk* r5 = h;
+    void* r4 = (-r5->pagesize) & (uint32_t)ptr;
+
+    pthread_mutex_lock(&r5->mutex/*r7*/);
+
+    struct USB_Memchunk_Inner_0x18* r5_ = &r5->Data_0x18[0];
+    while (r5_->size != 0)
+    {
+        //loc_60d4
+        struct USB_Memchunk_Inner_0x18_Inner_8* r3 = r5_->Data_8;
+        while (r3 != NULL)
+        {
+            //loc_60ec
+            if (r4 == r3)
+            {
+                //loc_60f4
+                paddr_t phys = r3->phys + ((uint8_t*)ptr - (uint8_t*)r3); 
+
+                pthread_mutex_unlock(&r5->mutex/*r7*/);
+
+                return phys;
+            }
+            //loc_610c
+            r3 = r3->next;
+        }
+        //loc_6118
+        r5_++;
+    } //while (r5_->size != 0)
+    //loc_6124
+    pthread_mutex_unlock(&r5->mutex/*r7*/);
+
+    return mphys(ptr);
+}
+
+
 /* 1169e4 - todo */
 int usbdi_get_dma_memory(void* a, int b)
 {

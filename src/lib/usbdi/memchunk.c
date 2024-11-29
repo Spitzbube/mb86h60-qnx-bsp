@@ -492,7 +492,7 @@ void* usbdi_memchunk_calloc(int a, int b, int c)
 paddr_t usbdi_memchunk_mphys(int h/*r5*/, const void* ptr/*r6*/)
 {
 #if 1
-    fprintf(stderr, "usbdi_memchunk_mphys: ptr=%p\n", ptr);
+    fprintf(stderr, "usbdi_memchunk_mphys(client): ptr=%p\n", ptr);
 #endif
 
     struct USB_Memchunk* r5 = h;

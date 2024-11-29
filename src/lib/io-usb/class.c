@@ -433,7 +433,7 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
 
     if (length/*fp_0x20*/ != 0)
     {
-        if (fp8->Data_0x6c & 0x40000000)
+        if (fp8->capabilities & 0x40000000)
         {
             fp_0x10->pData = buffer/*fp_0x1c*/;
             //->loc_10bc14
@@ -441,7 +441,7 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
         else
         {
             //loc_10bbfc
-            fp_0x10->pData = sub_117854(buffer/*fp_0x1c*/);
+            fp_0x10->pData = usbd_mphys(buffer/*fp_0x1c*/);
         }
     }
     //loc_10bc14
@@ -557,6 +557,11 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
     struct USB_Controller* fp_0xc = &usb_controllers[fp_0x40->Data_0x18];
     struct USB_Controller_Inner_0x7c* fp8;
 
+#if 1
+    fprintf(stderr, "USB_ControlTransfer: fp_0x40->pData=%p, fp_0x40->dwLength=%d\n",
+        fp_0x40->pData, fp_0x40->dwLength);
+#endif
+
     // Allocate Setup data
     fp_0x38 = usbd_alloc(8);
     if (fp_0x38 == NULL)
@@ -565,7 +570,13 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
     }
     //loc_111b3c
     fp_0x34 = usb_controllers[fp_0x40->Data_0x18].Data_0x70 + 1;
-    fp_0x18 = fp_0xc->Data_0x6c & 0x800;
+    fp_0x18 = fp_0xc->capabilities & 0x800;
+
+#if 1
+    fprintf(stderr, "USB_ControlTransfer: fp_0xc->capabilities=0x%08x, fp_0x38=%p\n", 
+        fp_0xc->capabilities, fp_0x38);
+#endif
+
     //->loc_111f20
     while (fp_0x34--)
     {
@@ -579,17 +590,17 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
         if (fp_0x18 != 0)
         {
             //0x00111bb8
-            fp_0x10 = sub_117854(fp_0x38);
+            fp_0x10 = usbd_mphys(fp_0x38);
             fp_0x14 = 0;
             //->loc_111c0c
         }
         else
         {
             //loc_111bd4
-            if ((fp_0xc->Data_0x6c & 0x40000000) == 0)
+            if ((fp_0xc->capabilities & 0x40000000) == 0)
             {
                 //0x00111be8
-                fp_0x10 = sub_117854(fp_0x38);
+                fp_0x10 = usbd_mphys(fp_0x38);
                 //->loc_111c04
             }
             else
@@ -693,7 +704,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
             (fp_0xc->ctrl_pipe_methods->ctrl_transfer_abort)(fp_0xc, fp_0x40, fp_0x44);
         }
         //loc_111e8c
-        if ((fp_0x3c != 0) && (fp_0xc->Data_0x6c & 0x40))
+        if ((fp_0x3c != 0) && (fp_0xc->capabilities & 0x40))
         {
             //0x00111eac
             fp8 = USB_CheckDevice(fp_0x40->Data_0x18, fp_0x40->Data_0x14);
@@ -2291,7 +2302,7 @@ int sub_10a51c(int a)
         ctrl = CTRL_HCLookup(i);
 
         if ((ctrl != NULL) &&
-            ((ctrl->Data_0x6c & 0x100) == a))
+            ((ctrl->capabilities & 0x100) == a))
         {
             sub_110b74(i);
         }

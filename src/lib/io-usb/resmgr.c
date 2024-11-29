@@ -80,7 +80,7 @@ int udi_hcd_info(int a, usbd_hcd_info_t* b)
 
     cntrl = &usb_controllers[a];
 
-    b->capabilities = cntrl->Data_0x6c | 0x1000;
+    b->capabilities = cntrl->capabilities | 0x1000;
     b->cindex = cntrl->Data_8;
     b->max_td_io = cntrl->Data_0x60;
     strcpy(&b->controller[0], cntrl->Data_0);
@@ -709,7 +709,7 @@ int udi_alloc_surb(struct USB_Controller* sb,
                 sub_108340/*sp_0x20*/: sub_107eac/*sp_0x24*/;
             r7->Data_0x60 = sp_0x1c;
 
-            if (/*r5*/sb->Data_0x6c & 0x40000000)
+            if (/*r5*/sb->capabilities & 0x40000000)
             {
                 //0x00107480
                 int r0 = udi_endpoint_descriptor(r6, &sp_0x34, NULL/*fp*/, 1);
@@ -749,7 +749,7 @@ loc_107518:
                     //->loc_107620
                     return r5_res;
                 }
-            }
+            } //if (/*r5*/sb->capabilities & 0x40000000)
             //loc_107524
             if (sp_0x14 == 0)
             {
@@ -878,10 +878,12 @@ int sub_11266c(struct Struct_10bab4* a)
 }
 
 
-int usb_find_data_key()
+int usb_find_data_key(struct Struct_1047a8* a, 
+        int b, int c, int d, int e, void* f, int* g)
 {
 #if 1
-    fprintf(stderr, "usb_find_data_key: TODO!!!\n");
+    fprintf(stderr, "usb_find_data_key: f=%p, *g=%d: TODO!!!\n",
+        f, *g);
 #endif
 
 
@@ -924,7 +926,7 @@ int udi_descriptor(struct usbd_urb* r4)
         if (r4->request == USB_GET_DESCRIPTOR)
         {
             //0x00106cfc
-            void* r8 = mmap(0, r4->dwLength, 
+            void* r8 = mmap(NULL, r4->dwLength, 
                         0xb00, 0x10001, -1, (off_t)(r4->pData));
 #if 1
             fprintf(stderr, "udi_descriptor: r4->pData=%p -> r8=%p\n", 
@@ -934,6 +936,9 @@ int udi_descriptor(struct usbd_urb* r4)
             r4->Data_0x14->pData = malloc(r4->dwLength);
             fprintf(stderr, "udi_descriptor: r4->Data_0x14->pData=%p, r4->dwLength=%d\n", 
                     r4->Data_0x14->pData, r4->dwLength);
+#endif
+#if 0
+            r4->Data_0x14->pData = r8;
 #endif
             if (r8 != NULL)
             {
@@ -975,6 +980,12 @@ int udi_descriptor(struct usbd_urb* r4)
                         //0x00106da4
 #if 1
                         fprintf(stderr, "udi_descriptor: 0x00106da4: TODO!!!\n");
+                        int i;
+                        for (i = 0; i < r4->dwLength; i++)
+                        {
+                            fprintf(stderr, "r4->Data_0x14->pData[%d] = 0x%02x\n",
+                                i, ((uint8_t*)(r4->Data_0x14->pData))[i]);
+                        }
 #endif
                         //TODO!!!
                     }
@@ -991,7 +1002,7 @@ int udi_descriptor(struct usbd_urb* r4)
                 r5->Data_0x34 = 0;
                 //->loc_106e34
             }
-        }
+        } //if (r4->request == USB_GET_DESCRIPTOR)
         else
         {
             //loc_106e28

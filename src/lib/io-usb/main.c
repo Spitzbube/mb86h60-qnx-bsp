@@ -1500,7 +1500,7 @@ int udi_memory_info(uint32_t* a)
         return 19;
     }
 
-    *a |= (p->Data_0x6c >> 31);
+    *a |= (p->capabilities >> 31);
 
 #if 1
     fprintf(stderr, "udi_memory_info: *a=0x%x\n", *a);
@@ -1606,17 +1606,6 @@ void* io_usb_dlopen(char* r5, int r8)
 }
 
 
-/* 114b8c - todo */
-void* sub_114b8c(int a, void* b)
-{
-#if 1
-    fprintf(stderr, "sub_114b8c: TODO!!!\n");
-#endif
-
-    return b;
-}
-
-
 /* 1177f8 - todo */
 void usbd_free(void* a)
 {
@@ -1628,13 +1617,15 @@ void usbd_free(void* a)
 
 
 /* 117854 - todo */
-void* sub_117854(void* a)
+paddr_t usbd_mphys(const void* ptr)
 {
-#if 0
-    fprintf(stderr, "sub_117854: TODO!!!\n");
+    paddr_t paddr = usbdi_memchunk_mphys(UsbdiGlobals.Data_8, ptr);
+
+#if 1
+    fprintf(stderr, "usbd_mphys(server): ptr=%p -> paddr=%p\n", ptr, paddr);
 #endif
 
-    return sub_114b8c(UsbdiGlobals.Data_8, a);
+    return paddr;
 }
 
 

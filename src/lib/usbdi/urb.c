@@ -134,7 +134,7 @@ paddr_t usbd_mphys(const void *ptr)
     paddr_t paddr = usbdi_memchunk_mphys(Data_b698.Data_8, ptr);
 
 #if 1
-    fprintf(stderr, "usbd_mphys: ptr=%p -> paddr=%p\n", ptr, paddr);
+    fprintf(stderr, "usbd_mphys(client): ptr=%p -> paddr=%p\n", ptr, paddr);
 #endif
 
     return paddr;

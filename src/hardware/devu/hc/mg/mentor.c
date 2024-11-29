@@ -773,6 +773,7 @@ static void* mentor_interrupt_thread(void* a)
 }
 
 
+/* 0x000043a0 - todo */
 int mentor_init_fifo_config(struct Mentor_Controller* r0, int b)
 {
 #if 1
@@ -1210,7 +1211,11 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
 
     struct Mentor_Controller* r4;
 
+#ifdef MB86H60
+    r7->Data_0 = "mb86h60";
+#else
     r7->Data_0 = "dm816x";
+#endif
 
     if ((r7->Data_0x84 = r4 = calloc(1, 0xe8)) == NULL)
     {
@@ -1224,7 +1229,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     r4->Data_0x74 = 0x60;
     r4->Data_0x7c = 1000;
     r4->Data_0x6c = 0x04;
-    r4->Data_0x50 = 0x45;
+    r4->Data_0x50 = 0x40 | 0x04; // | 0x01/*dma?*/;
     r4->Data_0x2c = -1;
     r4->Data_0x28 = -1;
     r4->Data_0x18 = 4;
@@ -1256,6 +1261,12 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                     {
                         r4->verbosity = strtol(fp_0x50, 0, 10);
                     }
+                    //->loc_6404
+                    break;
+
+                case 5:
+                    //loc_6328?: "nodma"
+                    r4->Data_0x50 &= ~1;
                     //->loc_6404
                     break;
 
@@ -1359,6 +1370,19 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
             else
             {
                 //loc_6700
+                struct Mentor_Controller* r2 = r7->Data_0x84;
+
+                r7->Data_0x5c = 1000;
+                r7->capabilities = 0x4000064f;
+                r7->Data_0x60 = 0x8000;
+                r7->Data_0x64 = 0x8000;
+                r7->Data_0x68 = 3;
+
+                if ((r2->Data_0x50 & 0x01) == 0)
+                {
+                    r7->capabilities = 0x4000044f;
+                }
+
                 res = MENTOR_AllocateTD(r4);
                 if (res != 0)
                 {
@@ -2248,7 +2272,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
             uint32_t Data_0; //0
             int Data_4; //4
             int fill_8; //8
-            int Data_0xc; //0xc
+            void* pData; //0xc
             int fill_0x10; //0x10
             int Data_0x14; //0x14
             int fill_0x18[6]; //0x18
@@ -2257,8 +2281,8 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
 
         r2 = fp_0x30->Data_8;
 #if 1
-        fprintf(stderr, "r2->Data_0=0x%x, r2->Data_4=0x%x, r2->Data_0xc=0x%x, \n",
-            r2->Data_0, r2->Data_4, r2->Data_0xc);
+        fprintf(stderr, "r2->Data_0=0x%x, r2->Data_4=0x%x, r2->pData=%p, \n",
+            r2->Data_0, r2->Data_4, r2->pData);
 #endif
 
         fp_0x30 = r2->Data_0x30;
@@ -2347,7 +2371,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         if (r2->Data_4 & 1)
         {
             //0x000097f8
-            MENTOR_LoadFIFO(r5, 0, r2->Data_0xc, r2->Data_0 & 0xffff);
+            MENTOR_LoadFIFO(r5, 0, r2->pData, r2->Data_0 & 0xffff);
 
             r2_ = fp_0x34_ | (1 << 3)/*SetupPkt*/ | (1 << 1)/*TxPktRdy*/; //0x0a;
             //->0x0000987c
@@ -2367,7 +2391,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
             if (r3 > 0)
             {
                 //0x00009850
-                MENTOR_LoadFIFO(r5, 0, r2->Data_0xc, r3 & 0xffff);
+                MENTOR_LoadFIFO(r5, 0, r2->pData, r3 & 0xffff);
             }
             //0x00009868
             r2_ = fp_0x34_ | (1 << 1)/*TxPktRdy*/; //0x02;
