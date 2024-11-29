@@ -962,16 +962,26 @@ int udi_descriptor(struct usbd_urb* r4)
                     if (r6 == 0)
                     {
                         //0x00106da4
-#if 1
-                        fprintf(stderr, "udi_descriptor: 0x00106da4: TODO!!!\n");
+                        if (r5->Data_0x34 < r4->dwLength)
+                        {
+                            usb_store_data_key(r7->Data_0x8c, 
+                                1, 1, r4->wValue, r4->wData_0x5a, 0, r8);
+                            //->loc_106e04
+                        }
+                        else
+                        {
+                            //loc_106de0
+                            usb_store_data_key(r7->Data_0x8c,
+                                0, 1, r4->wValue, r4->wData_0x5a, 0, r8);
+                        }
+#if 0
                         int i;
                         for (i = 0; i < r4->dwLength; i++)
                         {
-                            fprintf(stderr, "r4->Data_0x14->pData[%d] = 0x%02x\n",
+                            fprintf(stderr, "udi_descriptor: r4->Data_0x14->pData[%d] = 0x%02x\n",
                                 i, ((uint8_t*)(r4->Data_0x14->pData))[i]);
                         }
 #endif
-                        //TODO!!!
                     }
                 }
                 //loc_106e04
