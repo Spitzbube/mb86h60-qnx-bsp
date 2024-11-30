@@ -235,6 +235,12 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
 
                     usbd_descriptors_t* r4;
                     r4 = usbd_parse_descriptors(sp_0xd0, NULL, 1, 0, &sp_0xcc);
+
+#if 1
+                    fprintf(stderr, "usb: r4=%p, sp_0xcc=%p\n", r4, sp_0xcc);
+#endif
+
+#if 0
                     if (r4 != NULL)
                     {
                         //0x001047ac
@@ -251,6 +257,7 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
 
                         //TODO
                     }
+#endif
                     //loc_1048e0
 
                     //TODO

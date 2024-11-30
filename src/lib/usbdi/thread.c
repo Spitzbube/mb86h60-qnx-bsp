@@ -965,10 +965,36 @@ int usbdi_scan_descriptor(struct Struct_40b4_c** r0,
 
             case USB_DESC_CONFIGURATION: //2:
                 //loc_4318
-#if 1
-                fprintf(stderr, "usbdi_scan_descriptor: loc_4318: TODO!!!\n");
-#endif
-                //TODO!!!
+                {
+                    usbd_configuration_descriptor_t* r2 = (void*) *r4;
+                    r3 = (r3 + 3) & ~3;
+                    int sp4 = r3;
+                    uint32_t sp = r3 + 12;
+                    if (*r6 < sp)
+                    {
+                        //->loc_4834
+                        return 12;
+                    }
+                    //0x00004340
+                    r2->bLength = 10;
+                    r2->bDescriptorType = USB_DESC_CONFIGURATION; //2;
+                    r2->wTotalLength = r1[2] | (r1[3] << 8);
+                    r2->bNumInterfaces = r1[4];
+                    r2->bConfigurationValue = r1[5];
+                    r2->iConfiguration = r1[6];
+                    r2->bmAttributes = r1[7];
+                    r2->MaxPower = r1[8];
+
+                    uint8_t* r2_ = (void*) *r4;
+                    *r4 = (void*) r2_ + 12;
+                    
+                    memcpy(*r4, *fp, *sb);
+
+                    uint8_t* r2__ = (void*) *r4;
+                    *r4 = (void*) r2__ + sp4;
+
+                    *r6 -= sp;
+                } //->loc_47ec
                 break;
 
             case USB_DESC_STRING: //3:
@@ -1024,6 +1050,80 @@ int usbdi_scan_descriptor(struct Struct_40b4_c** r0,
                     int r3_ = *sl;
                     r3_ += sp4;
                     *sl = r3_;
+
+                    *r6 -= sp;
+                } //->loc_47ec
+                break;
+
+            case USB_DESC_INTERFACE: //4:
+                //loc_44b8
+                {
+                    usbd_interface_descriptor_t* r2 = (void*) *r4;
+                    r3 = (r3 + 3) & ~3;
+                    int sp4 = r3;
+                    uint32_t sp = r3 + 12;
+                    if (*r6 < sp)
+                    {
+                        //->loc_4834
+                        return 12;
+                    }
+                    //0x00004340
+                    r2->bLength = 9;
+                    r2->bDescriptorType = USB_DESC_INTERFACE; //4;
+                    r2->bInterfaceNumber = r1[2];
+                    r2->bAlternateSetting = r1[3];
+                    r2->bNumEndpoints = r1[4];
+                    r2->bInterfaceClass = r1[5];
+                    r2->bInterfaceSubClass = r1[6];
+                    r2->bInterfaceProtocol = r1[7];
+                    r2->iInterface = r1[8];
+
+                    uint8_t* r2_ = (void*) *r4;
+                    *r4 = (void*) r2_ + 12;
+                    
+                    memcpy(*r4, *fp, *sb);
+
+                    uint8_t* r2__ = (void*) *r4;
+                    *r4 = (void*) r2__ + sp4;
+
+                    *r6 -= sp;
+                } //->loc_47ec
+                break;
+
+            case USB_DESC_ENDPOINT: //5:
+                //loc_4568
+                {
+                    usbd_endpoint_descriptor_t* r2 = (void*) *r4;
+                    int r0 = (r3 == 9)? 1: 0;
+                    int sp_0xc = (r0 == 0)? 8: 12;
+                    r3 = (r3 + 3) & ~3;
+                    int sp4 = r3;
+                    uint32_t sp = r3 + sp_0xc;
+                    if (*r6 < sp)
+                    {
+                        //->loc_4834
+                        return 12;
+                    }
+                    //0x000045a8
+                    r2->bLength = (r0 == 0)? 8: 10;
+                    r2->bDescriptorType = USB_DESC_ENDPOINT; //5;
+                    r2->bEndpointAddress = r1[2];
+                    r2->bmAttributes = r1[3];
+                    r2->wMaxPacketSize = r1[4] | (r1[3] << 5);
+                    r2->bInterval = r1[6];
+                    if (r0 != 0)
+                    {
+                        ((usbd_audio_endpoint_descriptor_t*)r2)->bRefresh = r1[7];
+                        ((usbd_audio_endpoint_descriptor_t*)r2)->bSyncAddress = r1[8];
+                    }
+
+                    uint8_t* r2_ = (void*) *r4;
+                    *r4 = (void*) r2_ + sp_0xc;
+                    
+                    memcpy(*r4, *fp, *sb);
+
+                    uint8_t* r2__ = (void*) *r4;
+                    *r4 = (void*) r2__ + sp4;
 
                     *r6 -= sp;
                 } //->loc_47ec
@@ -1099,22 +1199,28 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
             struct Struct_40b4_c* sp_0x84;
             struct Struct_40b4_c* sp_0x80;
             struct Struct_40b4_c* sp_0x7c;
-            int sp_0x78;
+            struct Struct_40b4_c* sp_0x78;
             int sp_0x74;
             struct Struct_40b4_c* sp_0x6c;
             uint8_t* sp_0x68;
             int sp_0x64;
             int sp_0x60;
+            int sp_0x5c;
             int sp_0x58;
-            int sp_0x54;
-            int sp_0x48;
-            int sp_0x44;
+#if 0
+            uint8_t sp_0x57;
+            uint8_t sp_0x56;
+            uint8_t sp_0x55;
+#endif
+            uint8_t sp_0x54[4];
+            struct Struct_40b4_c** sp_0x48;
+            uint8_t* sp_0x44;
             int sp_0x3c;
             int sp_0x38;
             void* sp_0x34;
             int sp_0x28;
             struct Struct_40b4_c** sp_0x24;
-            int sp_0x20;
+            uint8_t* sp_0x20;
             int sp_0x1c;
             uint32_t sp_0x18;
             void* sp_0x14;
@@ -1126,7 +1232,7 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
 
             sp_0x1c = 0x2ac;
             sp_0x24 = &sp_0x84;
-            sp_0x20 = &sp_0x54;
+            sp_0x20 = &sp_0x54[0];
             sp_0x44 = &sp_0x58;
             sp_0x48 = &sp_0x78;
             int fp = type;
@@ -1295,9 +1401,9 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                         //sp_0x40 = &sp_0x60;
                         //sp_0x34 = r7;
                         //sp_0x38 = r5;
-                        //sp_0x28 = fp;
+                        //sp_0x28 = fp; //fp = type/*r6*/
                         //fp = device/*sb*/;
-                        //sp_0x2c = r6;
+                        //sp_0x2c = r6; //r6 = index/*r4*/
                         //sp_0x30 = r8/*_GLOBAL_OFFSET_TABLE_*/;
                         //sl = sp_0x4c
 
@@ -1315,7 +1421,7 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                                     0,
                                     USB_DESC_CONFIGURATION/*2*/,
                                     0, 
-                                    sp_0x3c, 
+                                    sp_0x3c/*r5*/, 
                                     0, 
                                     sp_0x68,
                                     sp_0x64);
@@ -1338,18 +1444,189 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
                                 fprintf(stderr, "usbd_parse_descriptors: loc_4eac: TODO!!!\n");
                             }
                             //0x00004c14
-                            fprintf(stderr, "usbd_parse_descriptors: 0x00004c14: TODO!!!\n");
+                            usbd_configuration_descriptor_t* r3 = sp_0x7c->Data_4;
+                            if (sp_0x18 < r3->wTotalLength)
+                            {
+                                //->loc_4f5c
+                                fprintf(stderr, "usbd_parse_descriptors: loc_4f5c: TODO!!!\n");
+                            }
+                            //0x00004c2c
+                            //Get the complete configuration descriptor
+                            sp_0x68/*descriptor bytes*/ = sp_0x14;
+                            sp_0x64/*descriptor size*/ = 
+                                ((usbd_configuration_descriptor_t*)(sp_0x7c->Data_4))->wTotalLength;
 
+                            r0 = usbd_descriptor(device,
+                                    0,
+                                    USB_DESC_CONFIGURATION/*2*/,
+                                    0, 
+                                    sp_0x3c/*r5*/, 
+                                    0, 
+                                    sp_0x14,
+                                    sp_0x64);
+                            if (r0 != 0)
+                            {
+                                //->loc_4ec8
+                                fprintf(stderr, "usbd_parse_descriptors: loc_4ec8: TODO!!!\n");
+                            }
+                            //0x00004c74
+                            sp_0x68 += 9;
+                            sp_0x64 -= 9;
+                            //r0 = sp_0x7c;
+                            while ((sp_0x64 != 0) &&
+                                //0x00004c98
+                                //r0 = &sp_0x7c->Data_8; //=sp_0x84
+                                //r7 = &sp_0x68;
+                                //r8 = &sp_0x64;
+                                //r5 = &sp_0x8c;
+                                //r6 = &sp_0x88;
+                                //->loc_4e0c
+                                ((r0 = usbdi_scan_descriptor(&sp_0x7c->Data_8/*TODO!!!*/,
+                                    USB_DESC_INTERFACE/*4*/,
+                                    sp_0x48,
+                                    &sp_0x68/*r7*/,
+                                    &sp_0x64/*r8*/,
+                                    &sp_0x8c/*r5*/,
+                                    &sp_0x88/*r6*/)) != 2))
+                            {
+                                //loc_4cb0
+                                if (r0 != 0)
+                                {
+                                    //->loc_4ee4
+                                    fprintf(stderr, "usbd_parse_descriptors: loc_4ee4: TODO!!!\n");
+                                }
+                                //0x00004cb8
+                                if (sp_0x88 < 20)
+                                {
+                                    //->loc_5088
+                                    fprintf(stderr, "usbd_parse_descriptors: loc_5088: TODO!!!\n");
+                                }
+                                //0x00004cc4
+                                sp_0x60 = sp_0x20;
+                                sp_0x5c = 7; //sizeof(usbd_endpoint_descriptor_t);
+                                sp_0x74 = sp_0x8c;
+                                sp_0x54[0] = 7;
+                                sp_0x54[1] = USB_DESC_ENDPOINT; //5; //r1;
+                                sp_0x54[2] = 0;
+                                sp_0x54[3] = 0;
+                                sp_0x44[0] = sp_0x80->Data_4[7]/*bMaxPacketSize0*/;
+                                sp_0x20[5/*r1*/] = 0;
+                                //sp_0x5a = 0; //TODO!!!
 
+                                r0 = usbdi_scan_descriptor(&sp_0x78->Data_8,
+                                        USB_DESC_ENDPOINT/*5*/,
+                                        /*sl*/&sp_0x74,
+                                        /*sp_0x40*/&sp_0x60,
+                                        &sp_0x5c,
+                                        /*r5*/&sp_0x8c,
+                                        /*r6*/&sp_0x88);
+                                if (r0 != 0)
+                                {
+                                    //loc_4f00
+                                    fprintf(stderr, "usbd_parse_descriptors: loc_4f00: TODO!!!\n");
+                                }
+                                //0x00004d3c
+                                sp_0x78->Data_8 = sp_0x74;
+                                //r0 = sp_0x74;
+                                //r3 = sp_0x78->Data_4[4]/*bNumEndpoints*/;
+                                int r4;
+                                for (r4 = 0; r4 < sp_0x78->Data_4[4]/*bNumEndpoints*/; r4++)
+                                {
+                                    //loc_4d68
+                                    r0 = usbdi_scan_descriptor(sp_0x74,
+                                            USB_DESC_ENDPOINT/*sb = 5*/,
+                                            /*sl*/&sp_0x74,
+                                            /*r7*/&sp_0x68,
+                                            /*r8*/&sp_0x64,
+                                            /*r5*/&sp_0x8c,
+                                            /*r6*/&sp_0x88);
+                                    if (r0 != 0)
+                                    {
+                                        //loc_4f1c
+                                        fprintf(stderr, "usbd_parse_descriptors: loc_4f1c: TODO!!!\n");
+                                    }
+                                    //0x00004d88
+                                } //for (r4 = 0; r4 < sp_0x78->Data_4[4]/*bNumEndpoints*/; r4++)
+                                //loc_4da4
+                                while ((sp_0x64 > 1) && (sp_0x68[1] != USB_DESC_INTERFACE/*4*/))
+                                {
+                                    //loc_4dc0
+                                    fprintf(stderr, "usbd_parse_descriptors: loc_4dc0: TODO!!!\n");
+
+                                    //TODO!!!
+                                }
+                                //loc_4dfc
+                                //r0 = sp_0x78;
+                                //->loc_4cb0
+                            } //while ((sp_0x64 != 0) && ((r0 = usbdi_scan_descriptor(&sp_0x7c->Data_8/*TODO!!!*/, USB_DESC_INTERFACE, ...)) != 2))
                             //loc_4e2c
+                            //->loc_4b9c
                         } //for (sp_0x3c = 0; sp_0x3c < sp_0x80->Data_4[17]/*bNumConfigurations*/; sp_0x3c++)
-                        //0x00004e50
+                        //0x00004e50 -> loc_4e60
+                    } //if (sp_0x80/*sl*/->Data_4[17]/*bNumConfigurations*/ > 0)
+                    else
+                    {
+                        //loc_4e54
+
+                        fprintf(stderr, "usbd_parse_descriptors: loc_4e54: TODO!!!\n");
+                        //TODO!!!
+                        //->loc_4e70
                     }
-                    //loc_4e54
+                    //loc_4e60
+                    //device/*sb*/ = fp;
+                    //r6 = sp_0x28; //sp_0x28 = fp; //fp = type/*r6*/
+                    //r4 = sp_0x2c; //sp_0x2c = r6; //r6 = index/*r4*/
+                    //r8 = sp_0x30;
+                    //loc_4e70
+                    device/*sb*/->Data_0x40 = sp_0x84;
 
-                    fprintf(stderr, "usbd_parse_descriptors: loc_4e54: TODO!!!\n");
+                    usbdi_memchunk_free(Data_b698.Data_8, sp_0x14);
+                    //->loc_5024
+                    struct 
+                    {
+                        void* Data_0; //0
+                        struct
+                        {
+                            uint8_t fill_0; //0
+                            uint8_t bData_1; //1
+                            //???
+                        }* Data_4;
+                        //???
+                    }* r3_ = device/*sb*/->Data_0x40;
+                    //->loc_5018
+                    while (r3_ != NULL)
+                    {
+                        //loc_502c
+#if 1
+                        fprintf(stderr, "usbd_parse_descriptors: loc_502c: type=%d, r3_->Data_4->bData_1=%d, index=%d\n",
+                            type, r3_->Data_4->bData_1, index);
+#endif
+                        if ((type/*r6*/ == 0) || (r3_->Data_4->bData_1 == type/*r6*/))
+                        {
+                            //loc_5044
+                            if (index/*r4*/ != 0)
+                            {
+                                index/*r4*/--;
+                                //->loc_5064
+                            }
+                            else
+                            {
+                                //0x00005050
+                                if (node != NULL)
+                                {
+                                    *node = (struct usbd_desc_node*) r3_;
+                                }
+                                return (usbd_descriptors_t*) (r3_->Data_4); //->loc_5080
+                            }
+                        }
+                        //loc_5064
+                        r3_ = r3_->Data_0;
+                    }
+                    //->loc_5070
+                    errno = 2;
+                    return NULL;
 
-                }
+                } //if (sp_0x18 > 0x11)
                 //loc_4f74
 
             } //while (1) //???
