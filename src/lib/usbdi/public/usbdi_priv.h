@@ -52,6 +52,15 @@ struct USB_Memchunk
 };
 
 
+struct usbd_desc_node
+{
+    struct usbd_desc_node* next; //0
+    usbd_descriptors_t* descr; //4
+    struct usbd_desc_node* child; //8
+    //12
+};
+
+
 struct usbd_connection
 {
     const char* Data_0; //0
@@ -91,7 +100,7 @@ struct usbd_device
     unsigned Data_0x14; //0x14
     int Data_0x18; //0x18
     usbd_device_instance_t Data_0x1c; //0x1c +0x24
-    int Data_0x40; //0x40
+    struct usbd_desc_node* desc_node; //0x40
     void* Data_0x44; //0x44
     //0x48
 };
