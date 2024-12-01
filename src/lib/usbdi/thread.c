@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <atomic.h>
 #include <fcntl.h>
+#include <malloc.h>
 #include <sys/mman.h>
 #include <sys/usbdi.h>
 #include "usbdi_priv.h"
@@ -26,6 +27,8 @@ static const uint32_t memcfg[13] = //0x0000a26c
 
 struct Struct_b698 Data_b698; //0x0000b698
 pthread_mutex_t conn_mutex; //0x0000b780
+int stringlength = 0; //B7A4
+void* string = NULL; //B7A8
 
 
 /* 0x00007d8c - todo */
@@ -1175,8 +1178,8 @@ usbd_descriptors_t* usbd_parse_descriptors(struct usbd_device* device/*sb*/,
     struct usbd_desc_node** node)
 {
 #if 1
-    fprintf(stderr, "usbd_parse_descriptors: index=%d: TODO!!!\n", 
-        index);
+    fprintf(stderr, "usbd_parse_descriptors: type=%d, index=%d: TODO!!!\n", 
+        type, index);
 #endif
 
     if (device->desc_node == NULL)
@@ -1643,16 +1646,189 @@ void debug_nodes(struct usbd_desc_node* node)
             return NULL; //->loc_5080
         }
         //loc_48e8
-    }
+    } //if (device->desc_node == NULL)
     else
     {
         //loc_500c
-        fprintf(stderr, "usbd_parse_descriptors: loc_500c: TODO!!!\n"); 
+        struct usbd_desc_node* r3_;
 
+        if (root != NULL)
+        {
+            //0x00005014
+            r3_ = root->child;
+        } //if (root != NULL)
+        else
+        {
+            //loc_5024
+            r3_ = device/*sb*/->desc_node;
+        }
+        //->loc_5018
+        while (r3_ != NULL)
+        {
+            //loc_502c
+#if 1
+            fprintf(stderr, "usbd_parse_descriptors: loc_502c: type=%d, r3_->descr->generic.bDescriptorType=%d, index=%d\n",
+                type, r3_->descr->generic.bDescriptorType[0], index);
+#endif
+            if ((type/*r6*/ == 0) || 
+                ( r3_->descr->generic.bDescriptorType[0] == type/*r6*/))
+            {
+                //loc_5044
+                if (index/*r4*/ != 0)
+                {
+                    index/*r4*/--;
+                    //->loc_5064
+                }
+                else
+                {
+                    //0x00005050
+                    if (node != NULL)
+                    {
+                        *node = r3_;
+                    }
+                    return r3_->descr; //->loc_5080
+                }
+            }
+            //loc_5064
+            r3_ = r3_->next;
+        } //while (r3_ != NULL)
+        //->loc_5070
+        errno = 2;
+        return NULL;
     }
 
     return 0;
 }
+
+
+/* 0x00005144 - todo */
+char* usbd_string(struct usbd_device* device, _Uint8t index/*r6*/, int langid/*r7*/)
+{
+#if 1
+    fprintf(stderr, "usbd_string: index=%d, langid=0x%x: TODO!!!\n", index, langid);
+#endif
+
+    uint8_t sp_0x14[514];
+    int res; //r4;
+
+    if (index == 0)
+    {
+        errno = 2;
+        return NULL;
+    }
+
+    if (langid == 0)
+    {
+        //0x0000517c
+        usbd_descriptors_t* r0 = usbd_parse_descriptors(device, 
+                                    NULL, USB_DESC_STRING, 0, NULL);
+        if (r0 == NULL)
+        {
+            errno = 2;
+            return NULL;
+        }
+
+        langid = r0->string.bString[0];
+        //->loc_51b0
+    }
+    //loc_51b0
+    res = usbd_descriptor(device, 
+            0, 
+            USB_DESC_STRING, 
+            0, 
+            index, 
+            langid, 
+            &sp_0x14[0], 
+            4);
+
+    if (res != 0)
+    {
+        if (res != 0xf0)
+        {
+            errno = res;
+            return NULL;
+        }
+    }
+    //loc_51fc
+    res = usbd_descriptor(device,
+            0, 
+            USB_DESC_STRING, 
+            0, 
+            index, 
+            langid, 
+            &sp_0x14[0], 
+            (size_t)(sp_0x14[0]));
+    if (res != 0)
+    {
+        errno = res;
+        return NULL;
+    }
+    //loc_523c
+    uint32_t r7 = sp_0x14[0];
+    if (r7 < 2)
+    {
+        errno = 2;
+        return NULL;
+    }
+    //loc_525c
+    r7 = (r7 - 2) / 2;
+    int r4 = r7 * 8;
+    if (r4 >= stringlength)
+    {
+        //0x00005278
+        r4++;
+
+        void* r0 = _srealloc(string, stringlength, r4);
+        if (r0 == NULL)
+        {
+            errno = 12;
+            return NULL;
+        }
+        //loc_52a8
+        string = r0;
+        stringlength = r4;
+    }
+    //loc_52b8
+    char* r4_ = string;
+    uint8_t* r5 = &sp_0x14[2];
+    int r6;
+    for (r6 = 0; r6 < r7; r6++)
+    {
+        //loc_52d8
+//            int r0 = wctomb(r4_, r2[0] | (r2[1] << 8));
+        uint16_t r1 = r5[0] | (r5[1] << 8);
+#if 1
+        fprintf(stderr, "usbd_string: string[%d]=0x%04x(%c)\n", r6, r1, r1);
+#endif
+        int r0 = wctomb(r4_, r1);
+        if (r0 == -1)
+        {
+            errno = 0x16;
+            return NULL;
+        }
+        //loc_530c
+        r4_ += r0;
+        r5 += 2;
+    }
+    //loc_5320
+    *r4_ = 0;
+
+    return string;
+}
+
+
+int usbd_get_frame(struct usbd_device *device, int* b, int* c)
+{
+#if 1
+    fprintf(stderr, "usbd_get_frame: TODO!!!\n");
+#endif
+
+    *b = 0;
+    *c = 0;
+
+    return 0;
+}
+
 
 
 
