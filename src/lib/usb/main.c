@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/usbdi.h>
 
 
@@ -159,6 +160,76 @@ char* sub_1025a4(int a, int b, int c, int* d, int* e)
 }
 
 
+/* 1026bc - todo */
+char* sub_1026bc(int a, int b, int c)
+{
+#if 0
+    fprintf(stderr, "sub_1026bc: TODO!!!\n");
+#endif
+
+    switch (b & 0x03)
+    {
+        case 0:
+            //loc_1026ec
+            return "Control";
+            //break;
+
+        case 1:
+            //loc_1026f8
+            if (c == 0)
+            {
+                if (a & 0x80)
+                {
+                    return "Isoch/IN";
+                }
+                else
+                {
+                    return "Isoch/OUT";
+                }
+            }
+            else
+            {
+                //loc_102718
+
+                //TODO
+                return "loc_102718: TODO!!!";
+            }
+            break;
+
+        case 2:
+            //loc_102784
+            if (a & 0x80)
+            {
+                return "Bulk/IN";
+            }
+            else
+            {
+                return "Bulk/OUT";
+            }
+            break;
+
+        case 3:
+            //loc_10279c
+            if (a & 0x80)
+            {
+                return "Interrupt/IN";
+            }
+            else
+            {
+                return "Interrupt/OUT";
+            }
+            break;
+
+        default:
+            //loc_1026e0
+            return "Unknown";
+            //break;
+    }
+
+    return "";
+}
+
+
 static const struct 
 {
     const char* strings[45];
@@ -199,6 +270,18 @@ TreeStrings[2] = //0x001052f8
             "    Interfaces             ",//[28]
             "      Interface            ",//[29]
             "        Class              ",//[30]
+            "        Subclass           ",//[31]
+            "        Protocol           ",//[32]
+            "        Class-Specific     ",//[33]
+            "        Vendor-Specific    ",//[34]
+            "        Endpoints          ",//[35]
+            "          Endpoint         ",//[36]
+            "            Attributes     ",//[37]
+            "            Max Packet Size",//[38]
+            "            Interval       ",//[39]
+            "            Refresh        ",//[40]
+            "            Sync Address   ",//[41]
+            "            Class-Specific ",//[42]
         }
     },
     //[1] //0x001053ac
@@ -235,6 +318,20 @@ TreeStrings[2] = //0x001052f8
             "|   Interfaces             ",//[28]
             "|   + Interface            ",//[29]
             "|   |   Class              ",//[30]
+            "|   |   Subclass           ",//[31]
+            "|   |   Protocol           ",//[32]
+            "|   |   Class-Specific     ",//[33]
+            "|   |   Vendor-Specific    ",//[34]
+            "|   |   Endpoints          ",//[35]
+            "|   |   + Endpoint         ",//[36]
+            "|   |   |   Attributes     ",//[37]
+            "|   |   |   Max Packet Size",//[38]
+            "|   |   |   Interval       ",//[39]
+            "|   |   |   Refresh        ",//[40]
+            "|   |   |   Sync Address   ",//[41]
+            "|   |   |   Class-Specific ",//[42]
+            "|   |   |   Vendor-Specific",//[43]
+            "|   |   |                  ",//[44]
         }
     },
 };
@@ -446,6 +543,78 @@ int sub_1034ec(struct usbd_device* sp_0xc,
 }
 
 
+/* 1029b4 - todo */
+int sub_1029b4(int sp_0xc, 
+        struct usbd_device* fp, 
+        usbd_descriptors_t* sb, 
+        usbd_descriptors_t* r4, 
+        struct usbd_desc_node* arg0, 
+        int arg4)
+{
+#if 0
+        fprintf(stderr, "sub_1029b4: TODO!!!\n");
+#endif
+
+    int sl = (r4->endpoint.bLength == 10)? 1: 0;
+
+    display(4, "%s: %d\n"/*r7*/, TreeStrings[Tree].strings[36],
+        r4->endpoint.bEndpointAddress & 0x0f);
+
+    display(4, "%s: %s\n", TreeStrings[Tree].strings[37],
+        sub_1026bc(r4->endpoint.bEndpointAddress,
+            r4->endpoint.bmAttributes, sl));
+
+    display(4, "%s: %d\n"/*r7*/, TreeStrings[Tree].strings[38],
+        r4->endpoint.wMaxPacketSize);
+
+    if (r4->endpoint.bmAttributes & 0x01)
+    {
+        //0x00102a70
+        if (bus_topology.ports[sp_0xc].upstream_port_speed == 2)
+        {
+            //0x00102a8c
+            if (r4->endpoint.bInterval > 3)
+            {
+                //0x00102a98
+                int r3 = 1 << (r4->endpoint.bInterval - 1);
+                int r1 = r3 + 7;
+                r3 = (r3 < 0)? r1: 0;
+
+                display(4, "%s: %d ms\n", TreeStrings[Tree].strings[39],
+                    r3 >> 3);
+                //->loc_102b50
+            }
+            else
+            {
+                //loc_102adc
+                display(4, "%s: %d mframe\n", TreeStrings[Tree].strings[39],
+                    1 << (r4->endpoint.bInterval - 1));
+                //->loc_102b50
+            }
+        }
+        else
+        {
+            //loc_102b1c
+            display(4, "%s: %d ms\n", TreeStrings[Tree].strings[39],
+                r4->endpoint.bInterval);
+        }
+    }
+    //loc_102b50
+    if ((sl != 0) /*&& (sb->endpoint.5... == 1)*/)
+    {
+        //0x00102b64
+        fprintf(stderr, "sub_1029b4: 0x00102b64: TODO!!!\n");
+
+        //TODO!!!
+    }
+    //loc_102bb8
+    sub_1027b4(fp, sb, arg0, 6, 43);
+
+    return 0;
+}
+
+
+
 /* 102be0 - todo */
 int sub_102be0(struct usbd_device* sb, 
         usbd_descriptors_t* r4, 
@@ -465,6 +634,7 @@ int sub_102be0(struct usbd_device* sb,
     //r2 = r4->interface.bInterfaceSubClass
     //r1 = r4->interface.bInterfaceProtocol
 
+    char* r8 = NULL;
     switch (r4->interface.bInterfaceClass/*r3*/)
     {
 #if 0 //TODO!!!
@@ -505,6 +675,12 @@ int sub_102be0(struct usbd_device* sb,
                         "Mass Storage");
                     //r1 = r6;
                     //->loc_103160
+                    display(3, "%s: 0x%02x (%s)\n"/*r6*/,
+                        TreeStrings[Tree].strings[31],
+                        r4->interface.bInterfaceSubClass,
+                        "SFF8020i"/*r5*/);
+                    //0x00103190
+                    //TODO!!!
                     break;
 
                 default:
@@ -532,6 +708,12 @@ int sub_102be0(struct usbd_device* sb,
                         "Mass Storage");
                     //r1 = r6;
                     //->loc_103160
+                    display(3, "%s: 0x%02x (%s)\n"/*r6*/,
+                        TreeStrings[Tree].strings[31],
+                        r4->interface.bInterfaceSubClass,
+                        "RBC"/*r5*/);
+                    //0x00103190
+                    //TODO!!!
                     break;
 
                 case 3:
@@ -546,6 +728,12 @@ int sub_102be0(struct usbd_device* sb,
                         "Mass Storage");
                     //r1 = r6;
                     //->loc_103160
+                    display(3, "%s: 0x%02x (%s)\n"/*r6*/,
+                        TreeStrings[Tree].strings[31],
+                        r4->interface.bInterfaceSubClass,
+                        "QIC-157"/*r5*/);
+                    //0x00103190
+                    //TODO!!!
                     break;
 
                 case 4:
@@ -560,6 +748,12 @@ int sub_102be0(struct usbd_device* sb,
                         "Mass Storage");
                     //r1 = r6;
                     //->loc_103160
+                    display(3, "%s: 0x%02x (%s)\n"/*r6*/,
+                        TreeStrings[Tree].strings[31],
+                        r4->interface.bInterfaceSubClass,
+                        "UFI"/*r5*/);
+                    //0x00103190
+                    //TODO!!!
                     break;
 
                 case 5:
@@ -574,6 +768,12 @@ int sub_102be0(struct usbd_device* sb,
                         "Mass Storage");
                     //r1 = r6;
                     //->loc_103160
+                    display(3, "%s: 0x%02x (%s)\n"/*r6*/,
+                        TreeStrings[Tree].strings[31],
+                        r4->interface.bInterfaceSubClass,
+                        "SFF8070i"/*r5*/);
+                    //0x00103190
+                    //TODO!!!
                     break;
 
                 case 6:
@@ -588,6 +788,12 @@ int sub_102be0(struct usbd_device* sb,
                         "Mass Storage");
                     //r1 = r6;
                     //->loc_103160
+                    display(3, "%s: 0x%02x (%s)\n"/*r6*/,
+                        TreeStrings[Tree].strings[31],
+                        r4->interface.bInterfaceSubClass,
+                        "SCSI"/*r5*/);
+                    //0x00103190
+                    //TODO!!!
                     break;
 
             }
@@ -628,7 +834,14 @@ int sub_102be0(struct usbd_device* sb,
             break;
     }
 
-    return 0;
+    display(3, (r8 != NULL)? "%s: 0x%02x (%s)\n": "%s: 0x%02x\n",
+        TreeStrings[Tree].strings[32], 
+        r4->interface.bInterfaceProtocol, r8);
+
+    sub_1027b4(sb, r4, sl, 5, 34);
+
+    return display(4, "%s: %s + %d\n", TreeStrings[Tree].strings[35],
+        sub_1026bc(0, 0, 0), r4->interface.bNumEndpoints);
 }
 
 
@@ -715,6 +928,7 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
     struct usbd_desc_node* sp_0xcc;
     struct usbd_desc_node* sp_0xc8;
     struct usbd_desc_node* sp_0xc4;
+    struct usbd_desc_node* sp_0xc0;
     usbd_device_instance_t sp_0x9c;
     usbd_hcd_info_t sp_0x78;
     usbd_connect_parm_t sp_0x48 = {0};
@@ -724,8 +938,8 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
     uint32_t sp_0x34;
     uint32_t sp_0x30;
     uint32_t sp_0x2c;
-    int sp_0x28;
-    int sp_0x24;
+//    int sp_0x28;
+//    int sp_0x24;
     int r0;
 
     sp_0x48.vusb = 0x110;
@@ -921,68 +1135,92 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
                     if (r4 != NULL)
                     {
                         //0x001047ac
+                        int langid; //r5;
                         usbd_descriptors_t* r2;
                         r2 = usbd_parse_descriptors(sp_0xd0, NULL, USB_DESC_STRING, 0, NULL);
                         if (r2 != NULL)
                         {
                             //0x001047cc
-                            int r5 = r2->string.bString[0];
+                            langid = r2->string.bString[0];
                             //r0 = sp_0xd0;
                             //r1 = r4;
-                            //loc_1047d8
-                            if (sub_1034ec(sp_0xd0, r4, r2, sp_0x3c/*r7*/, sp_0xcc, r5) != 0)
-                            {
-                                //0x001047f0
-                                sp_0x24 = 0;
-                                sp_0x28 = 0;
-                                usbd_descriptors_t* r1;
-                                //r6 = 5;
-                                //->loc_1048b8
-                                while ((r1 = usbd_parse_descriptors(sp_0xd0,
-                                        sp_0xcc, USB_DESC_CONFIGURATION, 
-                                        sp_0x24, &sp_0xc8)) != 0)
-                                {
-                                    //loc_104804
-                                    if (sub_103318(sp_0xd0, r1, sp_0xc8, sp_0xc8, r5) != 0)
-                                    {
-                                        int sl = 0;
-                                        //sb = 4;
-                                        //->loc_10488c
-                                        while ((r1 = usbd_parse_descriptors(sp_0xd0,
-                                                    sp_0xc8, 
-                                                    USB_DESC_INTERFACE/*sb*/, 
-                                                    sl, &sp_0xc4/*fp*/)) != 0)
-                                        {
-                                            //loc_10482c
-                                            if (sub_102be0(sp_0xd0, r1, sp_0xc4, r5) != 0)
-                                            {
-                                                //->loc_104868
-
-                                                //TODO!!!
-                                            }
-                                            //loc_104888
-                                            sl++;
-                                            //loc_10488c
-                                        } //while (usbd_parse_descriptors(USB_DESC_INTERFACE))
-                                    }
-                                    //loc_1048ac
-                                    sp_0x24++;
-                                } //while (usbd_parse_descriptors(USB_DESC_CONFIGURATION))
-                                //0x001048dc
-                                //loc_104914
-                            }
-                            //loc_104914
-
-                            //TODO
-
+                        } //if (r2 != NULL)
+                        else
+                        {
+                            //loc_1049b0
+                            langid = 0;
+                            //(sp_0xd0, r4, 0);
+                            //->loc_1047d8
                         }
-                        //loc_1049b0
+                        //loc_1047d8
+                        if (sub_1034ec(sp_0xd0, r4, r2, sp_0x3c/*r7*/, sp_0xcc, langid) != 0)
+                        {
+                            //0x001047f0
+                            int indexConf/*sp_0x24*/ = 0;
+                            //sp_0x28 = 0;
+                            usbd_descriptors_t* r1;
+                            //r6 = 5;
+                            //->loc_1048b8
+                            while ((r1 = usbd_parse_descriptors(sp_0xd0,
+                                    sp_0xcc, USB_DESC_CONFIGURATION, 
+                                    indexConf, &sp_0xc8)) != 0)
+                            {
+                                //loc_104804
+                                if (sub_103318(sp_0xd0, r1, sp_0xc8, sp_0xc8, langid) != 0)
+                                {
+                                    int indexIf = 0;
+                                    //sb = 4;
+                                    //->loc_10488c
+                                    while ((r1 = usbd_parse_descriptors(sp_0xd0,
+                                                sp_0xc8, 
+                                                USB_DESC_INTERFACE/*sb*/, 
+                                                indexIf, &sp_0xc4/*fp*/)) != 0)
+                                    {
+                                        //loc_10482c
+                                        if (sub_102be0(sp_0xd0, r1, sp_0xc4, langid) != 0)
+                                        {
+                                            int indexEp/*r4*/ = 0/*sp_0x28*/;
+                                            usbd_descriptors_t* r3;
+                                            //->loc_104868
+                                            while ((r3 = usbd_parse_descriptors(sp_0xd0, 
+                                                            sp_0xc4, 
+                                                            USB_DESC_ENDPOINT/*r6*/, 
+                                                            indexEp, &sp_0xc0/*r8*/)) != 0)
+                                            {
+                                                //loc_10484c
+                                                sub_1029b4(sp_0x3c/*r7*/, sp_0xd0, 
+                                                    r3, r3, sp_0xc0, langid);
 
-                        //TODO
+                                                indexEp++;
+                                            }
+                                        }
+                                        //loc_104888
+                                        indexIf++;
+                                        //loc_10488c
+                                    } //while (usbd_parse_descriptors(USB_DESC_INTERFACE))
+                                }
+                                //loc_1048ac
+                                indexConf++;
+                            } //while (usbd_parse_descriptors(USB_DESC_CONFIGURATION))
+                            //0x001048dc
+                            //loc_104914
+                        }
+                        //loc_104914
                     } //if (r4 != NULL)
-                    //loc_1048e0
-
-                    //TODO
+                    else
+                    {
+                        //loc_1048e0
+                        //if (x == 0)
+                        {
+                            //0x001048f4
+                            fprintf(stderr, "device %d - descriptors - %s\n"/*sp_0x44*/, 
+                                sp_0x3c/*r7*/, strerror(errno));
+                        }
+                    }                    
+                    //loc_104914
+                    display(0, "\n");
+                    usbd_detach(sp_0xd0);
+                    //->loc_104974
                 }
                 else
                 {
@@ -991,12 +1229,15 @@ int main(int argc/*r5*/, char *argv/*r4*/[])
                         sp_0x3c/*r7*/, strerror(r0));
                 }
                 //loc_104974
-            }
+                //r7++;
+                //if (r7 < sp_0x2c) -> loc_10474c
+            } //if (sp_0x2c >= sp_0x40)
             //loc_104984
         }
         //loc_104984
         sp_0x30++;
-    }
+        //->loc_1044a0
+    } //while (sp_0x30 <= sp_0x34)
     //->loc_10499c
     usbd_disconnect(sp_0xd4);
 

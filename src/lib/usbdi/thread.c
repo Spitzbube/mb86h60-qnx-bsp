@@ -1830,5 +1830,13 @@ int usbd_get_frame(struct usbd_device *device, int* b, int* c)
 }
 
 
+int usbd_detach(struct usbd_device *device)
+{
+#if 1
+    fprintf(stderr, "usbd_detach: TODO!!!\n");
+#endif
+
+    return 0;
+}
 
 
