@@ -156,6 +156,18 @@ int UseFreeEntry(struct USB_Memchunk_Inner_0x18* a,
 }
 
 
+/* 11697c - todo */
+int usbdi_free_dma_memory(void* a, int b)
+{
+#if 1
+    fprintf(stderr, "usbdi_free_dma_memory(server): TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+
 /* 114b8c - todo */
 paddr_t usbdi_memchunk_mphys(int h, const void* ptr)
 {
@@ -454,7 +466,7 @@ loc_115550:
     {
         struct
         {
-            int Data_0; //0
+            int size; //0
             int Data_4; //4
             //8
         }* r5_;
@@ -469,7 +481,7 @@ loc_115550:
         else
         {
             memset(r5_, 0, size);
-            r5_->Data_0 = size;
+            r5_->size = size;
             r5_->Data_4 = 0;
             ptr = r5_ + 1;
         }
@@ -501,12 +513,141 @@ void* usbdi_memchunk_calloc(int a, int b, int c)
 }
 
 
-void usbdi_memchunk_free(int a, void* b)
+/* 114f18 - todo */
+int free_resource(void* r4, int r5)
 {
-#if 1
+#if 0
+    fprintf(stderr, "free_resource: TODO!!!\n");
+#endif
+
+    if ((UsbdiGlobals.Data_0x14 & 1) == 0)
+    {
+        munmap(r4, r5);
+
+        return 0; //->loc_115008
+    }
+    //loc_114f48
+    if (UsbdiGlobals.Data_0x48 != NULL)
+    {
+        rsrc_request_t sp;
+        memset(&sp, 0, sizeof(rsrc_request_t));
+
+        sp.length = r5;
+        uint32_t r4_ = r4;
+        sp.start = r4_;
+        sp.end = r4_ + r5;
+        sp.flags = 0x2000;
+        sp.name = UsbdiGlobals.Data_0x48;
+
+        if (rsrcdbmgr_detach(&sp, 1) == 0)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    //loc_114fe0
+    if (usbdi_free_dma_memory(usbd_mphys(r4), r5) == 0)
+    {
+        return munmap_device_memory(r4, r5);
+    }
+    //loc_115004
+    return 0;
+}
+
+
+/* 0x00115098 - todo */
+void usbdi_memchunk_free(struct USB_Memchunk* r4, void* r5)
+{
+#if 0
     fprintf(stderr, "usbdi_memchunk_free\n");
 #endif
 
+    if (r5 == NULL)
+    {
+        return;
+    }
+
+    if (r5 == &r4->Data_0x10)
+    {
+        return;
+    }
+
+    pthread_mutex_lock(&r4->mutex/*r7*/);
+
+    struct USB_Memchunk_Inner_0x18_Inner_8* r3 = ((int*)r5) - 1; //TODO!!!
+    struct USB_Memchunk_Inner_0x18_Inner_8* r0 = r3->next;
+    if (r0 == NULL)
+    {
+        struct
+        {
+            int size; //0
+            int Data_4; //4
+            //8
+        }* r0 = r5;
+
+        r0--;
+
+        free_resource(r0, r0->size);
+        //->loc_1151ac
+    }
+    else
+    {
+        //loc_1150dc
+        int r2 = r0->wData_0xe;
+        r3->next = r0->Data_4;
+        r0->Data_4 = r3;
+
+        r4->Data_0x18[r2].avail++;
+        r0->wData_0xc--;
+        if (r0->wData_0xc == 0)
+        {
+            //loc_1151b8
+            int r6 = r0->wData_0xe;
+            //int r2 = r4->Data_0x18[r6].count;
+
+            if ((r4->Data_0x18[r6].avail - r4->Data_0x18[r6].count/*r2*/) > 5)
+            {
+                //loc_115120
+                struct 
+                {
+                    int Data_0; //0
+                }* r5;                    
+
+                int r8 = r0->next;
+                struct USB_Memchunk_Inner_0x18_Inner_8* r3 = r4->Data_0x18[r6].Data_8;
+                r5 = &r4->Data_0x18[r6].Data_8;
+                while (r3 != NULL)
+                {
+                    
+                    if (r0 == r3)
+                    {
+                        //loc_115158
+                        if (free_resource(r0, 
+                                r4->Data_0x18[r6].size * r4->Data_0x18[r6].count/*r2*/ + 0x10) != -1)
+                        {
+                            //0x00115178
+                            r5->Data_0 = r8;
+
+                            r4->Data_0x18[r6].avail -= r4->Data_0x18[r6].count;
+                        }
+                        //loc_1151ac
+                        break;
+                    }
+                    //loc_11519c
+                    r5 = r3;
+                    r3 = r3->next;
+                } //while (r3 != NULL)
+                //loc_1151ac
+            }
+            //loc_1151ac
+        }
+        //loc_1151ac
+    }
+    //loc_1151ac
+    pthread_mutex_unlock(&r4->mutex/*r7*/);
 }
 
 

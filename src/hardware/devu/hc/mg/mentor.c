@@ -1885,6 +1885,16 @@ int MENTOR_InitializeEndpoint(struct Mentor_Controller* r7,
 }
 
 
+int MENTOR_FreeEtd(struct Mentor_Controller* a, 
+    struct Struct_0xa4* r4)
+{
+#if 1
+    fprintf(stderr, "MENTOR_FreeEtd: TODO!!!\n");
+#endif
+
+}
+
+
 /* 51b4 - todo */
 int MENTOR_HookED(struct Mentor_Controller* a, 
     struct Struct_0xa4* r6, 
@@ -2478,9 +2488,48 @@ int mentor_ctrl_endpoint_disable(struct USB_Controller* a, struct Struct_112b08*
 
 
 
+/* 0x00009c24 - complete */
+int mentor_bulk_endpoint_enable(struct USB_Controller* a, 
+    struct USB_Controller_Inner_0x7c* b, 
+    struct Struct_112b08* r6)
+{
+#if 0
+    fprintf(stderr, "mentor_bulk_endpoint_enable: TODO!!!\n");
+#endif
+
+    struct Mentor_Controller* r5 = a->Data_0x84;
+    struct Struct_0xa4* r4 = r6->Data_0xc;
+
+    int r7 = MENTOR_InitializeEndpoint(r5, b, r6);
+
+    if ((r7 == 0) && (r4 == NULL))
+    {
+        r4 = r6->Data_0xc;
+
+        MENTOR_HookED(r5, r5->Data_0xb0, r4);
+    }
+    else
+    {
+        //loc_9c6c
+        if (r4 != NULL)
+        {
+            if (r4->Data_0x28 > 0)
+            {
+                MENTOR_FreeEtd(r5, r4);
+            }
+        }
+    }
+    //loc_9c8c
+    r4->Data_0x24 = 0;
+
+    return r7;
+}
+
+
 
 static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
 static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
+static struct io_usb_bulk_pipe_methods_t mentor_bulk_pipe_methods; //0x0000bfc0
 
 struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
 {
@@ -2490,10 +2539,10 @@ struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
     mentor_shutdown,
     &mentor_controller_methods,
     &mentor_ctrl_pipe_methods,
-#if 0 //TODO
-    &mentor_int_pipe_methods,
+#if 1 //TODO
+    0, //&mentor_int_pipe_methods,
     &mentor_bulk_pipe_methods,
-    &mentor_isoch_pipe_methods,
+    0, //&mentor_isoch_pipe_methods,
 #endif
 };
 
@@ -2526,4 +2575,14 @@ static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
 };
 
 
+static struct io_usb_bulk_pipe_methods_t mentor_bulk_pipe_methods = //0x0000bfc0
+{
+    mentor_bulk_endpoint_enable,
+#if 0 //TODO
+    mentor_bulk_endpoint_disable,
+    mentor_bulk_transfer,
+    mentor_transfer_abort,
+    NULL
+#endif
+};
 

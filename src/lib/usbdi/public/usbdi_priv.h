@@ -193,5 +193,5 @@ extern int usbdi_sendcmd(int sp_0xc, int r8,
 extern int usbdi_memchunk_init(uint32_t*, int, int*, int cached);
 extern void* usbdi_memchunk_malloc(int, int size);
 extern void* usbdi_memchunk_calloc(int, int b, int c);
-extern void usbdi_memchunk_free(int, void*);
+extern void usbdi_memchunk_free(struct USB_Memchunk*, void*);
 extern paddr_t usbdi_memchunk_mphys(int, const void* ptr);

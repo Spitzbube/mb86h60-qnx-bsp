@@ -1607,12 +1607,13 @@ void* io_usb_dlopen(char* r5, int r8)
 
 
 /* 1177f8 - todo */
-void usbd_free(void* a)
+void usbd_free(void* ptr)
 {
 #if 1
-    fprintf(stderr, "usbd_free: TODO!!!\n");
+    fprintf(stderr, "usbd_free(server): TODO!!!\n");
 #endif
 
+    usbdi_memchunk_free(UsbdiGlobals.Data_8, ptr);
 }
 
 

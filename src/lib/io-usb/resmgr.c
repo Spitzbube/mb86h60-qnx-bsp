@@ -4,7 +4,6 @@
 
 
 extern int usbdi_memchunk_init();
-extern void usbdi_memchunk_free(int, void*);
 
 extern void usbdi_client_destroy();
 

@@ -428,12 +428,14 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
 
             fp_0x18->Data_0x28 = 0;
             break;
+#endif
 
         case 2:
             //loc_112bac
             fp8 = (fp_0x10->bulk_pipe_methods->bulk_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
             break;
 
+#if 0
         case 3:
             //loc_112bd4
             fp8 = (fp_0x10->int_pipe_methods->int_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);

@@ -141,3 +141,26 @@ paddr_t usbd_mphys(const void *ptr)
 }
 
 
+/* 0x00009324 - todo */
+void* usbd_alloc(size_t size)
+{
+#if 1
+    fprintf(stderr, "usbd_alloc(client): size=%d\n", size);
+#endif
+
+    return usbdi_memchunk_malloc(Data_b698.Data_8, size);
+}
+
+
+
+/* 0x00008f10 - todo */
+void usbd_free(void *ptr)
+{
+#if 1
+    fprintf(stderr, "usbd_free(client): ptr=%p: TODO!!!\n", ptr);
+#endif
+
+    usbdi_memchunk_free(Data_b698.Data_8, ptr);
+}
+
+

@@ -546,26 +546,6 @@ int usbd_attach(struct usbd_connection* connection/*r6*/,
 }
 
 
-/* 0x00009324 - todo */
-void* usbd_alloc(size_t size)
-{
-#if 1
-    fprintf(stderr, "usbd_alloc: size=%d\n", size);
-#endif
-
-    return usbdi_memchunk_malloc(Data_b698.Data_8, size);
-}
-
-
-void usbd_free(void *ptr)
-{
-#if 1
-    fprintf(stderr, "usbd_free: ptr=%p: TODO!!!\n", ptr);
-#endif
-
-}
-
-
 /* 0x00009384 - todo */
 struct usbd_urb* usbd_alloc_urb(struct usbd_urb *link/*r4*/)
 {
