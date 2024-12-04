@@ -21,8 +21,8 @@
 
 struct Mentor_Controller;
 #define USB_CONTROLLER_PRIV_T struct Mentor_Controller
-#include "io-usb.h"
-
+#include "my-io-usb.h"
+#include <sys/io-usb.h>
 
 
 struct Struct_0xa4;
@@ -2752,7 +2752,7 @@ static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf6
 static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
 static struct io_usb_bulk_pipe_methods_t mentor_bulk_pipe_methods; //0x0000bfc0
 
-struct io_usb_dll_entry_t io_usb_dll_entry = //0x0000bf40
+struct _io_usb_dll_entry io_usb_dll_entry = //0x0000bf40
 {
     "devu-mb86h60-mg.so",
     0xffffffff,

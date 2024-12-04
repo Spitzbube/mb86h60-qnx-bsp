@@ -468,7 +468,7 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
     pthread_attr_setdetachstate(&sp_0x44, 1);
     pthread_attr_setstacksize(&sp_0x44, 0x4000);
 
-    r4->controller_methods = r5->pDllEntry->controller_methods;
+    r4->controller_methods = r5->pDllEntry->hc_methods;
     r4->ctrl_pipe_methods = r5->pDllEntry->ctrl_pipe_methods;
     r4->int_pipe_methods = r5->pDllEntry->int_pipe_methods;
     r4->bulk_pipe_methods = r5->pDllEntry->bulk_pipe_methods;
@@ -497,7 +497,7 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
             return -1;
         }
         //loc_103c54
-        if ((r5->pDllEntry->controller_methods->controller_init)(r4, 0, r7) != 0)
+        if ((r5->pDllEntry->hc_methods->hc_init)(r4, 0, r7) != 0)
         {
             slogf(12, 2, " Error Initializing Host Controller");
 
@@ -510,7 +510,7 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
     else
     {
         //loc_103ce0
-        if ((r5->pDllEntry->controller_methods->controller_init)(r4, 0, r7) != 0)
+        if ((r5->pDllEntry->hc_methods->hc_init)(r4, 0, r7) != 0)
         {
             slogf(12, 2, " Error Initializing Host Controller");
 
@@ -916,7 +916,7 @@ struct UsbdiGlobals_Inner_0x178* io_usb_dll_load(void** phDll/*r8*/, char* r5, c
 
     struct UsbdiGlobals_Inner_0x178* r7;
     void* hDll; //r6
-    struct io_usb_dll_entry_t* pDllEntry; //r5
+    struct _io_usb_dll_entry* pDllEntry; //r5
     char sp_0xc[258];
     char* r0;
 #if 0
@@ -1058,7 +1058,7 @@ int register_dll_entry(struct UsbdiGlobals_Inner_0x178* r4)
 
     char* r6 = strdup(usb_prefix);
 
-    sprintf(&sp_0x14[0], "%s/%s", dirname(r6), r4->pDllEntry->Data_0);
+    sprintf(&sp_0x14[0], "%s/%s", dirname(r6), r4->pDllEntry->name);
 
     r4->Data_0x10 = resmgr_attach(UsbdiGlobals.dpp, //dispatch_t *dpp
         &UsbdiGlobals.resmgr_attr, //resmgr_attr_t *attr
@@ -1073,7 +1073,7 @@ int register_dll_entry(struct UsbdiGlobals_Inner_0x178* r4)
     if (r4->Data_0x10 == -1)
     {
         fprintf(stderr, "resmgr_attach unable to register %s \n", 
-            r4->pDllEntry->Data_0);
+            r4->pDllEntry->name);
 
         free(r6);
 
@@ -1311,7 +1311,7 @@ int main(int argc/*r4*/, char *argv[]/*fp*/)
                                 r6->Data_8 = strdup(argv[optind]);
                             }
                             //loc_105864
-                            CTRL_RegisterControllerType(r6, r6->pDllEntry->Data_4, r6->Data_8);
+                            CTRL_RegisterControllerType(r6, r6->pDllEntry->device_interest, r6->Data_8);
 
                             atomic_sub(sp_0x30, 1);
                         }

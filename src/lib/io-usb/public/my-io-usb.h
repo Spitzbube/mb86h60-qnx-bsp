@@ -275,17 +275,3 @@ struct io_usb_int_pipe_methods_t
 };
 
 
-struct io_usb_dll_entry_t
-{
-    char* Data_0; //0
-    int Data_4; //4
-    int (*init)(); //8
-    int (*shutdown)(); //12
-    struct io_usb_controller_methods_t* controller_methods; //16
-    struct io_usb_ctrl_pipe_methods_t* ctrl_pipe_methods; //20
-    struct io_usb_int_pipe_methods_t* int_pipe_methods; //24
-    struct io_usb_bulk_pipe_methods_t* bulk_pipe_methods; //28
-    struct io_usb_isoch_pipe_methods_t* isoch_pipe_methods; //32
-    //36???
-};
-

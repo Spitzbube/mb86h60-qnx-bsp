@@ -17,12 +17,6 @@
 #include <sys/mman.h>
 #include <hw/pci.h>
 #include <pthread.h>
-#include <sys/usb100.h>
-#include <sys/usbdi.h>
-
-#include "io-usb.h"
-#include "usbdi_priv.h"
-
 
 /* Define our overrides before including <sys/iofunc.h> */
 struct ocb;
@@ -32,6 +26,13 @@ struct UsbdiGlobals_Inner_0x178;
 #include <sys/iofunc.h>
 #include <sys/resmgr.h>
 #include <sys/dispatch.h>
+
+#include <sys/usb100.h>
+#include <sys/usbdi.h>
+#include <sys/io-usb.h>
+
+#include "my-io-usb.h"
+#include "usbdi_priv.h"
 
 
 // This is our own ocb block
@@ -58,7 +59,7 @@ struct UsbdiGlobals_Inner_0x24
 struct UsbdiGlobals_Inner_0x178
 {
     void* hDll; //0
-    struct io_usb_dll_entry_t* pDllEntry; //4
+    struct _io_usb_dll_entry* pDllEntry; //4
     char* Data_8; //8
     int Data_0xc; //12
     int Data_0x10; //16
