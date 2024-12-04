@@ -216,7 +216,7 @@ struct io_usb_controller_methods_t
     int (*check_port_status)(struct USB_Controller*, uint32_t*); //0x24 = 36
     int (*check_device_connected)(struct USB_Controller*, int); //0x28 = 40
     int (*get_root_device_speed)(struct USB_Controller*, int); //0x2c = 44
-    //TODO!!!
+    int (*get_timer_from_controller)(struct USB_Controller*); //0x30 = 48
     //???
 };
 

@@ -17,6 +17,8 @@
 #include "mu_hdrdf.h"
 
 
+//_GLOBAL_OFFSET_TABLE_ //0x0000bd5c
+
 struct Mentor_Controller;
 #define USB_CONTROLLER_PRIV_T struct Mentor_Controller
 #include "io-usb.h"
@@ -87,6 +89,28 @@ struct Struct_0xe4
 };
 
 
+struct Mentor_Controller_Inner_0x8c
+{
+    int fill_0[6]; //0
+    struct fp_0x34_Inner_0x18
+    {
+        int fill_0[2]; //8
+        int Data_8; //8
+        int Data_0xc; //12 = 0xc
+        struct
+        {
+            int Data_0; //0
+            int Data_4; //4
+            int Data_8; //8
+            struct fp_0x34_Inner_0x18* Data_0xc; //0xc 
+            //16 = 0x10
+        }* Data_0x10; //16 = 0x10
+        //0x14
+    } Data_0x18[]; //0x18, size???
+    //???
+};
+
+
 struct Mentor_Controller
 {
     struct USB_Controller* Data_0; //0
@@ -114,8 +138,8 @@ struct Mentor_Controller
     uint32_t verbosity; //0x78
     int Data_0x7c; //0x7c
     int fill_0x80[2]; //0x80
-    int Data_0x88; //0x88
-    int fill_0x8c; //0x8c
+    char* fconfig_string; //0x88
+    struct Mentor_Controller_Inner_0x8c* Data_0x8c; //0x8c
     struct Struct_0x94 Data_0x90; //0x90
     struct Struct_0x94* Data_0x94; //0x94
     struct Struct_0xa0* Data_0x98; //0x98
@@ -773,18 +797,184 @@ static void* mentor_interrupt_thread(void* a)
 }
 
 
-/* 0x000043a0 - todo */
-int mentor_init_fifo_config(struct Mentor_Controller* r0, int b)
+/* 0x000041b8 - todo */
+int find_block_list(struct Mentor_Controller_Inner_0x8c* a, unsigned long b)
 {
-#if 1
+#if 0
+    fprintf(stderr, "find_block_list: TODO!!!\n");
+#endif
+
+    int r2 = 1;
+
+    while (r2 < b)
+    {
+        r2 *= 2;
+    }
+
+    uint32_t r3 = r2;
+
+    for (r2 = 0; ((r3 % 2) == 0) && (r2 < 14); r2++)
+    {
+        r3 /= 2;
+    }
+
+    r2 = r2 - 3;
+    if (r2 > 10)
+    {
+        return -1;
+    }
+
+    return r2 < 0? 0: r2;
+}
+
+
+/* 0x000043a0 - todo */
+int mentor_init_fifo_config(struct Mentor_Controller* fp_0x40, 
+        char* fconfig_string/*r6*/)
+{
+#if 0
     fprintf(stderr, "mentor_init_fifo_config: TODO\n");
 #endif
 
+    char* fconfig_default; //fp_0x3c
+    int fp_0x38 = 64;
+
+    struct Mentor_Controller_Inner_0x8c* fp_0x34;
+    int32_t fp_0x30;
+    char* fp_0x2c;
+//    int sb;
+
+    fp_0x34 = calloc(1, 0xf4);
+    if (fp_0x34 == NULL)
+    {
+        return 12; //->loc_45bc
+    }
+
+//    fp_0x38 = 64;
+    if (fconfig_string != NULL)
+    {
+        fconfig_default = NULL;
+        //->loc_4408
+//        fp_0x38 = 64;
+//        sb = 4;
+        //->loc_442c
+    }
+    else
+    {
+        //0x000043ec
+        fconfig_default = strdup("16:8;4:16;8:64;2:128;14:512");
+        if (fconfig_default != NULL)
+        {
+            fconfig_string = fconfig_default;
+            //loc_4408
+//            fp_0x38 = 64;
+//            sb = 4;
+            //->loc_442c
+        }
+        else
+        {
+            //loc_4418
+            free(fp_0x34);
+            return 12; //->loc_45bc
+        }
+    }
+#if 0
+    //loc_4428
+#endif
+    for (; fconfig_string != NULL; fconfig_string = fp_0x2c)
+    {
+        //loc_442c
+        fp_0x2c = strchr(fconfig_string, 0x3b);
+        if (fp_0x2c != NULL)
+        {
+            *fp_0x2c++ = 0;
+        }
+
+        char* r4 = strchr(fconfig_string, 0x3a);
+        if (r4 != NULL)
+        {
+            //0x00004464
+            *r4++ = 0;
+
+            fp_0x30 = strtoul(fconfig_string, NULL, 0);
+
+            if (r4 != NULL)
+            {
+                //0x00004484
+                unsigned long r4_, r5; 
+                r4_ = strtoul(r4, NULL, 0);
+                r5 = r4_;
+
+                *fconfig_string = 0;
+
+                int r6_ = find_block_list(fp_0x34, r4_);
+                //r7 = r6_ * 20;
+                //sl = r7 + 0x18;
+                //sl = fp_0x34 + sl;
+                //r7 = fp_0x34 + r7;
+                //r7->Data_0x20 = fp_0x30;
+#if 1
+                fprintf(stderr, "mentor_init_fifo_config: r6_=%d, fp_0x30=%d, r4_=%d\n",
+                    r6_, fp_0x30, r4_);
+#endif
+                fp_0x34->Data_0x18[r6_].Data_8 = fp_0x30;
+                fp_0x34->Data_0x18[r6_].Data_0x10 = calloc(fp_0x30, 16);
+
+                if (fp_0x34->Data_0x18[r6_].Data_0x10 == NULL)
+                {
+                    //loc_44fc
+                    free(fconfig_default);
+                    return 12; //->loc_45bc
+                }
+                //0x000044ec
+//                if (fp_0x30/*r7*/ > 0)
+                {
+                    //loc_450c
+//                    int r0 = fp_0x38;
+                    int32_t r3; // = 0;
+                    //r1 = &fp_0x34->Data_0x18[r6_].Data_0x10;
+                    //ip = &fp_0x34->Data_0x18[r6_].Data_0xc;
+                    //r8 = 1;
+                    for (r3 = 0; r3 < fp_0x30/*r7*/; r3++)
+                    {
+                        //loc_452c
+                        //r2 = r3*16;
+                        fp_0x34->Data_0x18[r6_].Data_0x10[r3].Data_0 = r4_;
+                        fp_0x34->Data_0x18[r6_].Data_0x10[r3].Data_4 = fp_0x38/*r0*/;
+                        fp_0x34->Data_0x18[r6_].Data_0x10[r3].Data_0xc = 
+                            &fp_0x34->Data_0x18[r6_]/*sl*/;
+                        fp_0x34->Data_0x18[r6_].Data_0x10[r3].Data_8 = r3;
+
+                        fp_0x34->Data_0x18[r6_].Data_0xc |= (1/*r8*/ << r3);
+                        
+                        fp_0x38/*r0*/ += r5;
+                    } //for (r3 = 0; r3 < fp_0x30/*r7*/; r3++)
+                    //0x00004578
+//                    fp_0x38 += r5 + (fp_0x30 - 1) * r5;
+                }
+                //loc_4590
+            }
+            //loc_4590
+        }
+        //loc_4590
+//        fconfig_string = fp_0x2c;
+        //loc_442c
+    }
+//    while (fp_0x2c != NULL);
+    //0x0000459c
+    if (fconfig_default != NULL)
+    {
+        free(fconfig_default);
+    }
+
+    fp_0x40->Data_0x8c = fp_0x34;
+
+    return 0;
 }
 
 
 /* 0x000045cc - complete */
-int mentor_fifo_init(struct Mentor_Controller* cntrl, int b)
+int mentor_fifo_init(struct Mentor_Controller* cntrl, char* fconfig)
 {
 #if 0
     fprintf(stderr, "mentor_fifo_init: TODO\n");
@@ -804,7 +994,7 @@ int mentor_fifo_init(struct Mentor_Controller* cntrl, int b)
     ((volatile uint16_t*)(cntrl->Data_0x14))[0x64/2] = 0; //TXFIFOADD
 #endif
 
-    mentor_init_fifo_config(cntrl, b);
+    mentor_init_fifo_config(cntrl, fconfig);
 
     return 0;
 }
@@ -1070,7 +1260,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
     ((volatile uint32_t*)(r5->Data_0))[0xd0/4] = 0;
 #endif
 
-    mentor_fifo_init(r6, r6->Data_0x88);
+    mentor_fifo_init(r6, r6->fconfig_string);
 
     if ((r6->Data_0x50 & 1) == 0)
     {
@@ -1267,6 +1457,15 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                 case 5:
                     //loc_6328?: "nodma"
                     r4->Data_0x50 &= ~1;
+                    //->loc_6404
+                    break;
+
+                case 6:
+                    //loc_6338: "fconfig"
+                    if (fp_0x50 != NULL)
+                    {
+                        r4->fconfig_string = strdup(fp_0x50);
+                    }
                     //->loc_6404
                     break;
 
@@ -1785,6 +1984,16 @@ int mentor_get_root_device_speed(struct USB_Controller* a, int b)
 }
 
 
+int mentor_get_timer_from_controller(struct USB_Controller* a)
+{
+#if 1
+    fprintf(stderr, "mentor_get_timer_from_controller: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
 
 /* 5278 - todo */
 void MENTOR_PutEDPool(struct Mentor_Controller* r4, struct Struct_0xa4* r5)
@@ -1933,11 +2142,17 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
     struct Struct_112b08* c)
 {
 #if 1
-    fprintf(stderr, "mentor_ctrl_endpoint_enable: TODO!!!\n");
+    fprintf(stderr, "mentor_ctrl_endpoint_enable: a=%p, b=%p, c=%p\n",
+        a, b, c);
 #endif
 
     struct Mentor_Controller* r5 = a->Data_0x84;
     struct Struct_0xa4* r7 = c->Data_0xc;
+
+#if 1
+    fprintf(stderr, "mentor_ctrl_endpoint_enable: r5=%p, r7=%p\n",
+        r5, r7);
+#endif
 
     int r4 = MENTOR_InitializeEndpoint(r5, b, c);
 
@@ -2493,12 +2708,18 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
     struct USB_Controller_Inner_0x7c* b, 
     struct Struct_112b08* r6)
 {
-#if 0
-    fprintf(stderr, "mentor_bulk_endpoint_enable: TODO!!!\n");
+#if 1
+    fprintf(stderr, "mentor_bulk_endpoint_enable: a=%p, b=%p, r6=%p\n",
+        a, b, r6);
 #endif
 
     struct Mentor_Controller* r5 = a->Data_0x84;
     struct Struct_0xa4* r4 = r6->Data_0xc;
+
+#if 1
+    fprintf(stderr, "mentor_bulk_endpoint_enable: r5=%p, r4=%p\n",
+        r5, r4);
+#endif
 
     int r7 = MENTOR_InitializeEndpoint(r5, b, r6);
 
@@ -2559,9 +2780,7 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
     mentor_check_port_status,
     mentor_check_device_connected,
     mentor_get_root_device_speed,
-#if 0 //TODO
     mentor_get_timer_from_controller,
-#endif
 };
 
 
