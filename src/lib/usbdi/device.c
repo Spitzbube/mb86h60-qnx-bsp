@@ -9,7 +9,9 @@
 #include <sys/neutrino.h>
 #include <sys/resmgr.h>
 #include <sys/usbdi.h>
+#include <sys/io-usb.h>
 #include "usbdi_priv.h"
+#include "my-io-usb.h"
 
 
 /* 0x00005a24 - todo */

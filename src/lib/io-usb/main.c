@@ -176,21 +176,21 @@ struct USB_Controller* CTRL_GetHCEntry()
 
             memset(pController, 0, sizeof(struct USB_Controller));
 
-            pController->Data_8 = i;
+            pController->cindex = i;
 
             ausb_controllers[i] = pController;
 
-            pController->Data_0x7c = calloc(1, 20 * sizeof(struct USB_Controller_Inner_0x7c));
-            if (pController->Data_0x7c == 0)
+            pController->UsbDevices = calloc(1, 20 * sizeof(struct USB_Controller_Inner_0x7c));
+            if (pController->UsbDevices == NULL)
             {
                 pController = NULL;
                 break;
             }
 
-            pController->Data_0x78 = calloc(1, 20*4);
-            if (pController->Data_0x78 == 0)
+            pController->ArrayUsbDevices = calloc(1, 20*4);
+            if (pController->ArrayUsbDevices == NULL)
             {
-                free(pController->Data_0x78);
+                free(pController->ArrayUsbDevices);
                 pController = NULL;
                 break;
             }
@@ -468,29 +468,29 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
     pthread_attr_setdetachstate(&sp_0x44, 1);
     pthread_attr_setstacksize(&sp_0x44, 0x4000);
 
-    r4->controller_methods = r5->pDllEntry->hc_methods;
+    r4->hc_methods = r5->pDllEntry->hc_methods;
     r4->ctrl_pipe_methods = r5->pDllEntry->ctrl_pipe_methods;
     r4->int_pipe_methods = r5->pDllEntry->int_pipe_methods;
     r4->bulk_pipe_methods = r5->pDllEntry->bulk_pipe_methods;
     r4->isoch_pipe_methods = r5->pDllEntry->isoch_pipe_methods;
 
-    if (pthread_mutex_init(&r4->Data_0x24, 0) == -1)
+    if (pthread_mutex_init(&r4->usb_rwlock, 0) == -1)
     {
         fwrite("CTRL_InitializeController:  Unable to initialize hc mutex\n", 1, 0x3a, stderr);
 
         return -1;
     }
     //loc_103be8
-    if (r4->controller_methods->Data_0x18 != 0)
+    if (r4->hc_methods->hc_interrupt != 0)
     {
         //0x00103bf8
-        int intr = r4->Data_4->bData_0x14[0] | 
-            (r4->Data_4->bData_0x14[1] << 8) |
-            (r4->Data_4->bData_0x14[2] << 16) |
-            (r4->Data_4->bData_0x14[3] << 24);
+        int intr = r4->pci_inf->bData_0x14[0] | 
+            (r4->pci_inf->bData_0x14[1] << 8) |
+            (r4->pci_inf->bData_0x14[2] << 16) |
+            (r4->pci_inf->bData_0x14[3] << 24);
 
-        r4->Data_0x20 = InterruptAttachEvent(intr, &sp_0xc, 8);
-        if (r4->Data_0x20 == -1)
+        r4->usb_iid = InterruptAttachEvent(intr, &sp_0xc, 8);
+        if (r4->usb_iid == -1)
         {
             fwrite("InterruptAttachEvent failed\n", 1, 0x1c, stderr);
 
@@ -501,7 +501,7 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
         {
             slogf(12, 2, " Error Initializing Host Controller");
 
-            InterruptDetach(r4->Data_0x20);
+            InterruptDetach(r4->usb_iid);
 
             return -1;
         }
@@ -514,7 +514,7 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
         {
             slogf(12, 2, " Error Initializing Host Controller");
 
-            InterruptDetach(r4->Data_0x20);
+            InterruptDetach(r4->usb_iid);
 
             return -1;
         }
@@ -522,7 +522,7 @@ int CTRL_InitializeController(struct UsbdiGlobals_Inner_0x178 *r5,
         return 0;
     }
     //loc_103c9c
-    if (pthread_create(&r4->Data_0x14, &sp_0x44, usb_interrupt_handler, r4) != 0)
+    if (pthread_create(&r4->tid, &sp_0x44, usb_interrupt_handler, r4) != 0)
     {
         fwrite("Unable to create controller interrupt thread\n", 1, 0x2d, stderr);
 
@@ -653,10 +653,10 @@ int CTRL_GetOptions(char* a,
                 return -1;
             }
             //loc_104354
-            r7->Data_0x18 = Data_12021c;
-            r7->Data_0x80 = sp_0x20;
-            r7->Data_4 = r4;
-            r7->Data_0x70 = 0;
+            r7->pdev = Data_12021c;
+            r7->dll_hdl = sp_0x20;
+            r7->pci_inf = r4;
+            r7->ctrl_retry = 0;
 
             CTRL_StripArgs(/*sp_0x18*/sp_0x20->args[sp_0x1c]);
 
@@ -665,12 +665,12 @@ int CTRL_GetOptions(char* a,
                 /*sp_0x18*/sp_0x20->args[sp_0x1c],
                 sp_0xa4) != 0)
             {
-                if (r7->Data_0x18 != 0)
+                if (r7->pdev != NULL)
                 {
                     pci_detach_device(Data_12021c);
                 }
                 //loc_1043bc
-                CTRL_FreeHCEntry(r7->Data_8);
+                CTRL_FreeHCEntry(r7->cindex);
 
                 return -1;
             }
@@ -690,7 +690,7 @@ int CTRL_GetOptions(char* a,
                     //loc_104470
                 } //for (r4 = 0; r4 < 16; r4++)
                 //0x0010447c                
-                memcpy(&Data_120220[r7->Data_8].bData_4[0], &sp_0x90[0], 16);
+                memcpy(&Data_120220[r7->cindex].bData_4[0], &sp_0x90[0], 16);
                 //->loc_1044f0
             } //if (sp_0x90[0] != 0xff)
             else
@@ -701,9 +701,9 @@ int CTRL_GetOptions(char* a,
                 for (r4 = 0; r4 < 16; r4++)
                 {
                     //loc_1044ac
-                    Data_120220[r7->Data_8].bData_4[r4] = r4;
+                    Data_120220[r7->cindex].bData_4[r4] = r4;
 
-                    pthread_mutex_init(&Data_120220[r7->Data_8].Data_0x14[r4].Data_4, 0);
+                    pthread_mutex_init(&Data_120220[r7->cindex].Data_0x14[r4].Data_4, 0);
                 }
             }
             //loc_1044f0
@@ -729,7 +729,7 @@ void* usb_interrupt_handler(void* a)
     char sp4[50]; //size???
     struct USB_Controller *r4 = a;
 
-    sprintf(&sp4[0], "irq_handler_%d", r4->Data_8);
+    sprintf(&sp4[0], "irq_handler_%d", r4->cindex);
 
     pthread_setname_np(0, &sp4[0]);
 
@@ -1156,16 +1156,16 @@ void stop_controllers(void)
         {
             if (r6->Data_0x24[i] != 0)
             {
-                if (r6->Data_0x24[i]->controller_methods->controller_shutdown != 0)
+                if (r6->Data_0x24[i]->hc_methods->hc_shutdown != 0)
                 {
-                    (r6->Data_0x24[i]->controller_methods->controller_shutdown)();
+                    (r6->Data_0x24[i]->hc_methods->hc_shutdown)(r6->Data_0x24[i]);
 
-                    if (r6->Data_0x24[i]->controller_methods->Data_0x18 != 0)
+                    if (r6->Data_0x24[i]->hc_methods->hc_interrupt != 0)
                     {
-                        InterruptDetach(r6->Data_0x24[i]->Data_0x20);
+                        InterruptDetach(r6->Data_0x24[i]->usb_iid);
                     }
 
-                    pci_detach_device(r6->Data_0x24[i]->Data_0x18);
+                    pci_detach_device(r6->Data_0x24[i]->pdev);
                 }
             }
         }

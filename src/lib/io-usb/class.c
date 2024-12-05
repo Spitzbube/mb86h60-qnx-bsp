@@ -181,13 +181,13 @@ int sub_113ed0(struct USB_Controller* fp_0x18, int fp_0x1c)
 
     int fp_0x10;
 
-    pthread_mutex_lock(&Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_4);
+    pthread_mutex_lock(&Data_120220[fp_0x18->cindex].Data_0x14[fp_0x1c].Data_4);
 
-    fp_0x10 = Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_0 & 1;
+    fp_0x10 = Data_120220[fp_0x18->cindex].Data_0x14[fp_0x1c].Data_0 & 1;
 
-    Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_0 &= ~1;
+    Data_120220[fp_0x18->cindex].Data_0x14[fp_0x1c].Data_0 &= ~1;
 
-    pthread_mutex_unlock(&Data_120220[fp_0x18->Data_8].Data_0x14[fp_0x1c].Data_4);
+    pthread_mutex_unlock(&Data_120220[fp_0x18->cindex].Data_0x14[fp_0x1c].Data_4);
 
     return fp_0x10;
 }
@@ -205,11 +205,11 @@ struct USB_Controller_Inner_0x7c* sub_113914(struct USB_Controller* fp_0x10, int
 
     for (fp8 = 0; fp8 < 20; fp8++)
     {
-        if (fp_0x10->Data_0x78[fp8] != NULL)
+        if (fp_0x10->ArrayUsbDevices[fp8] != NULL)
         {
-            fp_0xc = &fp_0x10->Data_0x7c[fp8];
+            fp_0xc = &fp_0x10->UsbDevices[fp8];
 
-            if ((fp_0xc->Data_0x1c == ((fp_0x14 != 0)? fp_0x10->Data_0x78[fp_0x14 - 1]: NULL)) &&
+            if ((fp_0xc->Data_0x1c == ((fp_0x14 != 0)? fp_0x10->ArrayUsbDevices[fp_0x14 - 1]: NULL)) &&
                 (fp_0xc->Data_0x20 == fp_0x18) &&
                 ((fp_0xc->bData_0xd & 1) != 0))
             {
@@ -248,7 +248,7 @@ int CLASS_ExtractDevice(int fp_0x10, int fp_0x14, int fp_0x18)
     
     fp_0xc = &usb_controllers[fp_0x10];
 
-    if (pthread_mutex_lock(&fp_0xc->Data_0x24) != 0)
+    if (pthread_mutex_lock(&fp_0xc->usb_rwlock) != 0)
     {
         usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, errno %d",
             "CLASS_ExtractDevice", 1009, errno);
@@ -257,7 +257,7 @@ int CLASS_ExtractDevice(int fp_0x10, int fp_0x14, int fp_0x18)
     fp8 = sub_113914(fp_0xc, fp_0x14, fp_0x18);
     if (fp8 == 0)
     {
-        if (pthread_mutex_unlock(&fp_0xc->Data_0x24) != 0)
+        if (pthread_mutex_unlock(&fp_0xc->usb_rwlock) != 0)
         {
             usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, errno %d",
                 "CLASS_ExtractDevice", 1014, errno);
@@ -273,7 +273,7 @@ int CLASS_ExtractDevice(int fp_0x10, int fp_0x14, int fp_0x18)
     fp8->bData_0xd |= 2;
     fp8->bData_0xd &= ~1;
 
-    if (pthread_mutex_unlock(&fp_0xc->Data_0x24) != 0)
+    if (pthread_mutex_unlock(&fp_0xc->usb_rwlock) != 0)
     {
         usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, errno %d",
             "CLASS_ExtractDevice", 1024, errno);
@@ -323,18 +323,18 @@ struct USB_Controller_Inner_0x7c* sub_10afc4(struct USB_Controller* fp_0x10)
     for (fp_0xc = 0; fp_0xc < 20; fp_0xc++)
     {
         //loc_10afe0
-        if (fp_0x10->Data_0x78[fp_0xc] == NULL)
+        if (fp_0x10->ArrayUsbDevices[fp_0xc] == NULL)
         {
             if (fp_0xc > 2)
             {
                 usb_slogf(12, 2, 1, "CLASS_MakeNewDeviceEntry");
             }
             //loc_10b028
-            fp8 = &fp_0x10->Data_0x7c[fp_0xc];
+            fp8 = &fp_0x10->UsbDevices[fp_0xc];
 
             memset(fp8, 0, sizeof(struct USB_Controller_Inner_0x7c));
 
-            fp_0x10->Data_0x78[fp_0xc] = fp8;
+            fp_0x10->ArrayUsbDevices[fp_0xc] = fp8;
 
             fp8->new_device_address = fp_0xc + 1;
             fp8->Data_0x40.Data_0x14 = 0;
@@ -393,9 +393,9 @@ struct USB_Controller_Inner_0x7c* sub_10d208(struct USB_Controller* fp_0x10, int
     }
     //loc_10d260
     fp8->bData_0xc = fp_0x1c;
-    fp8->Data_0x1c = (fp_0x14 == 0)? NULL: fp_0x10->Data_0x78[fp_0x14 - 1];
+    fp8->Data_0x1c = (fp_0x14 == 0)? NULL: fp_0x10->ArrayUsbDevices[fp_0x14 - 1];
     fp8->Data_0x20 = fp_0x18;
-    fp8->Data_0x88 = fp_0x10->Data_8;
+    fp8->Data_0x88 = fp_0x10->cindex;
     fp8->Data_0x40.endpoint_descriptor.bmAttributes = 0;
     fp8->Data_0x40.endpoint_descriptor.wMaxPacketSize = 8;
 
@@ -418,7 +418,7 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
     {
         case 0:
             //loc_112b50
-            fp8 = (fp_0x10->ctrl_pipe_methods->ctrl_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
+            fp8 = (fp_0x10->ctrl_pipe_methods->hc_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
             break;
 
 #if 0
@@ -432,7 +432,7 @@ int USB_EnableEndpoint(struct USB_Controller* fp_0x10,
 
         case 2:
             //loc_112bac
-            fp8 = (fp_0x10->bulk_pipe_methods->bulk_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
+            fp8 = (fp_0x10->bulk_pipe_methods->hc_endpoint_enable)(fp_0x10, fp_0x14, fp_0x18);
             break;
 
 #if 0
@@ -580,7 +580,7 @@ struct USB_Controller_Inner_0x7c* USB_CheckDevice(uint32_t fp_0x18, uint32_t fp_
         for (i = 0; i < 20; i++)
         {
             //loc_110ed8
-            fp_0x10 = fp_0xc->Data_0x78[i];
+            fp_0x10 = fp_0xc->ArrayUsbDevices[i];
             if ((fp_0x10 != NULL) && (fp_0x10->device_address == 0))
             {
                 //0x00110f14
@@ -592,7 +592,7 @@ struct USB_Controller_Inner_0x7c* USB_CheckDevice(uint32_t fp_0x18, uint32_t fp_
         return 0;
     }
     //loc_110f3c
-    fp_0x10 = fp_0xc->Data_0x78[fp_0x1c - 1];
+    fp_0x10 = fp_0xc->ArrayUsbDevices[fp_0x1c - 1];
     if (fp_0x10 == NULL)
     {
         return NULL;
@@ -647,7 +647,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
         return 12;
     }
     //loc_111b3c
-    fp_0x34 = usb_controllers[fp_0x40->Data_0x18].Data_0x70 + 1;
+    fp_0x34 = usb_controllers[fp_0x40->Data_0x18].ctrl_retry + 1;
     fp_0x18 = fp_0xc->capabilities & 0x800;
 
 #if 1
@@ -690,7 +690,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
             fp_0x14 = 0x80000000;
         }
         //loc_111c0c
-        fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer)(fp_0xc, 
+        fp_0x3c = (fp_0xc->ctrl_pipe_methods->hc_transfer_data)(fp_0xc, 
             fp_0x40, fp_0x44, fp_0x10, 8, fp_0x14 | 1);
 
         if ((fp_0x3c == 0) && (fp_0x40->dwLength != 0))
@@ -702,14 +702,14 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
             while ((fp_0x1c < fp_0x2c) && (fp_0x30 == 0) && (fp_0x3c == 0))
             {
                 //loc_111c80
-//                uint32_t r3 = ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->wData_4)/*r3*/;
-                fp_0x28 = (((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/ > (fp_0x2c - fp_0x1c)/*r2*/)? (fp_0x2c - fp_0x1c)/*r2*/: 
-                    ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/;
+//                uint32_t r3 = ((fp_0xc->MaxTransferSize != 0)? fp_0xc->MaxTransferSize: fp_0x44->wData_4)/*r3*/;
+                fp_0x28 = (((fp_0xc->MaxTransferSize != 0)? fp_0xc->MaxTransferSize: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/ > (fp_0x2c - fp_0x1c)/*r2*/)? (fp_0x2c - fp_0x1c)/*r2*/: 
+                    ((fp_0xc->MaxTransferSize != 0)? fp_0xc->MaxTransferSize: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/;
 
                 fp_0x40->dwLength = fp_0x28;
                 fp_0x24 = fp_0x40->Data_0x34;
 
-                fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer/*ip*/)(fp_0xc,
+                fp_0x3c = (fp_0xc->ctrl_pipe_methods->hc_transfer_data/*ip*/)(fp_0xc,
                     fp_0x40, fp_0x44, 
                     ((char*)fp_0x10 + fp_0x1c)/*lr*/,
                     fp_0x28, 
@@ -728,11 +728,11 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
                     //loc_111d60
 #if 0
                     int r2 = fp_0x40->Data_0x34;
-                    int r3 = fp_0xc->Data_0x60;
+                    int r3 = fp_0xc->MaxTransferSize;
 
                     if (r3 != 0)
                     {
-                        r3 = fp_0xc->Data_0x60;
+                        r3 = fp_0xc->MaxTransferSize;
                         //->loc_111d8c
                     }
                     else
@@ -756,7 +756,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
                     fp_0x30 = r3;
 #else
                     fp_0x30 = (((fp_0x40->Data_0x34/*r2*/ % 
-                        ((fp_0xc->Data_0x60 != 0)? fp_0xc->Data_0x60: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/) != 0) ||
+                        ((fp_0xc->MaxTransferSize != 0)? fp_0xc->MaxTransferSize: fp_0x44->endpoint_descriptor.wMaxPacketSize)/*r3*/) != 0) ||
                         (fp_0x40->Data_0x34 == fp_0x24))? 1: 0;
 #endif
                     fp_0x1c = fp_0x40->Data_0x34;
@@ -771,7 +771,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
             //0x00111e08
             fp_0x40->dwLength = 0;
 
-            fp_0x3c = (fp_0xc->ctrl_pipe_methods->ctrl_transfer)(fp_0xc,
+            fp_0x3c = (fp_0xc->ctrl_pipe_methods->hc_transfer_data)(fp_0xc,
                 fp_0x40, fp_0x44, 0, 0,
                 (fp_0x40->direction == 0x80)? 0x8000000a: 0x80000006);
         }
@@ -779,7 +779,7 @@ int USB_ControlTransfer(struct Struct_10bab4* fp_0x40, struct Struct_112b08* fp_
         if (fp_0x3c != 0)
         {
             //0x00111e70
-            (fp_0xc->ctrl_pipe_methods->ctrl_transfer_abort)(fp_0xc, fp_0x40, fp_0x44);
+            (fp_0xc->ctrl_pipe_methods->hc_transfer_abort)(fp_0xc, fp_0x40, fp_0x44);
         }
         //loc_111e8c
         if ((fp_0x3c != 0) && (fp_0xc->capabilities & 0x40))
@@ -1536,7 +1536,7 @@ struct UsbConfiguration* USB_GetConfiguration(struct USB_Controller* fp_0x10,
         return NULL;
     }
     //loc_1112b0
-    fp_0xc = fp_0x10->Data_0x78[fp_0x14 - 1];
+    fp_0xc = fp_0x10->ArrayUsbDevices[fp_0x14 - 1];
     if (fp_0xc == NULL)
     {
         return NULL;
@@ -1657,8 +1657,8 @@ struct UsbEndpoint* USB_DisableDeviceEndpoint(struct USB_Controller* fp8,
         {
             case 0:
                 //loc_1128c4
-                (fp8->ctrl_pipe_methods->ctrl_transfer_abort)(fp8, NULL, fp_0xc);
-                (fp8->ctrl_pipe_methods->ctrl_endpoint_disable)(fp8, fp_0xc);
+                (fp8->ctrl_pipe_methods->hc_transfer_abort)(fp8, NULL, fp_0xc);
+                (fp8->ctrl_pipe_methods->hc_endpoint_disable)(fp8, fp_0xc);
                 break;
 
 #if 0 //TODO!!!
@@ -2219,7 +2219,7 @@ int CLASS_EnumerateDevice(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
     }
     //loc_10d730
     usb_slogf(12, 2, 1, "CLASS_EnumerateDevice: bus %d dno %d, vid %x",
-        fp8->Data_8, 
+        fp8->cindex, 
         fp_0x18->device_address, 
         fp_0x18->device_descriptor.idVendor);
 
@@ -2240,7 +2240,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
 
     fp8 = &usb_controllers[fp_0x18];
 
-    if ((fp8->controller_methods->check_device_connected)(fp8, fp_0x1c) == 0)
+    if ((fp8->hc_methods->hc_check_device_connected)(fp8, fp_0x1c) == 0)
     {
         //0x001109fc
         delay(100);
@@ -2250,18 +2250,18 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
         while (fp_0xc--)
         {
             //->loc_110a18
-            fp_0x10 = (fp8->controller_methods->set_port_feature)(fp8, fp_0x1c, 2);
+            fp_0x10 = (fp8->hc_methods->hc_set_port_feature)(fp8, fp_0x1c, 2);
             if (fp_0x10 != 0x13)
             {
                 delay(100);
 
                 fp_0x10 = CLASS_EnumerateDevice(fp_0x18, 0, fp_0x1c, 
-                    (fp8->controller_methods->get_root_device_speed)(fp8, fp_0x1c));
+                    (fp8->hc_methods->hc_get_root_device_speed)(fp8, fp_0x1c));
 
                 if (fp_0x10 != 0)
                 {
                     //0x00110a90
-                    if ((fp8->controller_methods->check_device_connected)(fp8, fp_0x1c) != 0)
+                    if ((fp8->hc_methods->hc_check_device_connected)(fp8, fp_0x1c) != 0)
                     {
                         //0x00110ab4
                         fp_0x10 = 0x13;
@@ -2293,7 +2293,7 @@ int sub_1109a0(int fp_0x18, int fp_0x1c)
     //loc_110b10
     if (fp_0x10 != 0)
     {
-        (fp8->controller_methods->clear_port_feature)(fp8, fp_0x1c, 1);
+        (fp8->hc_methods->hc_clear_port_feature)(fp8, fp_0x1c, 1);
     }
     //loc_110b38
     return fp_0x10;
@@ -2317,7 +2317,7 @@ void sub_110b74(int fp_0x28)
     fp_0x14 = &Data_120220[fp_0x28].bData_4[0];
     fp_0x10 = &usb_controllers[fp_0x28];
 
-    (fp_0x10->controller_methods->check_port_status)(fp_0x10, &fp_0x24);
+    (fp_0x10->hc_methods->hc_check_port_status)(fp_0x10, &fp_0x24);
 
     for (fp_0x18 = 0; fp_0x18 < 16; fp_0x18++)
     {

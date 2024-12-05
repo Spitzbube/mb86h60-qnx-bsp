@@ -21,8 +21,8 @@
 
 struct Mentor_Controller;
 #define USB_CONTROLLER_PRIV_T struct Mentor_Controller
-#include "my-io-usb.h"
 #include <sys/io-usb.h>
+#include "my-io-usb.h"
 
 
 struct Struct_0xa4;
@@ -36,16 +36,18 @@ struct Struct_0xa0
 {
     volatile uint32_t Data_0; //0
     volatile int Data_4; //4
-    int fill_8; //8
+    int Data_8; //8
     void* Data_0xc; //0xc
-    int fill_0x10; //0x10
+    int Data_0x10; //0x10
     volatile uint32_t Data_0x14; //0x14
     int fill_0x18[4]; //0x18
     int status; //0x28
     struct Struct_0x94 Data_0x2c; //0x2c
     struct Struct_0xa4* Data_0x30; //0x30
     struct Struct_10bab4* Data_0x34; //0x34
-    int fill_0x38[3]; //0x38
+    void (*Data_0x38)(); //0x38
+    void (*Data_0x3c)(); //0x3c
+    int fill_0x40; //0x40
     //0x44
 };
 
@@ -69,7 +71,7 @@ struct Struct_0xa4
     int Data_0x24; //0x24
     int Data_0x28; //0x28
     int Data_0x2c; //0x2c
-    int fill_0x30; //0x30
+    struct fp_0x34_Inner_0x18_Inner_0x10* Data_0x30; //0x30
     struct Struct_112b08* Data_0x34; //0x34
     int Data_0x38; //0x38
     int fill_0x3c; //0x3c
@@ -96,8 +98,8 @@ struct Mentor_Controller_Inner_0x8c
     {
         int fill_0[2]; //8
         int Data_8; //8
-        int Data_0xc; //12 = 0xc
-        struct
+        uint32_t Data_0xc; //12 = 0xc
+        struct fp_0x34_Inner_0x18_Inner_0x10
         {
             int Data_0; //0
             int Data_4; //4
@@ -117,7 +119,7 @@ struct Mentor_Controller
     pthread_mutex_t Data_4; //4
     pthread_mutex_t Data_0xc; //12
     void* Data_0x14; //0x14
-    int Data_0x18; //0x18
+    uint32_t Data_0x18; //0x18
     int fill_ox1c[3]; //0x1c
     int Data_0x28; //0x28
     int Data_0x2c; //0x2c
@@ -154,9 +156,10 @@ struct Mentor_Controller
     struct Struct_0xa4* Data_0xbc; //0xbc
     struct Struct_0xa4* Data_0xc0; //0xc0
     struct Struct_0xa0** Data_0xc4; //0xc4
-    void* Data_0xc8; //0xc8
+    struct Struct_0xa4** Data_0xc8; //0xc8
     int fill_0xcc; //0xcc
     struct intrspin Data_0xd0; //0xd0
+    uint16_t wData_0xd4; //0xd4
     struct Struct_0xe4* Data_0xe4; //0xe4
     //0xe8
 };
@@ -434,14 +437,536 @@ void MENTOR_ProcessControlDone(struct Mentor_Controller* r5)
 }
 
 
+/* 0x00004220 - todo */
+struct fp_0x34_Inner_0x18_Inner_0x10* mentor_fifo_alloc(struct Mentor_Controller* r5,
+        int fp_0x2c, 
+        struct Struct_0xa4* c,
+        int fp_0x30)
+{
+#if 0
+    fprintf(stderr, "mentor_fifo_alloc: TODO!!!\n");
+#endif
+
+    struct fp_0x34_Inner_0x18_Inner_0x10* r0 = NULL;
+    int r8;
+    uint32_t r3;
+    struct Mentor_Controller_Inner_0x8c* r4 = r5->Data_0x8c;
+    int r6 = c->wData_0x18;
+    //r7 = 0x24;
+    //sb = 0x20;
+    //->loc_4364
+    while ((r8/*r0*/ = find_block_list(r4, r6)) != -1)
+    {
+        //loc_4250
+#if 1
+        fprintf(stderr, "mentor_fifo_alloc: r6=%d, fifo_size=%d\n", r6, r8);
+#endif
+        uint32_t sl = r4->Data_0x18[r8].Data_0xc;
+        for (r3 = 0; r3 < r4->Data_0x18[r8].Data_8; r3++)
+        {
+#if 1
+            fprintf(stderr, "mentor_fifo_alloc: r3=%d, sl=0x%04x\n", r3, sl);
+#endif
+            //if (sl & (1 << r3))
+            if (sl & 1)
+            {
+                r4->Data_0x18[r8].Data_0xc = sl & ~(1 << r3);
+
+#if 1
+                fprintf(stderr, "mentor_fifo_alloc: fp_0x30=%d, ep=%d, fifo_add=%d\n", 
+                    fp_0x30, fp_0x2c, r4->Data_0x18[r8].Data_0x10[r3].Data_4);
+#endif
+
+#ifdef MB86H60
+                MGC_SelectEnd(r5, fp_0x2c & 0xff);
+#else
+                ((volatile uint8_t*)(r5->Data_0x14))[0x0e/*INDEX*/] = fp_0x2c & 0xff;
+#endif
+
+                if (fp_0x30 != 0)
+                {
+                    //0x000042c0
+#ifdef MB86H60
+                    MGC_Write8(r5, MGC_O_HDRC_RXFIFOSZ, r8/*r0*/ & 0xff);
+                    MGC_Write16(r5, MGC_O_HDRC_RXFIFOADD, 
+                        (r4->Data_0x18[r8].Data_0x10[r3].Data_4 << 13) >> 16);
+#else
+                    ((volatile uint8_t*)(r5->Data_0x14))[0x63/*RXFIFOSZ*/] = r8/*r0*/ & 0xff;
+                    ((volatile uint16_t*)(r5->Data_0x14))[0x66/2/*RXFIFOADD*/] = 
+                        (r4->Data_0x18[r8].Data_0x10[r3].Data_4 << 13) >> 16;
+#endif
+                    //->loc_4334
+                }
+                else
+                {
+                    //loc_42fc
+#ifdef MB86H60
+                    MGC_Write8(r5, MGC_O_HDRC_TXFIFOSZ, r8/*r0*/ & 0xff);
+                    MGC_Write16(r5, MGC_O_HDRC_TXFIFOADD, 
+                        (r4->Data_0x18[r8].Data_0x10[r3].Data_4 << 13) >> 16);
+#else
+                    ((volatile uint8_t*)(r5->Data_0x14))[0x62/*TXFIFOSZ*/] = r8/*r0*/ & 0xff;
+                    ((volatile uint16_t*)(r5->Data_0x14))[0x64/2/*TXFIFOADD*/] = 
+                        (r4->Data_0x18[r8].Data_0x10[r3].Data_4 << 13) >> 16;
+#endif
+                }
+                //loc_4334
+                r0 = &r4->Data_0x18[r8].Data_0x10[r3];
+                //->loc_437c
+                return r0;
+            }
+            
+            sl >>= 1;
+        } //for (r3 = 0; r3 < r4->Data_0x18[r8].Data_8; r3++)
+        //loc_4360
+        r6 *= 2;
+    } //while ((r8/*r0*/ = find_block_list(r4, r6)) != -1)
+    //0x00004378
+    return r0;
+}
+
+
+/* 0x00008284 - todo */
+int MENTOR_AllocEtd(struct Mentor_Controller* r5, 
+        struct Struct_0xa4* r6, 
+        int r8)
+{
+#if 1
+    fprintf(stderr, "MENTOR_AllocEtd: TODO!!!\n");
+#endif
+
+    int r4 = r6->Data_0x28;
+    if ((r4 > 0) && (r4 < r5->Data_0x18))
+    {
+        //->loc_84f0
+        return r4;
+    }
+    //loc_82b4
+    for (r4 = 1; (r4 < r5->Data_0x18) && (r5->Data_0xc8[r4] != NULL); r4++)
+    {
+    }
+
+    if (r4 >= r5->Data_0x18)
+    {
+        //loc_8304
+        int r3 = r5->wData_0xd4;
+        if (r3 != 0)
+        {
+            //0x00008310
+            for (r4 = 1; (r4 < r5->Data_0x18) && 
+                (r5->Data_0xc8[r4]->Data_0x10 & 0x01); r4++)
+            {
+                //loc_832c
+            }
+
+            if (r4 >= r5->Data_0x18)
+            {
+                //->loc_84ec
+                return -1;
+            }
+            //loc_8344
+            if (MENTOR_FreeEtd(r5, r5->Data_0xc8[r4]) < 0)
+            {
+                //0x000083f8
+                mentor_slogf(r5, 12, 2, 1, 
+                    "%s - %s: Trying to relinquish an unreserved ETD failed",
+                    "devu-dm816x-mg.so", "MENTOR_AllocEtd");
+            }
+            //loc_8390
+            r5->wData_0xd4 = 0;
+            //->loc_8464
+        }
+        else
+        {
+            //loc_83b8
+            for (r4 = 1; (r4 < r5->Data_0x18) && 
+                (r5->Data_0xc8[r4]->Data_0x10 & 0x01); r4++)
+            {
+            }
+
+            if (r4 >= r5->Data_0x18)
+            {
+                //->loc_84ec
+                return -1;
+            }
+            //loc_83e8
+            if (MENTOR_FreeEtd(r5, r5->Data_0xc8[r4]) < 0)
+            {
+                //0x000083f8
+                mentor_slogf(r5, 12, 2, 1, 
+                    "%s - %s: Trying to relinquish an unreserved ETD failed",
+                    "devu-dm816x-mg.so", "MENTOR_AllocEtd");
+            }
+            //loc_8434
+            r5->wData_0xd4 = 1;
+            //->loc_8464
+        }
+    }
+    //loc_8464
+    r6->Data_0x30 = mentor_fifo_alloc(r5, r4, r6, r8);
+    if (r6->Data_0x30 == 0)
+    {
+        //0x00008484
+        mentor_slogf(r5, 12, 2, 1, 
+            "%s - %s: Allocate FIFO failed, bEnd=%d, maxPacketSize=%d",
+            "devu-dm816x-mg.so", "MENTOR_AllocEtd",
+            r4, r6->wData_0x18);
+
+        r4 = -1;
+        //->loc_84f0
+    }
+    else
+    {
+        //loc_84d4
+        r6->Data_0x28 = r4;
+        r6->bData_0x1f = 0;
+        r5->Data_0xc8[r4] = r6;
+    }
+    //loc_84f0
+    return r4;
+}
+
+
+int MENTOR_EtdConfigureTX(struct Mentor_Controller* a, struct Struct_0xa4* b, int c)
+{
+#if 1
+    fprintf(stderr, "MENTOR_EtdConfigureTX: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 0x00004898 - todo */
+void MENTOR_EtdConfigureRX(struct Mentor_Controller* a, 
+    struct Struct_0xa4* b, int c)
+{
+#if 1
+    fprintf(stderr, "MENTOR_EtdConfigureRX: c=%d, addr=%d\n", 
+        c, (b->Data_0x14 >> 4) & 0x7f);
+#endif
+
+    int r4 = b->bData_0x1a;
+    int r3 = c * 16;
+
+#ifdef MB86H60
+    MGC_Write16(a, 0x102 + r3, 0);
+#else
+    ((volatile uint16_t*)(a->Data_0x14))[0x102/2 + r3] = 0;
+#endif
+
+    int r2 = c * 8;
+#ifdef MB86H60
+    MGC_Write16(a, /*0x84 + r2*/MGC_BUSCTL_OFFSET(c, MGC_O_HDRC_RXFUNCADDR), 
+        (b->Data_0x14 >> 4) & 0x7f);
+#else
+    ((volatile uint16_t*)(a->Data_0x14))[0x84/2 + r2] = (b->Data_0x14 >> 4) & 0x7f;
+#endif
+
+    if (b->bData_0x1c != 0x40)
+    {
+        //0x000048e8
+#ifdef MB86H60
+        MGC_Write8(a, /*0x86 + r2*/MGC_BUSCTL_OFFSET(c, MGC_O_HDRC_RXHUBADDR), 
+            b->bData_0x1d);
+        MGC_Write8(a, /*0x87 + r2*/MGC_BUSCTL_OFFSET(c, MGC_O_HDRC_RXHUBPORT), 
+            b->bData_0x1e);
+#else
+        ((volatile uint8_t*)(a->Data_0x14))[0x86 + r2] = b->bData_0x1d;
+        ((volatile uint8_t*)(a->Data_0x14))[0x87 + r2] = b->bData_0x1e;
+#endif
+    }
+    //loc_4910: Write RXTYPE
+#if 1
+    fprintf(stderr, "MENTOR_EtdConfigureRX: speed=0x%0x, protocol=%d, ep=%d\n", 
+        b->bData_0x1c, r4, b->Data_0x14 & 0x0f);
+#endif
+#ifdef MB86H60
+    MGC_Write8(a, 0x10c + r3, b->bData_0x1c | (r4 << 4) | (b->Data_0x14 & 0x0f));
+#else
+    ((volatile uint8_t*)(a->Data_0x14))[0x10c + r3] = 
+        b->bData_0x1c | (r4 << 4) | (b->Data_0x14 & 0x0f);
+#endif
+
+#ifdef MB86H60
+    int r2_ = MGC_Read16(a, 0x106 + r3);
+#else
+    int r2_ = ((volatile uint16_t*)(a->Data_0x14))[0x106/2 + r3];
+#endif
+
+    if (r4 & 0x01)
+    {
+#ifdef MB86H60
+        MGC_Write8(a, 0x10d + r3, b->Data_0x24); //RXINTERVAL
+#else
+        ((volatile uint8_t*)(a->Data_0x14))[0x10d + r3] = b->Data_0x24;
+#endif
+    }
+    else
+    {
+#ifdef MB86H60
+        MGC_Write8(a, 0x10b + r3, 0); //TXINTERVAL
+#else
+        ((volatile uint8_t*)(a->Data_0x14))[0x10b + r3] = 0;
+#endif
+    }
+
+    if (b->Data_0x20 != 0)
+    {
+        //0x0000497c
+#ifdef MB86H60
+        MGC_Write16(a, 0x106 + r3, 0x610);
+#else
+        ((volatile uint16_t*)(a->Data_0x14))[0x106/2 + r3] = 0x610;
+#endif
+        //->loc_49b0
+    }
+    else
+    {
+        //loc_4998
+#ifdef MB86H60
+        MGC_Write16(a, 0x106 + r3, 0x90);
+#else
+        ((volatile uint16_t*)(a->Data_0x14))[0x106/2 + r3] = 0x90;
+#endif
+    }
+    //loc_49b0
+#ifdef MB86H60
+    MGC_Write16(a, 0x106 + r3, 0x10);
+#else
+    ((volatile uint16_t*)(a->Data_0x14))[0x106/2 + r3] = 0x10;
+#endif
+}
+
+
+/* 0x00006cc0 - todo */
+void MENTOR_StartEtd(struct Mentor_Controller* r4, 
+    struct Struct_0xa0* r6)
+{
+#if 1
+    fprintf(stderr, "MENTOR_StartEtd: TODO!!!\n");
+#endif
+
+    int fp_0x30;
+    //fp_0x2c = _GLOBAL_OFFSET_TABLE_;
+
+    struct Struct_0xa4* r8 = r6->Data_0x30;
+
+#if 1
+    fprintf(stderr, "MENTOR_StartEtd: r8=%p, r8->Data_0x28=%d\n",
+        r8, r8->Data_0x28);
+#endif
+
+    if (r8->Data_0x28 >= 0)
+    {
+        //0x00006cf4
+        r8->bData_0x1f = 0;
+
+        fp_0x30 = r8->Data_0x28;
+        r4->Data_0xc4[fp_0x30] = r6;
+        r6->Data_4 |= 0x100;
+
+        int r7 = fp_0x30 * 16;
+
+        uint16_t wCsr;
+        int retry/*r5*/ = 1000;
+#ifdef MB86H60
+        while (((wCsr = MGC_Read16(r4, 0x102 + r7)) & 0x03) && retry--)
+#else
+        while (((wCsr = ((volatile uint16_t*)r4->Data_0x14)[0x102/2 + r7]) & 0x03) && retry--)
+#endif
+        {
+            //loc_6d68
+#if 1
+            fprintf(stderr, "MENTOR_StartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
+#endif
+            nanospin_ns(1000);
+        }
+
+#if 1
+        fprintf(stderr, "MENTOR_StartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
+#endif
+
+        if (retry <= 0)
+        {
+            //loc_6d9c
+            mentor_slogf(r4, 12, 2, 1, 
+                " %s : MENTOR_StartEtd - %s: TX FIFO still not Empty (%x)",
+                "devu-dm816x-mg.so", "MENTOR_StartEtd", wCsr);
+        }
+        //loc_6de0
+        int r5 = r6->Data_0 - r6->Data_0x14;
+
+#if 1
+        fprintf(stderr, "MENTOR_StartEtd: r5=%d, r6->Data_4=0x%x\n",
+            r5, r6->Data_4);
+#endif
+
+        if ((r6->Data_4 & 0x400) &&
+            (r4->Data_0x50 & 0x200) &&
+            (r5 > r8->wData_0x18) &&
+            ((r8->wData_0x18 & 0x3f) == 0) &&
+            (r8->bData_0x1a == 2))
+        {
+            //0x00006e24
+            r6->Data_0x10 = r5;
+            r6->Data_4 |= 0x800;
+            //->loc_6e58
+        }
+        else
+        {
+            //loc_6e38
+            r6->Data_4 &= ~0x800;
+            r6->Data_0x10 = (r5 > r8->Data_0x30->Data_0)?
+                r8->Data_0x30->Data_0: r5;
+        }
+        //loc_6e58
+        if (r6->Data_4 & 0x04)
+        {
+            //0x00006e64
+#ifdef MB86H60
+            int sb = MGC_Read16(r4, 0x106 + r7);
+            fprintf(stderr, "MENTOR_StartEtd: 0x106 -> 0x%x\n", sb);
+#else
+            int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7])
+#endif
+
+            if ((r8->bData_0x1a == 1) || 
+                (r8->bData_0x1a == 3))
+            {
+                sb |= (1 << 12); //0x1000; /* PID Error ?*/
+            }
+
+            if (r6->Data_4 & 0x800)
+            {
+                //0x00006e94
+#ifdef MB86H60
+                MGC_Write16(r4, 0x104 + r7, r8->wData_0x18);
+                MGC_Write16(r4, 0x106 + r7, sb & 0x2792);
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = r8->wData_0x18;
+                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sb & 0x2792;
+#endif
+
+                if (r6->Data_4 & 0x400)
+                {
+                    //0x00006ec8
+#if 1
+                    fprintf(stderr, "MENTOR_StartEtd: 0x00006ec8: TODO!!!\n");
+#endif
+                    //TODO!!!
+                }
+                //loc_6f00
+#ifdef MB86H60
+                MGC_Write16(r4, 0x106 + r7, 
+                    MGC_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = 
+                    ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] | 0x2040 | 0x2d;
+#endif
+                //->loc_71bc
+            } //if (r6->Data_4 & 0x800)
+            else
+            {
+                //loc_6f24
+                int fp_0x34;
+                int fp_0x2c;
+
+                fp_0x34 = fp_0x2c = r8->wData_0x18;
+                int r0 = r6->Data_0x10 / r8->wData_0x18;
+                int r3;
+                if ((r0 - 1) <= 0)
+                {
+                    r3 = 0;
+                    //->loc_6f58
+                }
+                else
+                {
+                    r3 = (r6->Data_0x10 / fp_0x34) - 1;
+                }
+                //loc_6f58: write RXMAXP
+#ifdef MB86H60
+                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n",
+                    fp_0x2c | (r3 << 11));
+                MGC_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = fp_0x2c | (r3 << 11);
+#endif
+
+                int sl;
+                if ((r6->Data_4 & 0x400) == 0)
+                {
+                    sl = sb & 0x9fff;
+                    //->loc_6fc8
+                }
+                else
+                {
+                    //0x00006f84
+                    sl = sb & 0x2792;
+                    sl |= 0x6000;
+
+#if 1
+                    fprintf(stderr, "MENTOR_StartEtd: 0x00006f84: TODO!!!\n");
+#endif
+                    //TODO!!!
+                }
+                //loc_6fc8: write RxCSR
+#ifdef MB86H60
+                fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n",
+                    sl | 0x6d);
+                MGC_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
+                    //Clear: RxStall, DataError/NAK Timeout, Error, RxPktRdy
+                    //Set: ReqPkt
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sl | 0x6d;
+#endif
+            }
+            //->loc_71bc
+        } //if (r6->Data_4 & 0x04)
+        else
+        {
+            //loc_6fe4
+
+#if 1
+            fprintf(stderr, "MENTOR_StartEtd: loc_6fe4: TODO!!!\n");
+#endif
+
+            //TODO!!!
+        }
+    }
+    //loc_71bc
+}
+
+
 
 void MENTOR_ProcessETDDone(struct Mentor_Controller* a, uint16_t b)
 {
-#if 0
-    fprintf(stderr, "MENTOR_ProcessETDDone: TODO\n");
+#if 1
+    fprintf(stderr, "MENTOR_ProcessETDDone: TODO!!!\n");
 #endif
 
 }
+
+
+int mentor_alloc_dma_sched(struct Mentor_Controller* a, struct Struct_0xa4* b)
+{
+#if 1
+    fprintf(stderr, "mentor_alloc_dma_sched: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+int mentor_claim_dma_channel(struct Mentor_Controller* a, struct Struct_0xa0* b, int c, int* d)
+{
+#if 1
+    fprintf(stderr, "mentor_claim_dma_channel: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
 
 
 /* 0x00002a80 - complete */
@@ -725,7 +1250,7 @@ static void* mentor_interrupt_thread(void* a)
     fprintf(stderr, "mentor_interrupt_thread: TODO\n");
 
     struct USB_Controller* r7 = a;
-    struct Mentor_Controller* r4 = r7->Data_0x84;
+    struct Mentor_Controller* r4 = r7->hc_data;
 
     if (ThreadCtl(1, 0) == -1)
     {
@@ -1202,7 +1727,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
     struct USB_Controller* r4 = r6->Data_0;
 
     r6->Data_0x38 = 0x400;
-    r6->Data_0x18 = 0x10;
+    r6->Data_0x18 = 16;
     r6->Data_0x50 |= 0x200;
     r6->Data_0xe4 = r5 = calloc(1, 0x20);
 
@@ -1402,12 +1927,12 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     struct Mentor_Controller* r4;
 
 #ifdef MB86H60
-    r7->Data_0 = "mb86h60";
+    r7->cname = "mb86h60";
 #else
-    r7->Data_0 = "dm816x";
+    r7->cname = "dm816x";
 #endif
 
-    if ((r7->Data_0x84 = r4 = calloc(1, 0xe8)) == NULL)
+    if ((r7->hc_data = r4 = calloc(1, 0xe8)) == NULL)
     {
         return 12;
     }
@@ -1487,7 +2012,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
         //loc_6448
     }
     //loc_6448
-    r7->Data_0x60 = 0x8000;
+    r7->MaxTransferSize = 0x8000;
 
     pthread_mutexattr_init(&fp_0x48);
     pthread_mutexattr_setrecursive(&fp_0x48, 2);
@@ -1526,7 +2051,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
         return errno;
     }
     //loc_6584
-    struct Mentor_Controller* sb = r7->Data_0x84;
+    struct Mentor_Controller* sb = r7->hc_data;
 
     sb->Data_0x40 = ChannelCreate(0x08);
     if (sb->Data_0x40 < 0)
@@ -1569,13 +2094,13 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
             else
             {
                 //loc_6700
-                struct Mentor_Controller* r2 = r7->Data_0x84;
+                struct Mentor_Controller* r2 = r7->hc_data;
 
-                r7->Data_0x5c = 1000;
+                r7->AvailableBandwidth = 1000;
                 r7->capabilities = 0x4000064f;
-                r7->Data_0x60 = 0x8000;
-                r7->Data_0x64 = 0x8000;
-                r7->Data_0x68 = 3;
+                r7->MaxTransferSize = 0x8000;
+                r7->MaxUnalignedTransferSize = 0x8000;
+                r7->buff_alignment_mask = 3;
 
                 if ((r2->Data_0x50 & 0x01) == 0)
                 {
@@ -1748,7 +2273,7 @@ void mentor_board_specific_reset()
 /* 0x00006b1c - todo */
 int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 {
-    struct Mentor_Controller* r4 = a->Data_0x84;
+    struct Mentor_Controller* r4 = a->hc_data;
 
 #if 0
     fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x\n", r4->Data_0x6c);
@@ -1840,7 +2365,7 @@ int mentor_check_device_connected(struct USB_Controller* a, int b)
     fprintf(stderr, "mentor_check_device_connected: b = %d, TODO!!!\n", b);
 #endif
 
-    return ((a->Data_0x84->Data_0x6c & 0x02) == 0)? -1: 0;
+    return ((a->hc_data->Data_0x6c & 0x02) == 0)? -1: 0;
 }
 
 
@@ -1851,7 +2376,7 @@ int mentor_clear_port_feature(struct USB_Controller* a, int b, int c)
     fprintf(stderr, "mentor_clear_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
 #endif
 
-    struct Mentor_Controller* ctrl = a->Data_0x84;
+    struct Mentor_Controller* ctrl = a->hc_data;
 
     switch (c)
     {
@@ -1890,7 +2415,7 @@ int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
     fprintf(stderr, "mentor_set_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
 #endif
 
-    struct Mentor_Controller* ctrl = a->Data_0x84;
+    struct Mentor_Controller* ctrl = a->hc_data;
 
     switch (c)
     {
@@ -1956,7 +2481,7 @@ int mentor_get_root_device_speed(struct USB_Controller* a, int b)
     fprintf(stderr, "mentor_get_root_device_speed: b=%d, TODO!!!\n", b);
 #endif
 
-    struct Mentor_Controller* ctrl = a->Data_0x84;
+    struct Mentor_Controller* ctrl = a->hc_data;
 
     delay(200);
 
@@ -2146,7 +2671,7 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
         a, b, c);
 #endif
 
-    struct Mentor_Controller* r5 = a->Data_0x84;
+    struct Mentor_Controller* r5 = a->hc_data;
     struct Struct_0xa4* r7 = c->Data_0xc;
 
 #if 1
@@ -2338,7 +2863,7 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
     fprintf(stderr, "MENTOR_WaitEndControl: TODO!!!\n");
 #endif
 
-    struct Mentor_Controller* r8 = fp_0x30->Data_0x84;
+    struct Mentor_Controller* r8 = fp_0x30->hc_data;
 
 #if 0
     uint16_t wData;
@@ -2399,6 +2924,207 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
 }
 
 
+void MENTOR_ProcessInComplete()
+{
+#if 1
+    fprintf(stderr, "MENTOR_ProcessInComplete: TODO!!!\n");
+#endif
+
+}
+
+
+/* 0x00008e20 - todo */
+int mentor_bulk_transfer(struct USB_Controller* ctrl, 
+    struct Struct_10bab4* r8, 
+    struct Struct_112b08* r2, 
+    void* fp_0x34/*fp52*/, 
+    int e/*fp4*/, 
+    int sb/*arg4*/)
+{
+#if 1
+    fprintf(stderr, "mentor_bulk_transfer: TODO!!!\n");
+#endif
+
+    struct Mentor_Controller* r6 = ctrl->hc_data;
+    struct Struct_0xa4* r5 = r2->Data_0xc;
+    struct Struct_0xa0* r4;
+
+    if (pthread_mutex_lock(&r6->Data_4/*sl*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+            0x505);
+    }
+    //loc_8e80
+    r4 = MENTOR_TD_Setup(r6, r8, r5, sb);
+    if (r4 == NULL)
+    {
+        if (pthread_mutex_unlock(&r6->Data_4/*sl*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+                0x508);
+        }
+        //loc_8ecc
+        r8->Data_8 = 0x2000010;
+        return 12; //->loc_932c
+    }
+    //loc_8edc
+    r4->Data_0xc = fp_0x34;
+    r4->Data_8 = r8->Data_0x5c->pData;
+    r4->Data_0 = e;
+
+#if 1
+    fprintf(stderr, "mentor_bulk_transfer: r6->Data_0x50=0x%x, sb=0x%x\n",
+        r6->Data_0x50, sb);
+#endif
+
+    if (r6->Data_0x50 & 0x01)
+    {
+        //0x00008f04
+#if 1
+        fprintf(stderr, "mentor_bulk_transfer: 0x00008f04: TODO!!!\n");
+#endif
+        if (sb & 0x20/*PIPE_FLAGS_MULTI_XFER?*/)
+        {
+            //0x00008f0c
+            struct
+            {
+                int fill_0[2]; //0
+                int Data_8; //8
+
+            }* r3 = r8 + 1;
+
+        }
+        //0x00008fa8
+
+        //TODO!!!
+    }
+    //0x00009038
+    if (sb & 0x04/*PIPE_FLAGS_TOKEN_IN?*/)
+    {
+        //0x00009040
+        r4->Data_0x3c = r4->Data_0x38 = MENTOR_ProcessInComplete;
+        //->0x00009088
+    }
+    else
+    {
+        //0x00009054
+#if 1
+        fprintf(stderr, "mentor_bulk_transfer: 0x00009054: TODO!!!\n");
+#endif
+
+    }
+    //0x00009088
+    InterruptLock(&r6->Data_0xd0);
+
+    r4->Data_0x2c.Data_0 = NULL;
+    r5->Data_0xc->Data_0 = r4;
+
+    struct Struct_0x94* fp_0x30 = &r4->Data_0x2c;
+    r5->Data_0xc = fp_0x30;
+
+    if ((r5->Data_0x10 & 0x01) == 0)
+    {
+        //0x000090e4
+        InterruptUnlock(&r6->Data_0xd0);
+
+        if (r5->Data_0x28 == -1)
+        {
+            //0x00009108
+            if (MENTOR_AllocEtd(r6, r5, r4->Data_4 & 0x04) < 0)
+            {
+                //0x00009124
+                mentor_slogf(r6, 12, 2, 1, "%s - %s Call to MENTOR_AllocEtd() failed",
+                    "devu-dm816x-mg.so", "mentor_bulk_transfer");
+
+                InterruptLock(&r6->Data_0xd0);
+
+                r5->Data_8 = r4->Data_0x2c.Data_0;
+                if (r5->Data_8 == 0)
+                {
+                    r5->Data_0xc = &r5->Data_8;
+                }
+                r4->Data_0x2c.Data_0 = NULL;
+                r6->Data_0x94->Data_0 = r4;
+                r6->Data_0x94 = fp_0x30;
+
+                InterruptUnlock(&r6->Data_0xd0);
+
+                if (pthread_mutex_unlock(&r6->Data_4/*sl*/) != 0)
+                {
+                    fprintf(stderr, "mutex lock %s %d\n", 
+                        "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+                        0x55f);
+                }
+                //0x00009208
+                r8->Data_8 = 0x10;
+                return 12; //->loc_932c
+            } //if (MENTOR_AllocEtd() < 0)
+            //0x00009218
+            if (sb & 0x04/*PIPE_FLAGS_TOKEN_IN?*/)
+            {
+                //0x00009220
+                MENTOR_EtdConfigureRX(r6, r5, r5->Data_0x28);
+                //->0x00009244
+            }
+            else
+            {
+                //0x00009234
+                MENTOR_EtdConfigureTX(r6, r5, r5->Data_0x28);
+            }
+        }
+        //0x00009244
+        if ((r4->Data_4 & 0x600) && 
+            (r5->Data_0x38 == 0))
+        {
+            //0x0000925c
+            r5->Data_0x38 = mentor_alloc_dma_sched(r6, r5);
+            if (r5->Data_0x38 == 0)
+            {
+                r4->Data_4 &= ~0x600;
+            }
+
+            if (((r6->Data_0x50 & 0x04) == 0) &&
+                (r5->Data_0x2c == -1))
+            {
+                //0x00009288
+                if (mentor_claim_dma_channel(r6, r4, 
+                        r5->Data_0x28, &r5->Data_0x2c) != 0)
+                {
+                    r4->Data_4 &= ~0x600;
+                }
+            }
+            //0x000092b8
+        }
+        //0x000092b8
+        if (r5->Data_8 != 0)
+        {
+            //0x000092c4
+            r5->Data_0x10 |= 0x01;
+            r6->Data_0xbc = r5;
+
+            MENTOR_StartEtd(r6, r5->Data_8);
+        }
+        //0x000092f8
+    } //if ((r5->Data_0x10 & 0x01) == 0)
+    else
+    {
+        //0x000092e0
+        InterruptUnlock(&r6->Data_0xd0);
+    }
+    //0x000092f8
+    if (pthread_mutex_unlock(&r6->Data_4/*sl*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+            0x584);
+    }
+    //loc_932c
+    return 0;    
+}
+
+
 /* 0x0000947c - todo */
 int mentor_ctrl_transfer(struct USB_Controller* sl, 
     struct Struct_10bab4* r8, 
@@ -2414,7 +3140,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
     int res;
 
     struct Struct_0xa0* fp_0x38;
-    struct Mentor_Controller* r5 = sl->Data_0x84;
+    struct Mentor_Controller* r5 = sl->hc_data;
     struct Struct_0xa4* fp_0x30/*fp48*/ = sb->Data_0xc;
 
     if (pthread_mutex_lock(&r5->Data_0xc/*r7*/) != 0)
@@ -2692,6 +3418,7 @@ int mentor_ctrl_transfer_abort(struct USB_Controller* a,
 }
 
 
+
 int mentor_ctrl_endpoint_disable(struct USB_Controller* a, struct Struct_112b08* b)
 {
 #if 1
@@ -2713,7 +3440,7 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
         a, b, r6);
 #endif
 
-    struct Mentor_Controller* r5 = a->Data_0x84;
+    struct Mentor_Controller* r5 = a->hc_data;
     struct Struct_0xa4* r4 = r6->Data_0xc;
 
 #if 1
@@ -2747,10 +3474,20 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
 }
 
 
+int mentor_bulk_endpoint_disable(struct USB_Controller* a, struct Struct_112b08* b)
+{
+#if 1
+    fprintf(stderr, "mentor_bulk_endpoint_disable: TODO!!!\n");
+#endif
 
-static struct io_usb_controller_methods_t mentor_controller_methods; //0x0000bf64
-static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
-static struct io_usb_bulk_pipe_methods_t mentor_bulk_pipe_methods; //0x0000bfc0
+    return 0;
+}
+
+
+
+static hc_methods_t mentor_controller_methods; //0x0000bf64
+static hc_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
+static hc_pipe_methods_t mentor_bulk_pipe_methods; //0x0000bfc0
 
 struct _io_usb_dll_entry io_usb_dll_entry = //0x0000bf40
 {
@@ -2768,7 +3505,7 @@ struct _io_usb_dll_entry io_usb_dll_entry = //0x0000bf40
 };
 
 
-static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf64
+static hc_methods_t mentor_controller_methods = //0x0000bf64
 {
     9,
     mentor_controller_init,
@@ -2784,7 +3521,7 @@ static struct io_usb_controller_methods_t mentor_controller_methods = //0x0000bf
 };
 
 
-static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
+static hc_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
 {
     mentor_ctrl_endpoint_enable,
     mentor_ctrl_endpoint_disable,
@@ -2794,14 +3531,12 @@ static struct io_usb_ctrl_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
 };
 
 
-static struct io_usb_bulk_pipe_methods_t mentor_bulk_pipe_methods = //0x0000bfc0
+static hc_pipe_methods_t mentor_bulk_pipe_methods = //0x0000bfc0
 {
     mentor_bulk_endpoint_enable,
-#if 0 //TODO
     mentor_bulk_endpoint_disable,
     mentor_bulk_transfer,
     mentor_transfer_abort,
     NULL
-#endif
 };
 

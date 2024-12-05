@@ -9,7 +9,9 @@
 #include <pthread.h>
 #include <atomic.h>
 #include <sys/usbdi.h>
+#include <sys/io-usb.h>
 #include "usbdi_priv.h"
+#include "my-io-usb.h"
 
 
 

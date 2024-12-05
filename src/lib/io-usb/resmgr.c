@@ -80,9 +80,9 @@ int udi_hcd_info(int a, usbd_hcd_info_t* b)
     cntrl = &usb_controllers[a];
 
     b->capabilities = cntrl->capabilities | 0x1000;
-    b->cindex = cntrl->Data_8;
-    b->max_td_io = cntrl->Data_0x60;
-    strcpy(&b->controller[0], cntrl->Data_0);
+    b->cindex = cntrl->cindex;
+    b->max_td_io = cntrl->MaxTransferSize;
+    strcpy(&b->controller[0], cntrl->cname);
 
     return 0;
 }
@@ -104,7 +104,7 @@ int udi_topology(int r6, usbd_bus_topology_t* b)
         return 0x13;
     }
 
-    if (pthread_mutex_lock(&cntrl->Data_0x24) != 0)
+    if (pthread_mutex_lock(&cntrl->usb_rwlock) != 0)
     {
         usb_slogf(12, 2, 0, "udi_topology:  error acquiring mutex, %d", errno);
     }
@@ -130,7 +130,7 @@ int udi_topology(int r6, usbd_bus_topology_t* b)
         r5++;
     } //for (i = 1; i < 21; i++)
     //0x00105f94
-    if (pthread_mutex_unlock(&cntrl->Data_0x24) != 0)
+    if (pthread_mutex_unlock(&cntrl->usb_rwlock) != 0)
     {
         usb_slogf(12, 2, 0, "udi_topology:  error releasing mutex, %d", errno);
     }
@@ -170,7 +170,7 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
     usb_slogf(12, 2, 5, "%s(%d): devno %d",
         "udi_attach", 0x6c1, r4->devno);
 
-    if (pthread_mutex_lock(&r7->Data_0x24/*r5*/) != 0)
+    if (pthread_mutex_lock(&r7->usb_rwlock/*r5*/) != 0)
     {
         //0x00106364
         usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, %d",
@@ -181,7 +181,7 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
     if ((r6 == NULL) || ((r6->bData_0xd & 1) == 0))
     {
         //loc_1063b8
-        if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+        if (pthread_mutex_unlock(&r7->usb_rwlock/*r5*/) != 0)
         {
             //0x001063c8
             usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
@@ -221,7 +221,7 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
     if (r7_ == NULL)
     {
         //0x001065a8
-        if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+        if (pthread_mutex_unlock(&r7->usb_rwlock/*r5*/) != 0)
         {
             //0x001065b8
             usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
@@ -239,7 +239,7 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
         if (r0 == NULL)
         {
             //0x00106624
-            if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+            if (pthread_mutex_unlock(&r7->usb_rwlock/*r5*/) != 0)
             {
                 //0x00106634
                 usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
@@ -265,7 +265,7 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
         ((r4->ident.protocol != -1) && (r4->ident.protocol != r0->Data_8.bInterfaceProtocol)))
     {
         //loc_106700
-        if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+        if (pthread_mutex_unlock(&r7->usb_rwlock/*r5*/) != 0)
         {
             //0x00106710
             usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
@@ -306,7 +306,7 @@ int udi_attach(usbd_device_instance_t* r4, int r8)
 #endif
     }
     //loc_106800
-    if (pthread_mutex_unlock(&r7->Data_0x24/*r5*/) != 0)
+    if (pthread_mutex_unlock(&r7->usb_rwlock/*r5*/) != 0)
     {
         usb_slogf(12, 2, 0, "%s(%d):  error releasing mutex, %d",
             "udi_attach", 0x737, errno);
@@ -1182,7 +1182,7 @@ int udi_io(struct USB_Client* r8, struct usbd_urb* r4)
         return 0x13; //->loc_107e9c
     }
 
-    int r0 = pthread_mutex_lock(&r7->Data_0x24/*r6*/);
+    int r0 = pthread_mutex_lock(&r7->usb_rwlock/*r6*/);
     if (r0 != 0)
     {
         usb_slogf(12, 2, 0, "%s(%d):  error acquiring mutex, %d",
@@ -1196,7 +1196,7 @@ int udi_io(struct USB_Client* r8, struct usbd_urb* r4)
         usb_slogf(12, 2, 4, "%s(%d): devno %d status %d ",
             "udi_io", 0x64b, r4->bData_0x29, r5);
 
-        r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
+        r0 = pthread_mutex_unlock(&r7->usb_rwlock/*r6*/);
         if (r0 != 0)
         {
             //0x00107b54
@@ -1215,7 +1215,7 @@ int udi_io(struct USB_Client* r8, struct usbd_urb* r4)
         //0x00107bb0
         atomic_sub(&sp_0x14->Data_0xa8, 1);
 
-        r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
+        r0 = pthread_mutex_unlock(&r7->usb_rwlock/*r6*/);
         if (r0 != 0)
         {
             //0x00107bd0
@@ -1233,7 +1233,7 @@ int udi_io(struct USB_Client* r8, struct usbd_urb* r4)
     sp_0x1c->Data_0x60 = r8;
     int r7_ = r4_->Data_0x38;
 
-    r0 = pthread_mutex_unlock(&r7->Data_0x24/*r6*/);
+    r0 = pthread_mutex_unlock(&r7->usb_rwlock/*r6*/);
     if (r0 != 0)
     {
         //0x00107c54
