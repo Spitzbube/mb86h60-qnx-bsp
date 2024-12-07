@@ -84,7 +84,7 @@ struct Struct_10bab4
     int value_low; //0x4c
     uint32_t Data_0x50; //0x50
     int Data_0x54; //0x54
-    void (*Func_0x58)(); //0x58
+    void (*Func_0x58)(struct Struct_10bab4*); //0x58
     struct usbd_urb* Data_0x5c; //0x5c
     struct USB_Client* Data_0x60; //0x60
     //0x64

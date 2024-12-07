@@ -131,7 +131,7 @@ struct Mentor_Controller
     int Data_0x48; //0x48
     int Data_0x4c; //0x4c
     int Data_0x50; //0x50
-    int fill_0x54; //0x54
+    int Data_0x54; //0x54
     int Data_0x58; //0x58
     struct sigevent Data_0x5c;
     int Data_0x6c; //0x6c
@@ -478,7 +478,8 @@ struct fp_0x34_Inner_0x18_Inner_0x10* mentor_fifo_alloc(struct Mentor_Controller
 #endif
 
 #ifdef MB86H60
-                MGC_SelectEnd(r5, fp_0x2c & 0xff);
+                //MGC_SelectEnd(r5, fp_0x2c & 0xff);
+                MGC_Write8(r5, MGC_O_HDRC_INDEX, fp_0x2c & 0xff);
 #else
                 ((volatile uint8_t*)(r5->Data_0x14))[0x0e/*INDEX*/] = fp_0x2c & 0xff;
 #endif
@@ -938,13 +939,246 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 }
 
 
-
-void MENTOR_ProcessETDDone(struct Mentor_Controller* a, uint16_t b)
+void mentor_start_dma_transfer(struct Mentor_Controller* a, 
+    struct Struct_0xa4* b, struct Struct_0xa0* c, int d,
+    int e, int f, int g, int h)
 {
 #if 1
+    fprintf(stderr, "mentor_start_dma_transfer: TODO!!!\n");
+#endif
+
+}
+
+
+void MENTOR_AbortDMA_TX(struct Mentor_Controller* a, struct Struct_0xa4* b)
+{
+#if 1
+    fprintf(stderr, "MENTOR_AbortDMA_TX: TODO!!!\n");
+#endif
+
+}
+
+
+void MENTOR_AbortDMA_RX(struct Mentor_Controller* a, struct Struct_0xa4* b)
+{
+#if 1
+    fprintf(stderr, "MENTOR_AbortDMA_RX: TODO!!!\n");
+#endif
+
+}
+
+
+/* 0x00005738 - todo */
+int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
+{
+#if 0
     fprintf(stderr, "MENTOR_ProcessETDDone: TODO!!!\n");
 #endif
 
+    int fp_0x34;
+//    void* fp_0x30 = &sl->Data_0x54;
+    int r7 = 16;
+    int r6 = 1;
+
+    while ((r5 >>= 1) != 0)
+    {
+        //loc_5768
+        if (r5 & 0x01)
+        {
+            //0x00005770
+            struct Struct_0xa0* r8 = sl->Data_0xc4[r6];
+            if (r8 == NULL)
+            {
+                //0x00005780
+#ifdef MB86H60
+                MGC_Write16(sl, 0x106 + r7, 0);
+                MGC_Write16(sl, 0x102 + r7, 0);
+#else
+                ((volatile uint16_t*)(sl->Data_0x14))[0x106/2 + r7] = 0;
+                ((volatile uint16_t*)(sl->Data_0x14))[0x102/2 + r7] = 0;
+#endif
+                //->loc_59e8
+            }
+            else
+            {
+                //loc_57b0
+                int fp_0x2c = r8->Data_4;
+                struct Struct_0xa4* sb = r8->Data_0x30;
+
+                if (sb->bData_0x1f == 0)
+                {
+                    //0x000057c8
+                    if (fp_0x2c/*r2*/ & 0x04)
+                    {
+                        //0x000057d0
+#if MB86H60
+                        uint32_t r3 = MGC_Read16(sl, 0x106 + r7);
+#else
+                        uint32_t r3 = ((volatile uint16_t*)(sl->Data_0x14))[0x106/2 + r7];
+#endif
+                        r3 = r3 << 16;
+                        uint32_t r4 = r3 >> 16;
+                        r3 = (r3 >> 25) & 0x01;
+                        sb->Data_0x20 = r3;
+
+                        if ((r4 & 0x14c) == 0)
+                        {
+                            //0x00005800
+                            if ((1 << r6) & sl->Data_0x54)
+                            {
+                                //->loc_582c
+                                atomic_clr(/*fp_0x30*/&sl->Data_0x54);
+                                r4 = 8;
+                                //->loc_5848
+                                if (r4 & 0x400)
+                                {
+                                    //0x00005854
+                                    MENTOR_AbortDMA_RX(sl, sb);
+                                }
+                                //loc_5860
+                                (r8->Data_0x38)(sl, r8, 0, r4);
+                                //->loc_59e8
+                            }
+                            else
+                            {
+                                //loc_587c
+#ifdef MB86H60
+                                r3 = MGC_Read16(sl, 0x108 + r7);
+#else
+                                r3 = ((volatile uint16_t*)(sl->Data_0x14))[0x108/2 + r7];
+#endif
+                                fp_0x34 = r3/*r1*/;
+                                if ((r3/*r1*/ + r8->Data_0x14) > r8->Data_0)
+                                {
+                                    //0x000058a8
+                                    (r8->Data_0x38)(sl, r8, 0, 8);
+                                    //->loc_59e8
+                                }
+                                else
+                                {
+                                    //loc_58c4
+                                    if (fp_0x2c & 0x200)
+                                    {
+                                        //0x000058d0
+
+                                        mentor_start_dma_transfer(sl, sb, r8, 0, 
+                                            r6, sb->Data_0x2c, 
+                                            r8->Data_8 + r8->Data_0x14,
+                                            r3/*r1*/);
+                                        //->loc_59e8
+                                    }
+                                    else
+                                    {
+                                        //loc_5908
+                                        if ((fp_0x2c & 0x600) == 0)
+                                        {
+                                            //0x00005914
+                                            MENTOR_ReadFIFO(sl, r8, r6, 
+                                                r8->Data_8 + r8->Data_0x14,
+                                                fp_0x34);
+
+#ifdef MB86H60
+                                            MGC_Write16(sl, 0x106 + r7, (uint16_t)(r4 & ~1));
+#else
+                                            ((volatile uint16_t*)(sl->Data_0x14))[0x106/2 + r7] = 
+                                                (uint16_t)(r4 & ~1);
+#endif
+                                        }
+                                        //loc_595c
+                                        (r8->Data_0x38)(sl, r8, fp_0x34, 0);
+                                        //->loc_59e8
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //loc_5818
+                            if ((1 << r6) & sl->Data_0x54)
+                            {
+                                //->loc_582c
+                                atomic_clr(/*fp_0x30*/&sl->Data_0x54);
+                                r4 = 8;
+                                //->loc_5848
+                            }
+                            else
+                            {
+                                //loc_583c
+                                if (r4 & 0x40)
+                                {
+                                    r4 = 4;
+                                }
+                                else
+                                {
+                                    r4 = 0x0f;
+                                }
+                            }
+                            //loc_5848
+                            if (fp_0x2c & 0x400)
+                            {
+                                //0x00005854
+                                MENTOR_AbortDMA_RX(sl, sb);
+                            }
+                            //loc_5860
+                            (r8->Data_0x38)(sl, r8, 0, r4);
+                            //->loc_59e8
+                        }
+                    } //if (fp_0x2c/*r2*/ & 0x04)
+                    else
+                    {
+                        //loc_5978
+#ifdef MB86H60
+                        uint32_t r3 = MGC_Read16(sl, 0x102 + r7);
+#else
+                        uint32_t r3 = ((volatile uint16_t*)(sl->Data_0x14))[0x102/2 + r7];
+#endif
+                        r3 = r3 << 16;
+                        uint32_t r2 = r3 >> 24;
+                        sb->Data_0x20 = r2 & 0x01;
+                        r3 = r3 >> 16;
+
+                        int r4;
+                        if ((r3 & 0xa4) == 0)
+                        {
+                            r4 = 0;
+                            //->loc_59d0
+                        }
+                        else
+                        {
+                            //0x000059ac
+                            if (r3 & 0x20)
+                            {
+                                r4 = 0x04;
+                            }
+                            else
+                            {
+                                r4 = 0x0f;
+                            }
+
+                            if (fp_0x2c & 0x400)
+                            {
+                                //0x000059c4
+                                MENTOR_AbortDMA_TX(sl, sb);
+                            }
+                            //loc_59d0
+                        }
+                        //loc_59d0
+                        (r8->Data_0x38)(sl, r8, r8->Data_0x10, r4);
+
+                        //TODO!!!
+                    }
+                } //if (sb->bData_0x1f == 0)
+                //loc_59e8
+            }
+            //loc_59e8
+        }
+        //loc_59e8
+        r7 += 16;
+        r6++;
+        //->loc_5768
+    } //while ((r5 >>= 1) != 0)
+    //loc_59f8
+    return 0;
 }
 
 
@@ -1025,6 +1259,18 @@ void mentor_clr_ext_int(struct Mentor_Controller* a)
 }
 
 
+int MENTOR_RemoveTDFromEndpoint(struct Mentor_Controller* a, 
+    struct Struct_10bab4* b, 
+    struct Struct_0xa4* c)
+{
+#if 1
+    fprintf(stderr, "MENTOR_RemoveTDFromEndpoint: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
 /* 0x000079c0 - todo */
 void MENTOR_URB_complete(struct Mentor_Controller* r5,
     struct Struct_0xa4 * r7, 
@@ -1044,7 +1290,7 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
         return;
     }
 
-    r6->Data_8 = err/*fp4*/;
+    r6->Data_8 = err/*fp4 = r2*/;
 
     switch (d)
     {
@@ -1090,12 +1336,90 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
             //
             //TODO!!!
             break;
+#endif
 
         case 2:
-            //
-            //TODO!!!
+            //0x00007b00
+            r6->Data_0x34/*r1*/ += r8;
+
+            if (err != 0)
+            {
+                //0x00007b14
+                //0x00007b28
+                mentor_slogf(r5, 12, 2, 1, "%s - Error on %s status 0x%x",
+                    "devu-dm816x-mg.so", 
+                    (d != 2)? "Interrupt": "Bulk", err);
+
+                InterruptLock(&r5->Data_0xd0);
+
+                r4->Data_4 = 0;
+                r4->Data_0x2c.Data_0 = 0;
+                r5->Data_0x94->Data_0 = r4;
+                r5->Data_0x94 = &r4->Data_0x2c;
+
+                InterruptUnlock(&r5->Data_0xd0);
+
+                MENTOR_RemoveTDFromEndpoint(r5, r6, r7);
+
+                if (r6->Func_0x58 != NULL)
+                {
+                    //0x00007be4
+                    (r6->Func_0x58)(r6);
+                }
+                //->0x00007e14
+            }
+            else
+            {
+                //0x00007bf4
+                if (((r6->Data_0 & 0x04) == 0) &&
+                    ((r4->Data_4 & 0x04) != 0))
+                {
+                    //0x00007c0c
+                    if (/*r1*/r6->Data_0x34 != r6->dwLength)
+                    {
+                        r6->Data_8 = 9;
+                    }
+                }
+                //0x00007c1c
+                if (((r4->Data_4 & 0x80000000 /*< 0*/) && (r4->Data_4 & 0x08)) || 
+                    (((r4->Data_0 != r8) || (r4->Data_4 & 0x80000000 /*< 0*/)) 
+                        && (r4->Data_4 & 0x04)))
+                {
+                    //0x00007c58
+                    InterruptLock(&r5->Data_0xd0);
+
+                    r4->Data_4 = 0;
+                    r4->Data_0x2c.Data_0 = 0;
+                    r5->Data_0x94->Data_0 = r4;
+                    r5->Data_0x94 = &r4->Data_0x2c;
+
+                    InterruptUnlock(&r5->Data_0xd0);
+
+                    if (r6->Func_0x58 != NULL)
+                    {
+                        //0x00007cc8
+                        (r6->Func_0x58)(r6);
+                    }
+                    //->0x00007e14
+                }
+                else
+                {
+                    //0x00007cd8
+                    InterruptLock(&r5->Data_0xd0);
+
+                    r4->Data_4 = 0;
+                    r4->Data_0x2c.Data_0 = 0;
+                    r5->Data_0x94->Data_0 = r4;
+                    r5->Data_0x94 = &r4->Data_0x2c;
+
+                    InterruptUnlock(&r5->Data_0xd0);
+                    //->0x00007e14
+                }
+            }
+            //->0x00007e14
             break;
 
+#if 0
         case 3:
             //
             //TODO!!!
@@ -2924,12 +3248,53 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
 }
 
 
-void MENTOR_ProcessInComplete()
+/* 0x000074ec - todo */
+int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
+        struct Struct_0xa0* r5, int r8, int r7)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_ProcessInComplete: TODO!!!\n");
 #endif
 
+    struct Struct_0xa4* r4;
+
+    r4 = r5->Data_0x30;
+    if (r4->bData_0x1f == 0)
+    {
+        //0x0000751c
+        r5->Data_0x14 += r8;
+
+        if ((r7 != 0) || (r5->Data_0x14 >= r5->Data_0) ||  
+            ((r8 % r4->wData_0x18) || ((1 - r8) > 0)))  //TODO!!!
+        {
+            //0x00007564
+            ((volatile uint16_t*)(r6->Data_0x14))[0x106 + r4->Data_0x28] = 0;
+
+            InterruptLock(&r6->Data_0xd0);
+
+            r6->Data_0xc4[r4->Data_0x28] = NULL;
+            r4->Data_0x10 &= ~0x01;
+            r5->status = r7;
+            r4->Data_8 = r5->Data_0x2c.Data_0;
+            if (r4->Data_8 == 0)
+            {
+                r4->Data_0xc = &r4->Data_8;
+            }
+            r5->Data_0x2c.Data_0 = 0;
+            *(r6->Data_0x9c) = r5;
+            r6->Data_0x9c = &r5->Data_0x2c;
+
+            InterruptUnlock(&r6->Data_0xd0);
+            //->0x00007620
+        }
+        else
+        {
+            //0x00007614
+            MENTOR_StartEtd(r6, r5);
+        }
+    }
+    //0x00007620
+    return 0;
 }
 
 
