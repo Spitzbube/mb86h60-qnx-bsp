@@ -2659,3 +2659,55 @@ struct ArrayClass* CLASS_RegisterDriver(struct Struct_10acec* a)
 }
 
 
+/* 1113ec - todo */
+struct UsbInterface* sub_1113ec(int fp_0x20, int fp_0x24, int fp_0x28, int fp_0x2c)
+{
+#if 0
+    fprintf(stderr, "sub_1113ec: TODO!!!\n");
+#endif
+
+    struct UsbConfiguration* fp_0x18;
+    struct UsbInterface* fp_0x14;
+    int fp_0x10 = 0;
+    struct USB_Controller* fp_0xc = &usb_controllers[fp_0x20];
+    struct USB_Controller_Inner_0x7c * fp8 = USB_CheckDevice(fp_0x20, fp_0x24);
+
+    if (fp8 == NULL)
+    {
+        return 0;
+    } 
+
+    if (fp8->Data_0x14 != fp_0x28)
+    {
+        return 0;
+    }
+
+    fp_0x18 = USB_GetConfiguration(fp_0xc, fp_0x24, fp_0x28);
+    if (fp_0x18 == NULL)
+    {
+        return 0;
+    }
+
+    fp_0x14 = fp_0x18->interfaces;
+    while (fp_0x14 != NULL)
+    {
+        //loc_1114ac
+        if (fp_0x14->Data_8.bAlternateSetting == 0)
+        {
+            fp_0x10 = fp_0x14->Data_0x14;
+        }
+
+        if ((fp_0x14->Data_8.bInterfaceNumber == fp_0x2c) &&
+            (fp_0x14->Data_8.bAlternateSetting == fp_0x10))
+        {
+            //loc_111514
+            break;
+        }
+        //loc_1114f8
+        fp_0x14 = fp_0x14->next;
+    }
+
+    return fp_0x14;
+}
+
+

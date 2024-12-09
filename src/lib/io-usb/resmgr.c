@@ -139,17 +139,6 @@ int udi_topology(int r6, usbd_bus_topology_t* b)
 }
 
 
-/* 1113ec - todo */
-int sub_1113ec(int a, int b, int c, int d)
-{
-#if 1
-    fprintf(stderr, "sub_1113ec: TODO!!!\n");
-#endif
-
-    return 0;
-}
-
-
 /* 0x00106300 - todo */
 int udi_attach(usbd_device_instance_t* r4, int r8)
 {

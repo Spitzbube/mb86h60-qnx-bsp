@@ -139,7 +139,8 @@ struct Mentor_Controller
     uint32_t Data_0x74; //0x74
     uint32_t verbosity; //0x78
     int Data_0x7c; //0x7c
-    int fill_0x80[2]; //0x80
+    int fill_0x80; //0x80
+    int Data_0x84; //0x84
     char* fconfig_string; //0x88
     struct Mentor_Controller_Inner_0x8c* Data_0x8c; //0x8c
     struct Struct_0x94 Data_0x90; //0x90
@@ -839,7 +840,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 //            int sb = MGC_Read16(r4, 0x106 + r7);
             fprintf(stderr, "MENTOR_StartEtd: 0x106 -> 0x%x\n", sb);
 #else
-            int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7])
+            int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7];
 #endif
 
             if ((r8->transferType == USB_ATTRIB_ISOCHRONOUS/*1*/) || 
@@ -1306,7 +1307,9 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
 #if 1
     fprintf(stderr, "MENTOR_URB_complete: transferType=%d, r4->flags=0x%x, r4->Data_0=%d\n",
         transferType, r4->flags, r4->Data_0);
-    if (r4->Data_0 != 0)
+
+    if ((r4->flags & PIPE_FLAGS_TOKEN_IN) && 
+        (r4->Data_0 != 0) && (r4->pData != NULL))
     {
         hex_dump("MENTOR_URB_complete", r4->pData, r4->Data_0);
     }
@@ -1629,7 +1632,7 @@ static void* mentor_interrupt_thread(void* a)
 #ifdef MB86H60
     r4->Data_0x48 = MB86H60_INTR_USB; //r7->Data_4->bData_0x14;
 #else
-    r4->Data_0x48 = r7->Data_4->bData_0x14...;
+//    r4->Data_0x48 = r7->pci_inf->bData_0x14...; //TODO!!!
 #endif
 
     r4->Data_0x4c = InterruptAttach(r4->Data_0x48, mentor_interrupt_handler, r4, 0xe8, 8);
@@ -2195,9 +2198,9 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
         return sl;
     }
     //loc_2ef0
-    r5->Data_0 = r4->Data_4->Data_0x68 - 0x47400400 + r5->Data_4;
+    r5->Data_0 = r4->pci_inf->Data_0x68 - 0x47400400 + r5->Data_4;
 
-    if (r4->Data_4->Data_0x68 == 0x47401c00)
+    if (r4->pci_inf->Data_0x68 == 0x47401c00)
     {
         r5->bData_0xc = 1;
     }
@@ -2478,6 +2481,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                            0xb00/*int prot*/,
                            0x10001/*int flags*/,
 #ifndef MB86H60
+                            0);
 //                           *(uint64_t*)(char*)&(r7->Data_4->Data_0x68)/*uint64_t physical*/);
                             //UNALIGNED_RET64(r7->Data_4->Data_0x68_));
                             //ENDIAN_BE64(*((uint64_t*)(r7->Data_4->Data_0x68_))));
@@ -3275,14 +3279,123 @@ void MENTOR_LoadFIFO(struct Mentor_Controller* a, uint16_t b, int c, uint16_t r8
 }
 
 
-/* */
-void mentor_transfer_abort(struct USB_Controller* a, 
-        struct Struct_10bab4* b, struct Struct_112b08* c)
+/* 0x00005b54 - todo */
+int mentor_transfer_abort(struct USB_Controller* a, 
+        struct Struct_10bab4* b, struct Struct_112b08* r5_)
 {
-#if 1
+#if 0
     fprintf(stderr, "mentor_transfer_abort: TODO!!!\n");
 #endif
 
+    struct Mentor_Controller* r4 = a->hc_data;
+
+    if (pthread_mutex_lock(&r4->Data_4/*r7*/) != 0)
+    {
+        //0x00005b88
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+            0x38b);
+    }
+    //0x00005ba8
+    struct Struct_0xa4* r5;
+    int r8;
+
+    if (((r5 = r5_->Data_0xc) == NULL) || ((r8 = r5->Data_0x28) < 0))
+    {
+        //0x00005bc0
+        if (pthread_mutex_unlock(&r4->Data_4/*r7*/) != 0)
+        {
+            //0x00005bd8
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+                0x38e);
+        }
+        
+        return 2;
+    }
+    //0x00005c00
+    struct Struct_0xa0* r2 = r5->Data_8__;
+    r5->bData_0x1f = 1;
+    if (r8 == 0)
+    {
+        //0x00005c14
+        HW_Write16(r4, 0x102, 0x100);
+        //->0x00005d40
+    }
+    else
+    {
+        //0x00005c2c
+        if (r5->bData_0x1b & 0x80)
+        {
+            //0x00005c38
+            if ((r2 != NULL) && (r2->flags & 0x600))
+            {
+                MENTOR_AbortDMA_RX(r4, r5);
+            }
+            //0x00005c58
+            HW_Write8(r4, 0x10d + r8*16, 0);
+            HW_Write8(r4, 0x10b + r8*16, 0);
+            uint32_t r2 = (HW_Read16(r4, 0x106 + r8*16) & 0x3f92) | 0x10;
+            HW_Write16(r4, 0x106 + r8*16, r2);
+            HW_Write16(r4, 0x106 + r8*16, r2);
+            //->0x00005d40
+        }
+        else
+        {
+            //0x00005cc0
+            if ((r2 != NULL) && (r2->flags & 0x600))
+            {
+                MENTOR_AbortDMA_TX(r4, r5);
+            }
+            //0x00005ce0
+            HW_Write8(r4, 0x10b + r8*16, 0);
+            HW_Write8(r4, 0x10b + r8*16, 0);
+            uint32_t r2 = (HW_Read16(r4, 0x102 + r8*16) & 0x7f58) | 0x08;
+            HW_Write16(r4, 0x102 + r8*16, r2);
+            HW_Write16(r4, 0x102 + r8*16, r2);
+        }
+        //0x00005d40
+    }
+    //0x00005d40
+    InterruptLock(&r4->Data_0xd0);
+
+    struct Struct_0xa0* r3 = r5->Data_8__;
+    while (r3 != NULL)
+    {
+        //0x00005d88
+        r5->Data_8__ = r3->Data_0x2c.Data_0;
+        if (r5->Data_8__  == NULL)
+        {
+            r5->Data_0xc = &r5->Data_8__;
+        }
+        r3->flags = 0;
+        r3->Data_0x2c.Data_0 = NULL;
+        r4->Data_0x94->Data_0 = r3;
+        r4->Data_0x94 = &r3->Data_0x2c;
+        r3 = r5->Data_8__;
+    }
+    //0x00005dbc
+    InterruptUnlock(&r4->Data_0xd0);
+
+    r4->Data_0xc4[r8] = NULL;
+
+    MENTOR_FreeEtd(r4, r5);
+
+    if (r5->transferType == USB_ATTRIB_INTERRUPT) //3)
+    {
+        r4->Data_0x84--;
+    }
+
+    r5->Data_0x10 &= ~0x01;
+
+    if (pthread_mutex_unlock(&r4->Data_4/*r7*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+            0x3dc);
+    }
+
+    return 0;
 }
 
 
@@ -3420,8 +3533,13 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     int flags/*sb*//*arg4*/)
 {
 #if 1
-    fprintf(stderr, "mentor_bulk_transfer: length=%d, flags=0x%x: TODO!!!\n",
-        length, flags);
+    fprintf(stderr, "mentor_bulk_transfer: buffer=%p, length=%d, flags=0x%x: TODO!!!\n",
+        buffer, length, flags);
+
+    if ((buffer != NULL) && (length > 0))
+    {
+        hex_dump("mentor_bulk_transfer", buffer, length);
+    }
 #endif
 
     struct Mentor_Controller* r6 = ctrl->hc_data;
@@ -3613,7 +3731,20 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
     uint32_t flags/*fp8*/)
 {
 #if 1
-    fprintf(stderr, "mentor_ctrl_transfer: length=%d, flags=0x%x: TODO!!!\n", length, flags);
+    fprintf(stderr, "mentor_ctrl_transfer: buffer=%p, length=%d, flags=0x%x\n", 
+        buffer, length, flags);
+
+    if ((flags & PIPE_FLAGS_TOKEN_SETUP) && (length == 8) && (buffer != NULL))
+    {
+        fprintf(stderr, "mentor_ctrl_transfer: Setup Packet:\n");
+        fprintf(stderr, "mentor_ctrl_transfer: bmRequestType.Recipient=%d\n", buffer[0] & 0x1f);
+        fprintf(stderr, "mentor_ctrl_transfer: bmRequestType.Type=%d\n", (buffer[0] >> 5) & 0x03);
+        fprintf(stderr, "mentor_ctrl_transfer: bmRequestType.Direction=%d\n", (buffer[0] >> 7) & 0x01);
+        fprintf(stderr, "mentor_ctrl_transfer: bRequest=0x%02x\n", buffer[1]);
+        fprintf(stderr, "mentor_ctrl_transfer: wValue=0x%04x\n", buffer[2] | (buffer[3] << 8));
+        fprintf(stderr, "mentor_ctrl_transfer: wIndex=0x%04x\n", buffer[4] | (buffer[5] << 8));
+        fprintf(stderr, "mentor_ctrl_transfer: wLength=0x%04x\n", buffer[6] | (buffer[7] << 8));
+    }
 #endif
 
     int res;
