@@ -101,13 +101,14 @@ typedef struct ccb_header
 {
     struct ccb_header *my_addr; /* The address of this CCB */
     u_short cam_ccb_len;        /* Length of the entire CCB */
-    u_char cam_func_code;       /* XPT function code */
-    volatile u_char cam_status; /* Returned CAM subsystem status */
+    u_char cam_func_code; //6       /* XPT function code */
+    volatile u_char cam_status;//7 /* Returned CAM subsystem status */
     u_char cam_priority;		/* NTO extension */
     u_char cam_path_id;         /* Path ID for the request */
     u_char cam_target_id;       /* Target device ID */
     u_char cam_target_lun;      /* Target LUN number */
-    u_long cam_flags;           /* Flags for operation of the subsystem */
+    u_long cam_flags; //0xc           /* Flags for operation of the subsystem */
+    //0x10
 } CCB_HEADER;
 
 /* Common SCSI functions. */
@@ -175,23 +176,23 @@ typedef struct ccb_relsim
 typedef struct ccb_scsiio
 {
     CCB_HEADER cam_ch;               /* Header information fields */
-    u_char *cam_pdrv_ptr;            /* Ptr used by the Peripheral driver */
+    u_char *cam_pdrv_ptr; //0x10            /* Ptr used by the Peripheral driver */
     CCB_HEADER *cam_next_ccb;        /* Ptr to the next CCB for action */
     u_char *cam_req_map;             /* Ptr for mapping info on the Req. */
-    void (*cam_cbfcnp)();            /* Callback on completion function */
-    CAM_DATA_UN cam_data;            /* Pointer to the data buf/SG list */
-    u_long cam_dxfer_len;            /* Data xfer length */
-    u_char *cam_sense_ptr;           /* Pointer to the sense data buffer */
-    u_char cam_sense_len;            /* Num of bytes in the Autosense buf */
-    u_char cam_cdb_len;              /* Number of bytes for the CDB */
+    void (*cam_cbfcnp)(); //0x1c            /* Callback on completion function */
+    CAM_DATA_UN cam_data; //0x20            /* Pointer to the data buf/SG list */
+    u_long cam_dxfer_len; //0x24            /* Data xfer length */
+    u_char *cam_sense_ptr; //0x28           /* Pointer to the sense data buffer */
+    u_char cam_sense_len; //0x2c            /* Num of bytes in the Autosense buf */
+    u_char cam_cdb_len; //0x2d              /* Number of bytes for the CDB */
     u_short cam_sglist_cnt;          /* Num of scatter gather list entries */
     u_long cam_osd_rsvd0;            /* OSD Reserved field, for alignment */
-    u_char cam_scsi_status;          /* Returned scsi device status */
+    u_char cam_scsi_status; //0x34          /* Returned scsi device status */
     u_char cam_sense_resid;          /* Autosense resid length: 2's comp */
     u_char cam_osd_rsvd1[2];         /* OSD Reserved field, for alignment */
     long cam_resid;                  /* Transfer residual length: 2's comp */
-    CDB_UN cam_cdb_io;               /* Union for CDB bytes/pointer */
-    u_long cam_timeout;              /* Timeout value */
+    CDB_UN cam_cdb_io;  //0x3c             /* Union for CDB bytes/pointer */
+    u_long cam_timeout; //0x4c              /* Timeout value */
     u_char *cam_msg_ptr;             /* Pointer to the message buffer */
     u_short cam_msgb_len;            /* Num of bytes in the message buf */
     u_short cam_vu_flags;            /* Vendor unique flags */

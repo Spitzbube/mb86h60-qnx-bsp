@@ -201,19 +201,19 @@ struct _sim_memory_pool {
 
 struct _sim_hba {
 	TAILQ_ENTRY( _sim_hba )	hlink;
-	SIM_HBA_EXT			*ext;
-	SIM_QUEUE			*simq;
-	CAM_ENTRY			*cam_funcs;
-	CONFIG_INFO			cfg;
-	_uint32				verbosity;
+	SIM_HBA_EXT			*ext; //8
+	SIM_QUEUE			*simq; //0xc
+	CAM_ENTRY			*cam_funcs; //0x10
+	CONFIG_INFO			cfg; //0x14
+	_uint32				verbosity; //0x1d0
 	_uint32				hflags;				// see HBA_FLAGS_...
 	_uint32				state;				// see HBA_STATE_...
-	_uint32				coid;
-	_uint32				chid;
+	_uint32				coid; //0x1dc
+	_uint32				chid; //0x1e0
 	_uint32				iid;
-	pthread_t			tid;				// id of event handling thread
+	pthread_t			tid; //0x1e8				// id of event handling thread
 	void				*dhdl;				// device handle (pci)
-	_int32				pathid;
+	_int32				pathid; //0x1f0
 	_uint32				vpathid[8];			// pathid's for virtual devices (system drives)
 
 	_uint8				stride;				// I/O stride
@@ -236,10 +236,10 @@ struct _sim_hba {
 	_uint16				ultra320_mask;
 	_uint16				ultra640_mask;
 
-	_uint32				timeout;			// command completion timeout
-	_uint32				rst_settle;			// reset settle time
+	_uint32				timeout; //0x230			// command completion timeout
+	_uint32				rst_settle; //0x234			// reset settle time
 	SIM_HBA_STATS		stats;
-	SIM_MEM_POOL		*pool;
+	SIM_MEM_POOL		*pool; //0x274???
 };
 
 #define SIM_MBLOCK_ALLOC( _free, _ptr )	{	pthread_sleepon_lock( ); 		\
