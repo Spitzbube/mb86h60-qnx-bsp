@@ -622,13 +622,55 @@ int MENTOR_AllocEtd(struct Mentor_Controller* r5,
 }
 
 
-int MENTOR_EtdConfigureTX(struct Mentor_Controller* a, struct Struct_0xa4* b, int c)
+void MENTOR_EtdConfigureTX(struct Mentor_Controller* a, 
+    struct Struct_0xa4* b, int c)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_EtdConfigureTX: TODO!!!\n");
 #endif
 
-    return 0;
+    int r4 = b->transferType;
+    int r3 = c * 16;
+
+    HW_Write16(a, 0x106 + r3, 0);
+
+    if (b->Data_0x20 != 0)
+    {
+        //0x00004794
+        HW_Write16(a, 0x102 + r3, 0x2308);
+        //->loc_47c8
+    }
+    else
+    {
+        //loc_47b0
+        HW_Write16(a, 0x102 + r3, 0x2048);
+    }
+    //loc_47c8
+    int r2 = c * 8;
+
+    HW_Write16(a, 0x80 + r2, (b->Data_0x14 >> 4) & 0x7f);
+
+    if (b->bData_0x1c & 0x40)
+    {
+        //0x000047f4
+        HW_Write8(a, 0x82 + r2, b->bData_0x1d);
+        HW_Write8(a, 0x83 + r2, b->bData_0x1e);
+    }
+    //loc_481c
+    HW_Write16(a, 0x10a + r3, 
+        (r4 << 4) | (b->Data_0x14 & 0x0f) | b->bData_0x1c);
+    
+    if (r4 & 0x01)
+    {
+        //0x00004854
+        HW_Write8(a, 0x10b + r3, b->Data_0x24);
+    }
+    else
+    {
+        //loc_4870
+        HW_Write8(a, 0x10b + r3, 0);
+    }
+    //loc_4888
 }
 
 
@@ -954,12 +996,44 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
         else
         {
             //loc_6fe4
+            int32_t r0 = r6->Data_0x10;
+            uint32_t sl = r8->wData_0x18;
+            r0 = r0 - 1;
+            r0 = r0 + sl;
+            r0 = r0 / sl;
+            r0 = r0 - 1;
+            if (r0 <= 0)
+            {
+                r0 = 0; 
+                //->loc_7024
+            }
+            else
+            {
+                //0x0000700c
+                r0 = r6->Data_0x10;
+                r0 = r0 - 1;
+                r0 = r0 + sl;
+                r0 = r0 / sl;
+                r0 = r0 - 1;
+            }
+            //loc_7024
+            int sb = HW_Read16(r4, 0x102 + r7);
 
+            if (r6->flags & 0x600)
+            {
+                //0x00007044
 #if 1
-            fprintf(stderr, "MENTOR_StartEtd: loc_6fe4: TODO!!!\n");
+                fprintf(stderr, "MENTOR_StartEtd: 0x00007044: TODO!!!\n");
 #endif
+                //TODO!!!
+            }
+            //loc_7160
+            HW_Write16(r4, 0x100 + r7, sl | (r0 << 11));
 
-            //TODO!!!
+            MENTOR_LoadFIFO(r4, fp_0x30, r6->pData, r5);
+
+            HW_Write16(r4, 0x102 + r7, 
+                (sb & ~0x9400) | 0x2080 | 0x27);
         }
     }
     //loc_71bc
@@ -3524,6 +3598,29 @@ int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
 }
 
 
+
+int MENTOR_ProcessOutComplete(struct Mentor_Controller* a,
+        struct Struct_0xa0* b, int c, int d)
+{
+#if 0
+    fprintf(stderr, "MENTOR_ProcessOutComplete: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+int MENTOR_ProcessOutDMAComplete(struct Mentor_Controller* a,
+        struct Struct_0xa0* b, int c, int d)
+{
+#if 1
+    fprintf(stderr, "MENTOR_ProcessOutDMAComplete: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
 /* 0x00008e20 - todo */ /* refer musb_transfer */
 int mentor_bulk_transfer(struct USB_Controller* ctrl, 
     struct Struct_10bab4* r8, 
@@ -3607,10 +3704,19 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     else
     {
         //0x00009054
-#if 1
-        fprintf(stderr, "mentor_bulk_transfer: 0x00009054: TODO!!!\n");
-#endif
+        td->Data_0x38 = MENTOR_ProcessOutComplete;
 
+        if ((r6->Data_0x38 & 0x400) == 0)
+        {
+            //0x0000906c
+            td->Data_0x3c = MENTOR_ProcessOutComplete;
+        }
+        else
+        {
+            //0x0000907c
+            td->Data_0x3c = MENTOR_ProcessOutDMAComplete;
+        }
+        //0x00009088
     }
     //0x00009088
     InterruptLock(&r6->Data_0xd0);

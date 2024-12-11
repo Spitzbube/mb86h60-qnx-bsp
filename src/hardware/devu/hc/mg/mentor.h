@@ -3,6 +3,19 @@
 //#undef MB86H60
 
 
+static inline uint8_t HW_Read8( struct Mentor_Controller* c/*uint8_t * iobase*/, uint32_t offset ) {
+	uint8_t data;
+#ifdef MB86H60
+	dma_SetUsbMode_LengthInput(c, 0);
+    data = ((volatile uint32_t*)(c->Data_0x14))[offset];
+#else
+	data = *((uint8_t*)(/*iobase*/c->Data_0x14 + offset));
+#endif
+	return data;
+}
+
+
+
 static inline uint16_t HW_Read16( struct Mentor_Controller* c, uint32_t offset ) {
     uint16_t data;
 #ifdef MB86H60
