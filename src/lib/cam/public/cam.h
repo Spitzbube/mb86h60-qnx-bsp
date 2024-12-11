@@ -106,7 +106,7 @@ typedef struct ccb_header
     u_char cam_priority;		/* NTO extension */
     u_char cam_path_id;         /* Path ID for the request */
     u_char cam_target_id;       /* Target device ID */
-    u_char cam_target_lun;      /* Target LUN number */
+    u_char cam_target_lun; //0xb      /* Target LUN number */
     u_long cam_flags; //0xc           /* Flags for operation of the subsystem */
     //0x10
 } CCB_HEADER;
@@ -193,12 +193,12 @@ typedef struct ccb_scsiio
     long cam_resid;                  /* Transfer residual length: 2's comp */
     CDB_UN cam_cdb_io;  //0x3c             /* Union for CDB bytes/pointer */
     u_long cam_timeout; //0x4c              /* Timeout value */
-    u_char *cam_msg_ptr;             /* Pointer to the message buffer */
-    u_short cam_msgb_len;            /* Num of bytes in the message buf */
-    u_short cam_vu_flags;            /* Vendor unique flags */
-    u_char cam_tag_action;           /* What to do for tag queuing */
-    u_char cam_iorsvd0[3];           /* Reserved field, for alignment */
-    u_char cam_sim_priv[ SIM_PRIV ]; /* SIM private data area */
+    u_char *cam_msg_ptr; //0x50             /* Pointer to the message buffer */
+    u_short cam_msgb_len; //0x54            /* Num of bytes in the message buf */
+    u_short cam_vu_flags; //0x56            /* Vendor unique flags */
+    u_char cam_tag_action; //0x58           /* What to do for tag queuing */
+    u_char cam_iorsvd0[3]; //0x59           /* Reserved field, for alignment */
+    u_char cam_sim_priv[ SIM_PRIV ]; //0x5c /* SIM private data area */
 } CCB_SCSIIO;
 
 /* Set Async Callback CCB */
