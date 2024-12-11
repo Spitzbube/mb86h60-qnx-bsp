@@ -959,8 +959,10 @@ int umass_attach(SIM_HBA* r4, struct usbd_connection* r7, usbd_device_instance_t
         usbd_hcd_ext_info(r7, r5->path, &fp_0x44);
 
 #if 1
-        fprintf(stderr, "umass_attach: fp_0x44.capabilities=0x%x, fp_0x44.max_td_io=%d\n",
-            fp_0x44.capabilities, fp_0x44.max_td_io);
+        fprintf(stderr, "umass_attach: fp_0x44.cap=0x%x, USBD_HCD_CAP_BULK_SG=%d, fp_0x44.max_td_io=%d\n",
+            fp_0x44.capabilities,
+            (fp_0x44.capabilities & USBD_HCD_CAP_BULK_SG)? 1: 0, 
+            fp_0x44.max_td_io);
 #endif
 
         if (fp_0x44.capabilities & USBD_HCD_CAP_BULK_SG/*0x200*/)
@@ -1022,8 +1024,9 @@ int umass_attach(SIM_HBA* r4, struct usbd_connection* r7, usbd_device_instance_t
 #endif
 
 #if 1
-        fprintf(stderr, "umass_attach: fp_0x44.capabilities=0x%x, umass_ctrl.Data_8=0x%x\n",
-            fp_0x44.capabilities, umass_ctrl.Data_8);
+        fprintf(stderr, "umass_attach: USBD_HCD_CAP_CHAINED_URB=%d, umass_ctrl.Data_8=0x%x\n",
+            (fp_0x44.capabilities & USBD_HCD_CAP_CHAINED_URB)? 1: 0, 
+            umass_ctrl.Data_8);
 #endif
 
         if (fp_0x44.capabilities & USBD_HCD_CAP_CHAINED_URB) //0x1000)
@@ -1031,7 +1034,9 @@ int umass_attach(SIM_HBA* r4, struct usbd_connection* r7, usbd_device_instance_t
             //0x001046ac
             if (umass_ctrl.Data_8 & 0x200)
             {
+#if 0
                 r6->Data_0x1c.Data_0x2c |= 0x2000;   
+#endif
             }
         }
         //loc_1046c4
