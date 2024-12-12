@@ -3598,14 +3598,108 @@ int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
 }
 
 
-
-int MENTOR_ProcessOutComplete(struct Mentor_Controller* a,
-        struct Struct_0xa0* b, int c, int d)
+/* 0x0000549c - todo */
+int MENTOR_ProcessOutComplete(struct Mentor_Controller* r6,
+        struct Struct_0xa0* r4, int r2, int r3)
 {
 #if 0
     fprintf(stderr, "MENTOR_ProcessOutComplete: TODO!!!\n");
 #endif
 
+    struct Struct_0xa4* r5 = r4->Data_0x30;
+    if (r5->bData_0x1f == 0)
+    {
+        //0x000054c4
+        r4->Data_0x14 += r2;
+
+        if ((r3 != 0) ||
+            (r4->Data_0x14 >= r4->Data_0))
+        {
+            //loc_54e8
+            InterruptLock(&r6->Data_0xd0);
+
+            r6->Data_0xc4[r5->Data_0x28] = NULL;
+            r5->Data_0x10 &= ~0x01;
+
+            HW_Write16(r6, 0x102 + r5->Data_0x28 * 16, 0);
+
+            r4->Data_0x10 = 0;
+            r4->status = r3;
+
+            r5->Data_8__ = r4->Data_0x2c.Data_0;
+            if (r5->Data_8__ == NULL)
+            {
+                r5->Data_0xc = &r5->Data_8__;
+            }
+            r4->Data_0x2c.Data_0 = NULL;
+
+            *(r6->Data_0x9c) = r4;
+            r6->Data_0x9c = &r4->Data_0x2c;
+
+            InterruptUnlock(&r6->Data_0xd0);
+            //->loc_56d0
+        }
+        else
+        {
+            //0x0000559c
+            r4->flags &= ~0x800;
+
+            uint32_t r3 = r5->Data_0x30->Data_0;
+            int r1 = r4->Data_0;
+            int r2 = r4->Data_0x14;
+            r2 = r1 - r2;
+            if (r3 >= r2)
+            {
+                r3 = r4->Data_0 - r4->Data_0x14;
+            }
+            r4->Data_0x10 = r3;
+            int r0 = r4->Data_0x10;
+            uint32_t r7 = r5->wData_0x18;
+            int r8 = r7;
+            r0 = r0 - 1;
+            r0 = r0 + r7;
+            r0 = r0 / r7;
+            r0 = r0 - 1;
+            uint32_t r0_;
+            if (r0 <= 0)
+            {
+                r0_ = 0;
+                //->0x00005614
+            }
+            else
+            {
+                //0x000055fc
+                r0 = r4->Data_0x10;
+                r0 = r0 - 1;
+                r0 = r0 + r7;
+                r0_ = (r0 / r7) - 1;
+            }
+            //0x00005614
+            HW_Write16(r6, 0x100 + r5->Data_0x28 * 16,
+                r7 | (r0_ << 11));
+
+            if (r4->flags & 0x600)
+            {
+                //0x00005640
+#if 1
+                fprintf(stderr, "MENTOR_ProcessOutComplete: 0x00005640: TODO!!!\n");
+#endif
+                //TODO!!!
+
+                //->0x000056d0
+            }
+            else
+            {
+                //0x0000568c
+                MENTOR_LoadFIFO(r6, r5->Data_0x28, 
+                    r4->pData + r4->Data_0x14, r4->Data_0x10);
+                
+                HW_Write16(r6, 0x102 + r5->Data_0x28 * 16, 
+                    HW_Read16(r6, 0x102 + r5->Data_0x28 * 16) | 0x01);
+            }
+        }
+    }
+    //loc_56d0
     return 0;
 }
 

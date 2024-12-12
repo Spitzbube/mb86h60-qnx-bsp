@@ -1848,11 +1848,61 @@ void umass_bulk_data_cbf()
 }
 
 
-void umass_bulk_cbw_cbf()
+int umass_handle_urb_error(struct Struct_10416c* a,
+        CCB_SCSIIO* b, struct usbd_pipe* c, uint32_t d, uint32_t e)
+{
+#if 1
+    fprintf(stderr, "umass_handle_urb_error: TODO!!!\n");
+#endif
+
+}
+
+
+int umass_bulk_csw(struct Struct_10416c* a)
+{
+#if 1
+    fprintf(stderr, "umass_bulk_csw: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+/* 0x00105adc - complete */
+void umass_bulk_cbw_cbf(struct usbd_urb* r0, 
+        struct usbd_pipe* r7, struct Struct_10416c* r4)
 {
 #if 1
     fprintf(stderr, "umass_bulk_cbw_cbf: TODO!!!\n");
 #endif
+
+    uint32_t fp_0x20;
+    uint32_t fp_0x24;
+
+    SIM_UMASS_EXT* r6 = (SIM_UMASS_EXT*) r4->Data_0->ext;
+    CCB_SCSIIO* r5 = r6->Data_0x10;
+
+    usbd_urb_status(r0, &fp_0x24, &fp_0x20);
+
+    if ((fp_0x24 & 0xff000000) != 0x1000000)
+    {
+        umass_handle_urb_error(r4, r5, r7, fp_0x24, fp_0x20);
+    }
+    else
+    {
+        if ((r5->cam_ch.cam_flags & 0xc0) != 0xc0)
+        {
+            int r2 = umass_bulk_data_phase(r6, r4, r5, r4->Data_0xfc);
+            if (r2 != 0)
+            {
+                umass_post_ccb(r4, r5, r2, 0);
+            }
+        }
+        else
+        {
+            umass_bulk_csw(r4);
+        }
+    }
 
 }
 
@@ -1861,7 +1911,7 @@ int umass_post_ccb(struct Struct_10416c* a,
         CCB_SCSIIO* b, int c, int d)
 {
 #if 1
-    fprintf(stderr, "umass_bulk_cbw_cbf: TODO!!!\n");
+    fprintf(stderr, "umass_post_ccb: TODO!!!\n");
 #endif
 
     return 0;
