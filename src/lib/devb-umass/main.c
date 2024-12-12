@@ -1918,11 +1918,101 @@ int umass_post_ccb(struct Struct_10416c* a,
 }
 
 
+/* 0x00102b70 - todo */
 int umass_padvance(struct Struct_10416c* a)
 {
-#if 1
+#if 0
     fprintf(stderr, "umass_padvance: TODO!!!\n");
 #endif
+
+    SIM_UMASS_EXT* r3_ = (SIM_UMASS_EXT*) a->Data_0->ext;
+    CCB_SCSIIO* r2 = r3_->Data_0x10;
+
+    struct
+    {
+        int fill_0[4]; //0
+        char* Data_0x10; //0x10
+        uint32_t Data_0x14; //0x14
+        int Data_0x18; //0x18
+        //???
+    }* r3 = &r2->cam_sim_priv[0];
+
+#if 1
+    fprintf(stderr, "umass_padvance: r3->Data_0x10=%p, r3->Data_0x14=%d, r3->Data_0x18=%d\n",
+        r3->Data_0x10, r3->Data_0x14, r3->Data_0x18);
+#endif
+
+    if (r3->Data_0x10 != NULL)
+    {
+        //0x00102b8c
+        if (r3->Data_0x14 != 0)
+        {
+            //->loc_102c24
+            return 0;
+        }
+        //0x00102b98
+        if (r2->cam_ch.cam_flags & 0x10)
+        {
+            //->loc_102c2c
+            if (r3->Data_0x18 == r2->cam_sglist_cnt)
+            {
+                //->loc_102ba8
+                if (r2->cam_ch.cam_flags & 0x10)
+                {
+                    //->loc_102c1c
+                    return 1;
+                }
+                //->loc_102c04
+            }
+            else
+            {
+                //->loc_102bc4
+                if (r2->cam_ch.cam_flags & 0x10)
+                {
+                    //0x00102bd0
+                    r3->Data_0x14 = r2->cam_data.cam_sg_ptr[r3->Data_0x18].cam_sg_count;
+                    r3->Data_0x10 = r2->cam_data.cam_sg_ptr[r3->Data_0x18].cam_sg_address;
+                    r3->Data_0x18++;
+
+                    return 0;
+                }
+                //loc_102c04
+            }
+        }
+        else
+        {
+            //->loc_102c1c
+            return 1;
+        }
+    }
+    else
+    {
+        //loc_102bb8
+        if (r3->Data_0x14 != 0)
+        {
+            //->loc_102c24
+            return 0;
+        }
+        //loc_102bc4
+        if (r2->cam_ch.cam_flags & 0x10)
+        {
+            //0x00102bd0
+            r3->Data_0x14 = r2->cam_data.cam_sg_ptr[r3->Data_0x18].cam_sg_count;
+            r3->Data_0x10 = r2->cam_data.cam_sg_ptr[r3->Data_0x18].cam_sg_address;
+            r3->Data_0x18++;
+
+            return 0;
+        }
+        //loc_102c04
+    }
+    //loc_102c04
+#if 1
+    fprintf(stderr, "umass_padvance: r2->cam_data.cam_data_ptr=%p, r2->cam_dxfer_len=%d\n",
+        r2->cam_data.cam_data_ptr, r2->cam_dxfer_len);
+#endif
+
+    r3->Data_0x14 = r2->cam_dxfer_len;
+    r3->Data_0x10 = r2->cam_data.cam_data_ptr;
 
     return 0;
 }

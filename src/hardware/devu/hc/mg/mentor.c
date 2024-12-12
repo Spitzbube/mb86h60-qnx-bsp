@@ -45,7 +45,7 @@ struct Struct_0xa0
     struct Struct_0x94 Data_0x2c; //0x2c
     struct Struct_0xa4* Data_0x30; //0x30
     struct Struct_10bab4* Data_0x34; //0x34
-    void (*Data_0x38)(); //0x38
+    void (*Func_0x38)(); //0x38
     void (*Data_0x3c)(); //0x3c
     int fill_0x40; //0x40
     //0x44
@@ -981,7 +981,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sl | 0x6d;
 #endif
 
-#if 1
+#if 0
                 int i;
                 for (i = 0; i < 10; i++)
                 {
@@ -1072,7 +1072,7 @@ void MENTOR_AbortDMA_RX(struct Mentor_Controller* a, struct Struct_0xa4* b)
 /* 0x00005738 - todo */
 int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
 {
-#if 0
+#if 0 //No printf in ISR
     fprintf(stderr, "MENTOR_ProcessETDDone: TODO!!!\n");
 #endif
 
@@ -1137,9 +1137,9 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
                                     MENTOR_AbortDMA_RX(sl, sb);
                                 }
                                 //loc_5860
-                                (r8->Data_0x38)(sl, r8, 0, r4);
+                                (r8->Func_0x38)(sl, r8, 0, r4);
                                 //->loc_59e8
-                            }
+                            } //if ((1 << r6) & sl->Data_0x54)
                             else
                             {
                                 //loc_587c
@@ -1152,7 +1152,7 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
                                 if ((r3/*r1*/ + r8->Data_0x14) > r8->Data_0)
                                 {
                                     //0x000058a8
-                                    (r8->Data_0x38)(sl, r8, 0, 8);
+                                    (r8->Func_0x38)(sl, r8, 0, 8);
                                     //->loc_59e8
                                 }
                                 else
@@ -1175,7 +1175,7 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
                                         {
                                             //0x00005914
                                             MENTOR_ReadFIFO(sl, r8, r6, 
-                                                r8->Data_8 + r8->Data_0x14,
+                                                r8->pData + r8->Data_0x14,
                                                 fp_0x34);
 
 #ifdef MB86H60
@@ -1186,12 +1186,12 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
 #endif
                                         }
                                         //loc_595c
-                                        (r8->Data_0x38)(sl, r8, fp_0x34, 0);
+                                        (r8->Func_0x38)(sl, r8, fp_0x34, 0);
                                         //->loc_59e8
                                     }
                                 }
                             }
-                        }
+                        } //if ((r4 & 0x14c) == 0)
                         else
                         {
                             //loc_5818
@@ -1221,7 +1221,7 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
                                 MENTOR_AbortDMA_RX(sl, sb);
                             }
                             //loc_5860
-                            (r8->Data_0x38)(sl, r8, 0, r4);
+                            (r8->Func_0x38)(sl, r8, 0, r4);
                             //->loc_59e8
                         }
                     } //if (fp_0x2c/*r2*/ & 0x04)
@@ -1264,9 +1264,8 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
                             //loc_59d0
                         }
                         //loc_59d0
-                        (r8->Data_0x38)(sl, r8, r8->Data_0x10, r4);
-
-                        //TODO!!!
+                        (r8->Func_0x38)(sl, r8, r8->Data_0x10, r4);
+                        //loc_59e8
                     }
                 } //if (sb->bData_0x1f == 0)
                 //loc_59e8
@@ -3548,7 +3547,7 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
 int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
         struct Struct_0xa0* r5, int r8, int r7)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_ProcessInComplete: TODO!!!\n");
 #endif
 
@@ -3792,13 +3791,13 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     if (flags/*sb*/ & 0x04/*PIPE_FLAGS_TOKEN_IN?*/)
     {
         //0x00009040
-        td->Data_0x3c = td->Data_0x38 = MENTOR_ProcessInComplete;
+        td->Data_0x3c = td->Func_0x38 = MENTOR_ProcessInComplete;
         //->0x00009088
     }
     else
     {
         //0x00009054
-        td->Data_0x38 = MENTOR_ProcessOutComplete;
+        td->Func_0x38 = MENTOR_ProcessOutComplete;
 
         if ((r6->Data_0x38 & 0x400) == 0)
         {

@@ -185,7 +185,7 @@ typedef struct ccb_scsiio
     u_char *cam_sense_ptr; //0x28           /* Pointer to the sense data buffer */
     u_char cam_sense_len; //0x2c            /* Num of bytes in the Autosense buf */
     u_char cam_cdb_len; //0x2d              /* Number of bytes for the CDB */
-    u_short cam_sglist_cnt;          /* Num of scatter gather list entries */
+    u_short cam_sglist_cnt; //0x2e          /* Num of scatter gather list entries */
     u_long cam_osd_rsvd0;            /* OSD Reserved field, for alignment */
     u_char cam_scsi_status; //0x34          /* Returned scsi device status */
     u_char cam_sense_resid;          /* Autosense resid length: 2's comp */
