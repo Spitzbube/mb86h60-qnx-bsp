@@ -820,23 +820,16 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 
         uint16_t wCsr;
         int retry/*r5*/ = 1000;
-#ifdef MB86H60
-        MGC_SelectEnd(r4, fp_0x30);
-        while (((wCsr = MGC_Read16(r4, 0x12)) & 0x03) && retry--)
-
-//        while (((wCsr = MGC_Read16(r4, 0x102 + r7)) & 0x03) && retry--)
-#else
-        while (((wCsr = ((volatile uint16_t*)r4->Data_0x14)[0x102/2 + r7]) & 0x03) && retry--)
-#endif
+        while (((wCsr = HW_Read16(r4, 0x102 + r7)) & 0x03) && retry--)
         {
             //loc_6d68
-#if 1
+#if 0
             fprintf(stderr, "MENTOR_StartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
 #endif
             nanospin_ns(1000);
         }
 
-#if 1
+#if 0
         fprintf(stderr, "MENTOR_StartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
 #endif
 
@@ -877,14 +870,9 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
         if (r6->flags & 0x04)
         {
             //0x00006e64
-#ifdef MB86H60
-            int sb = MGC_Read16(r4, 0x16);
-//            int sb = MGC_Read16(r4, 0x106 + r7);
+            int sb = HW_Read16(r4, 0x106 + r7);
 #if 1
             fprintf(stderr, "MENTOR_StartEtd: 0x106 -> 0x%x\n", sb);
-#endif
-#else
-            int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7];
 #endif
 
             if ((r8->transferType == USB_ATTRIB_ISOCHRONOUS/*1*/) || 
@@ -896,15 +884,8 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
             if (r6->flags & 0x800)
             {
                 //0x00006e94
-#ifdef MB86H60
-                MGC_Write16(r4, 0x14, r8->wData_0x18);
-                MGC_Write16(r4, 0x16, sb & 0x2792);
-//                MGC_Write16(r4, 0x104 + r7, r8->wData_0x18);
-//                MGC_Write16(r4, 0x106 + r7, sb & 0x2792);
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = r8->wData_0x18;
-                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sb & 0x2792;
-#endif
+                HW_Write16(r4, 0x104 + r7, r8->wData_0x18);
+                HW_Write16(r4, 0x106 + r7, sb & 0x2792);
 
                 if (r6->flags & 0x400)
                 {
@@ -915,15 +896,8 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                     //TODO!!!
                 }
                 //loc_6f00
-#ifdef MB86H60
-                MGC_Write16(r4, 0x16, 
-                    MGC_Read16(r4, 0x16) | 0x2040 | 0x2d);
-//                MGC_Write16(r4, 0x106 + r7, 
-//                    MGC_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = 
-                    ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] | 0x2040 | 0x2d;
-#endif
+                HW_Write16(r4, 0x106 + r7, 
+                    HW_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -945,16 +919,12 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                     r3 = (r6->Data_0x10 / fp_0x34) - 1;
                 }
                 //loc_6f58: write RXMAXP
-#ifdef MB86H60
 #if 1
                 fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n",
                     fp_0x2c | (r3 << 11));
 #endif
-                MGC_Write16(r4, 0x14, fp_0x2c | (r3 << 11));
-//                MGC_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = fp_0x2c | (r3 << 11);
-#endif
+
+                HW_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
 
                 int sl;
                 if ((r6->flags & 0x400) == 0)
@@ -974,28 +944,13 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                     //TODO!!!
                 }
                 //loc_6fc8: write RxCSR
-#ifdef MB86H60
 #if 1
                 fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n",
                     sl | 0x6d);
 #endif
-                MGC_Write16(r4, 0x16, sl | 0x6d); //01101101
-//                MGC_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
+                HW_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
                     //Clear: RxStall, DataError/NAK Timeout, Error, RxPktRdy
                     //Set: ReqPkt
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sl | 0x6d;
-#endif
-
-#if 0
-                int i;
-                for (i = 0; i < 10; i++)
-                {
-                    delay(100);
-                    uint16_t r0 = MGC_Read16(r4, 0x16);
-                    fprintf(stderr, "MENTOR_StartEtd: 0x106 -> 0x%x\n", r0);
-                }
-#endif
             }
             //->loc_71bc
         } //if (r6->flags & 0x04)
@@ -1077,25 +1032,11 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
 
         uint16_t wCsr;
         int retry/*r5*/ = 1000;
-#ifdef MB86H60
-        MGC_SelectEnd(r4, fp_0x30);
-        while (((wCsr = MGC_Read16(r4, 0x12)) & 0x03) && retry--)
-
-//        while (((wCsr = MGC_Read16(r4, 0x102 + r7)) & 0x03) && retry--)
-#else
-        while (((wCsr = ((volatile uint16_t*)r4->Data_0x14)[0x102/2 + r7]) & 0x03) && retry--)
-#endif
+        while (((wCsr = HW_Read16(r4, 0x102 + r7)) & 0x03) && retry--)
         {
             //loc_6d68
-#if 0
-            fprintf(stderr, "MENTOR_RestartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
-#endif
             nanospin_ns(1000);
         }
-
-#if 0
-        fprintf(stderr, "MENTOR_RestartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
-#endif
 
         if (retry <= 0)
         {
@@ -1134,14 +1075,9 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
         if (r6->flags & 0x04)
         {
             //0x00006e64
-#ifdef MB86H60
-            int sb = MGC_Read16(r4, 0x16);
-//            int sb = MGC_Read16(r4, 0x106 + r7);
+            int sb = HW_Read16(r4, 0x106 + r7);
 #if 0
             fprintf(stderr, "MENTOR_RestartEtd: 0x106 -> 0x%x\n", sb);
-#endif
-#else
-            int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7];
 #endif
 
             if ((r8->transferType == USB_ATTRIB_ISOCHRONOUS/*1*/) || 
@@ -1153,15 +1089,8 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
             if (r6->flags & 0x800)
             {
                 //0x00006e94
-#ifdef MB86H60
-                MGC_Write16(r4, 0x14, r8->wData_0x18);
-                MGC_Write16(r4, 0x16, sb & 0x2792);
-//                MGC_Write16(r4, 0x104 + r7, r8->wData_0x18);
-//                MGC_Write16(r4, 0x106 + r7, sb & 0x2792);
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = r8->wData_0x18;
-                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sb & 0x2792;
-#endif
+                HW_Write16(r4, 0x104 + r7, r8->wData_0x18);
+                HW_Write16(r4, 0x106 + r7, sb & 0x2792);
 
                 if (r6->flags & 0x400)
                 {
@@ -1172,15 +1101,8 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                     //TODO!!!
                 }
                 //loc_6f00
-#ifdef MB86H60
-                MGC_Write16(r4, 0x16, 
-                    MGC_Read16(r4, 0x16) | 0x2040 | 0x2d);
-//                MGC_Write16(r4, 0x106 + r7, 
-//                    MGC_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = 
-                    ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] | 0x2040 | 0x2d;
-#endif
+                HW_Write16(r4, 0x106 + r7, 
+                    HW_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -1202,16 +1124,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                     r3 = (r6->Data_0x10 / fp_0x34) - 1;
                 }
                 //loc_6f58: write RXMAXP
-#ifdef MB86H60
-#if 0
-                fprintf(stderr, "MENTOR_RestartEtd: 0x104 <- 0x%x\n",
-                    fp_0x2c | (r3 << 11));
-#endif
-                MGC_Write16(r4, 0x14, fp_0x2c | (r3 << 11));
-//                MGC_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = fp_0x2c | (r3 << 11);
-#endif
+                HW_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
 
                 int sl;
                 if ((r6->flags & 0x400) == 0)
@@ -1231,28 +1144,9 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                     //TODO!!!
                 }
                 //loc_6fc8: write RxCSR
-#ifdef MB86H60
-#if 0
-                fprintf(stderr, "MENTOR_RestartEtd: 0x106 <- 0x%x\n",
-                    sl | 0x6d);
-#endif
-                MGC_Write16(r4, 0x16, sl | 0x6d); //01101101
-//                MGC_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
+                HW_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
                     //Clear: RxStall, DataError/NAK Timeout, Error, RxPktRdy
                     //Set: ReqPkt
-#else
-                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sl | 0x6d;
-#endif
-
-#if 0
-                int i;
-                for (i = 0; i < 10; i++)
-                {
-                    delay(100);
-                    uint16_t r0 = MGC_Read16(r4, 0x16);
-                    fprintf(stderr, "MENTOR_RestartEtd: 0x106 -> 0x%x\n", r0);
-                }
-#endif
             }
             //->loc_71bc
         } //if (r6->flags & 0x04)
