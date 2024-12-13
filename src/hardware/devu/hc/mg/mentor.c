@@ -3726,7 +3726,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     fprintf(stderr, "mentor_bulk_transfer: buffer=%p, length=%d, flags=0x%x: TODO!!!\n",
         buffer, length, flags);
 
-    if ((buffer != NULL) && (length > 0))
+    if ((buffer != NULL) && (length > 0) && ((flags & 0x04) == 0))
     {
         hex_dump("mentor_bulk_transfer", buffer, length);
     }

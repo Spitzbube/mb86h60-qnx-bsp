@@ -148,20 +148,20 @@ typedef struct ccb_getdev
 typedef struct ccb_pathinq
 {
     CCB_HEADER cam_ch;                  /* Header information fields */
-    u_char cam_version_num;             /* Version number for the SIM/HBA */
-    u_char cam_hba_inquiry;             /* Mimic of INQ byte 7 for the HBA */
-    u_char cam_target_sprt;             /* Flags for target mode support */
-    u_char cam_hba_misc;                /* Misc HBA feature flags */
-    u_short cam_hba_eng_cnt;            /* HBA engine count */
-    u_char cam_vuhba_flags[ VUHBA ];    /* Vendor unique capabilities */
-    u_long cam_sim_priv;                /* Size of SIM private data area */
-    u_long cam_async_flags;             /* Event cap. for Async Callback */
-    u_char cam_hpath_id;                /* Highest path ID in the subsystem */
-    u_char cam_initiator_id;            /* ID of the HBA on the SCSI bus */
+    u_char cam_version_num; //0x10             /* Version number for the SIM/HBA */
+    u_char cam_hba_inquiry; //0x11             /* Mimic of INQ byte 7 for the HBA */
+    u_char cam_target_sprt; //0x12             /* Flags for target mode support */
+    u_char cam_hba_misc; //0x13                /* Misc HBA feature flags */
+    u_short cam_hba_eng_cnt; //0x14            /* HBA engine count */
+    u_char cam_vuhba_flags[ VUHBA ]; //0x16    /* Vendor unique capabilities */
+    u_long cam_sim_priv; //0x24                /* Size of SIM private data area */
+    u_long cam_async_flags; //0x28             /* Event cap. for Async Callback */
+    u_char cam_hpath_id; //0x2c                /* Highest path ID in the subsystem */
+    u_char cam_initiator_id; //0x2d            /* ID of the HBA on the SCSI bus */
     u_char cam_prsvd0;                  /* Reserved field, for alignment */
     u_char cam_prsvd1;                  /* Reserved field, for alignment */
-    char cam_sim_vid[ SIM_ID ];         /* Vendor ID of the SIM */
-    char cam_hba_vid[ HBA_ID ];         /* Vendor ID of the HBA */
+    char cam_sim_vid[ SIM_ID ]; //0x30         /* Vendor ID of the SIM */
+    char cam_hba_vid[ HBA_ID ]; //0x40         /* Vendor ID of the HBA */
     u_char *cam_osd_usage;              /* Ptr for the OSD specific area */
 } CCB_PATHINQ;
 

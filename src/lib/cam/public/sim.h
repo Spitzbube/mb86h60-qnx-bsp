@@ -218,7 +218,7 @@ struct _sim_hba {
 
 	_uint8				stride;				// I/O stride
 	_uint8				decode;				// I/O decode
-	_uint8				scsiid;
+	_uint8				scsiid; //0x216
 	_uint8				seltimo;			// selection timeout;
 	_uint8				ntargets;
 	_uint8				nluns;

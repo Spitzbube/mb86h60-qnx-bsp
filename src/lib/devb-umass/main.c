@@ -24,7 +24,7 @@ static long umass_sim_init(SIM_HBA *hba, long path);
 static long umass_sim_action(SIM_HBA *hba, /*CCB*/CCB_HEADER *ccb_ptr);
 static void umass_command_scsi(SIM_UMASS_EXT*, CCB_SCSIIO*);
 static int umass_bulk_cbw(SIM_UMASS_EXT*, CCB_SCSIIO*);
-static void umass_command_qnx_rbc(void);
+static void umass_command_qnx_rbc(SIM_UMASS_EXT*, CCB_SCSIIO*);
 static void umass_command_ufi(void);
 static void umass_command_sff8020(void);
 static void umass_cb_adsc(void);
@@ -1071,11 +1071,74 @@ int umass_detach(int* a)
 }
 
 
-int umass_validate_cmd(SIM_UMASS_EXT* a)
+/* 0x0010328c - complete */
+int umass_invalid_cmd(struct Struct_10416c* r6, 
+    CCB_SCSIIO* r4, int r7, int r8, int e)
 {
 #if 1
-    fprintf(stderr, "umass_validate_cmd: TODO!!!\n");
+    fprintf(stderr, "umass_invalid_cmd\n");
 #endif
+
+    uint8_t* r5 = r4->cam_sense_ptr;
+    if (r4->cam_ch.cam_flags & 0x20)
+    {
+        //0x001032b8
+        umass_post_ccb(r6, r4, 4, 2);
+        return 0;
+    }
+    //loc_1032cc
+    memset(r5, 0, r4->cam_sense_len);
+
+    r5[0] = 0x70;
+    r5[2] = r7;
+    r5[12] = r8;
+    r5[13] = e;
+
+    umass_post_ccb(r6, r4, 0x84, 2);
+
+    return 4;
+}
+
+
+
+/* 0x00103310 - complete */
+int umass_validate_cmd(SIM_UMASS_EXT* r0, CCB_SCSIIO* r1)
+{
+#if 1
+    fprintf(stderr, "umass_validate_cmd: r1->cam_cdb_io.cam_cdb_bytes[0]=0x%x, r0->Data_0x1c.Data_0x2c=0x%x\n",
+        r1->cam_cdb_io.cam_cdb_bytes[0],
+        r0->Data_0x1c.Data_0x2c);
+#endif
+
+    switch (r1->cam_cdb_io.cam_cdb_bytes[0])
+    {
+        case 0x16:
+        case 0x35:
+        case 0x5a:
+        case 0xbd:
+            //loc_103354
+            if (r0->Data_0x1c.Data_0x2c & 0x4b0)
+            {
+                return umass_invalid_cmd(&r0->Data_0x1c, r1, 5, 0, 0);
+            }
+            //loc_10339c
+            break;
+
+        case 0:
+            //loc_103378
+            if (r0->Data_0x1c.Data_0x2c & 0x08)
+            {
+                r1->cam_cdb_io.cam_cdb_bytes[0] = 0x1b;   
+                r1->cam_cdb_io.cam_cdb_bytes[4] = 1;
+                return 0;
+            }
+            //loc_10339c
+            break;
+
+        default:
+            //loc_10339c
+            break;
+    }
 
     return 0;
 }
@@ -1090,7 +1153,7 @@ int umass_scsi_io(SIM_HBA* r0, CCB_SCSIIO* r5)
 
     SIM_UMASS_EXT* r4 = (SIM_UMASS_EXT*) r0->ext;
 
-    if (umass_validate_cmd(r4) == 0)
+    if (umass_validate_cmd(r4, r5) == 0)
     {
         (r4->Data_0x124)(r4, r5);
     }
@@ -1394,7 +1457,7 @@ int umass_inquiry(SIM_HBA* r5)
     r4->cam_sense_ptr = sl->Data_0x1c.Data_0xc8;
     r4->cam_sense_len = 0x14;
     r4->cam_cdb_len = 6;
-    r4->cam_cdb_io.cam_cdb_bytes[0] = 0x12;
+    r4->cam_cdb_io.cam_cdb_bytes[0] = SC_INQUIRY; //0x12;
     r4->cam_cdb_io.cam_cdb_bytes[4] = 0x60; //TODO!!!
     int r6; // = 0;
     //r7 = 0;
@@ -1451,6 +1514,14 @@ int umass_inquiry(SIM_HBA* r5)
     else
     {
         //0x00103d40
+#if 0
+        fprintf(stderr, "umass_inquiry: 0x00103d40: TODO!!!\n");
+        int i;
+        for (i = 0; i < 0x60; i++)
+        {
+            fprintf(stderr, "r8[%d] = 0x%02x\n", i, ((uint8_t*)r8)[i]);
+        }
+#endif
         if ((((uint8_t*)r8)[0] == 0) &&
             (sl->Data_0x1c.Data_4.ident.subclass == 6))
         {
@@ -1802,23 +1873,44 @@ static long umass_sim_init(SIM_HBA *hba, long path)
 }
 
 
-int umass_rel_simq(SIM_HBA* a, CCB_HEADER* b)
+/* 0x00102c70 - complete */
+int umass_rel_simq(SIM_HBA* r4, CCB_RELSIM* ccb)
 {
 #if 1
-    fprintf(stderr, "umass_rel_simq: TODO!!!\n");
+    fprintf(stderr, "umass_rel_simq\n");
 #endif
 
-    return 0;
+    simq_rel_simq(r4->simq, ccb);
+
+    MsgSendPulse(r4->coid, umass_ctrl.Data_0x18, 1, 0);
+
+    return 1;
 }
 
 
-int umass_path_inq(SIM_HBA* a, CCB_HEADER* b)
+/* 0x001037e8 - complete */
+int umass_path_inq(SIM_HBA* r0, CCB_PATHINQ* r1)
 {
-#if 1
-    fprintf(stderr, "umass_path_inq: TODO!!!\n");
+#if 0
+    fprintf(stderr, "umass_path_inq\n");
 #endif
 
-    return 0;
+    r1->cam_version_num = 0x25;
+    r1->cam_hba_inquiry = 1;
+    r1->cam_target_sprt = 0;
+    r1->cam_hba_misc = 0;
+    r1->cam_hba_eng_cnt = 0;
+    r1->cam_sim_priv = 0x32;
+    r1->cam_async_flags = 1;
+    r1->cam_vuhba_flags[0] = ~0x5a;
+    r1->cam_vuhba_flags[2] = umass_ctrl.Data_0x20;
+    r1->cam_vuhba_flags[1] = 1;
+    r1->cam_initiator_id = r0->scsiid;
+
+    memcpy(&r1->cam_hba_vid[0] + strlen(&r1->cam_hba_vid[0]),
+        "QNX USB Storage", 0x10);
+
+    return 1;
 }
 
 
@@ -1924,11 +2016,11 @@ static long umass_sim_action(SIM_HBA* hba/*r5*/, /*CCB*/CCB_HEADER* ccb_ptr/*r4*
 /* 0x00101e78 - complete */
 static void umass_command_scsi(SIM_UMASS_EXT* r3, CCB_SCSIIO* r1)
 {
-#if 0
-    fprintf(stderr, "umass_command_scsi: TODO!!!\n");
+#if 1
+    fprintf(stderr, "umass_command_scsi\n");
 #endif
 
-    if (r1->cam_cdb_io.cam_cdb_bytes[0] == 0x12)
+    if (r1->cam_cdb_io.cam_cdb_bytes[0] == SC_INQUIRY/*0x12*/)
     {
         r1->cam_dxfer_len = 0x24;
         r1->cam_cdb_io.cam_cdb_bytes[4] = 0x24;
@@ -2642,12 +2734,46 @@ static int umass_bulk_cbw(SIM_UMASS_EXT* r6, CCB_SCSIIO* r4)
 }
 
 
-static void umass_command_qnx_rbc(void)
+/* 0x00102a24 - complete */
+static void umass_command_qnx_rbc(SIM_UMASS_EXT* r2, CCB_SCSIIO* r1)
 {
 #if 1
-    fprintf(stderr, "umass_command_qnx_rbc: TODO!!!\n");
+    fprintf(stderr, "umass_command_qnx_rbc: r1->cam_cdb_io.cam_cdb_bytes[0]=0x%x\n",
+        r1->cam_cdb_io.cam_cdb_bytes[0]);
 #endif
 
+    switch (r1->cam_cdb_io.cam_cdb_bytes[0])
+    {
+        case SC_UNIT_RDY: //0:
+        case SC_RQ_SENSE: //3:
+        case SC_RD_CAP: //0x25:
+        case SC_READ10: //0x28:
+        case SC_WRITE10: //0x2a:
+            //0x00102b1c
+            break;
+
+        case SC_INQUIRY: //0x12:
+            //loc_102af4
+            r1->cam_dxfer_len = 0x24;
+            r1->cam_cdb_io.cam_cdb_bytes[4] = 0x24;
+            //->loc_102b1c
+            break;
+
+#if 0 //Unsupported commands
+        case SC_MSENSE10: //0x5a
+        case SC_SYNC: //0x35
+            //umass_invalid_cmd
+//            break;
+#endif
+
+        default:
+            //0x00102b04
+            umass_invalid_cmd(&r2->Data_0x1c, r1, 0x05, 0, 0);
+            return;
+            //break;
+    }
+    //loc_102b1c
+    (r2->Data_0x128)(r2, r1);
 }
 
 
