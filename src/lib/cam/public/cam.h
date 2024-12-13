@@ -104,8 +104,8 @@ typedef struct ccb_header
     u_char cam_func_code; //6       /* XPT function code */
     volatile u_char cam_status;//7 /* Returned CAM subsystem status */
     u_char cam_priority;		/* NTO extension */
-    u_char cam_path_id;         /* Path ID for the request */
-    u_char cam_target_id;       /* Target device ID */
+    u_char cam_path_id; //9         /* Path ID for the request */
+    u_char cam_target_id; //0xa       /* Target device ID */
     u_char cam_target_lun; //0xb      /* Target LUN number */
     u_long cam_flags; //0xc           /* Flags for operation of the subsystem */
     //0x10
