@@ -1,5 +1,15 @@
 
 
+#define MUSB_CSR0					0x102  // 16-bit
+
+
+#define MUSB_COUNT0					0x108	// 16-bit
+
+
+
+
+
+
 //#undef MB86H60
 
 
@@ -48,4 +58,6 @@ static inline void HW_Write16( struct Mentor_Controller* c, uint32_t offset, uin
 	*((uint16_t*)((uint8_t*)(c->Data_0x14) + offset)) = data;
 #endif
 }
+
+
 
