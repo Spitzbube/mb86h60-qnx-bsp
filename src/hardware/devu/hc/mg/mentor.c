@@ -130,7 +130,7 @@ struct Mentor_Controller
     int Data_0x44; //0x44
     int Data_0x48; //0x48
     int Data_0x4c; //0x4c
-    int Data_0x50; //0x50
+    int flags; //0x50
     int Data_0x54; //0x54
     int Data_0x58; //0x58
     struct sigevent Data_0x5c;
@@ -849,7 +849,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 #endif
 
         if ((r6->flags & 0x400) &&
-            (r4->Data_0x50 & 0x200) &&
+            (r4->flags & 0x200) &&
             (r5 > r8->wData_0x18) &&
             ((r8->wData_0x18 & 0x3f) == 0) &&
             (r8->transferType == USB_ATTRIB_BULK)) //2))
@@ -1054,7 +1054,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
 #endif
 
         if ((r6->flags & 0x400) &&
-            (r4->Data_0x50 & 0x200) &&
+            (r4->flags & 0x200) &&
             (r5 > r8->wData_0x18) &&
             ((r8->wData_0x18 & 0x3f) == 0) &&
             (r8->transferType == USB_ATTRIB_BULK)) //2))
@@ -1853,7 +1853,7 @@ static void* mentor_interrupt_thread(void* a)
     r4->Data_0x5c.sigev_value.sival_int = 0;
     r4->Data_0x5c.sigev_code = 1;
 
-    while ((r4->Data_0x50 & 0x10) == 0)
+    while ((r4->flags & 0x10) == 0)
     {
         //loc_803c
         delay(1);
@@ -2399,7 +2399,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
 
     r6->Data_0x38 = 0x400;
     r6->Data_0x18 = 16;
-    r6->Data_0x50 |= 0x200;
+    r6->flags |= 0x200;
     r6->Data_0xe4 = r5 = calloc(1, 0x20);
 
     if (r5 == NULL)
@@ -2458,7 +2458,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
 
     mentor_fifo_init(r6, r6->fconfig_string);
 
-    if ((r6->Data_0x50 & 1) == 0)
+    if ((r6->flags & 1) == 0)
     {
         sl = 0;
         //->loc_35fc
@@ -2615,13 +2615,13 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     r4->Data_0x74 = 0x60;
     r4->Data_0x7c = 1000;
     r4->Data_0x6c = 0x04;
-    r4->Data_0x50 = 0x40 | 0x04; // | 0x01/*dma?*/;
+    r4->flags = 0x40 | 0x04 | 0x01/*dma?*/;
     r4->Data_0x2c = -1;
     r4->Data_0x28 = -1;
     r4->Data_0x18 = 4;
     r4->Data_0x38 = 0x200;
 
-    pthread_mutexattr_t fp_0x48;
+    pthread_mutexattr_t mattr; //fp_0x48;
     char* fp_0x4c = r5;
     char* fp_0x50;
     struct sched_param fp_0x78;
@@ -2652,7 +2652,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
 
                 case 5:
                     //loc_6328?: "nodma"
-                    r4->Data_0x50 &= ~1;
+                    r4->flags &= ~1;
                     //->loc_6404
                     break;
 
@@ -2685,9 +2685,9 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     //loc_6448
     r7->MaxTransferSize = 0x8000;
 
-    pthread_mutexattr_init(&fp_0x48);
-    pthread_mutexattr_setrecursive(&fp_0x48, 2);
-    int res = pthread_mutex_init(&r4->Data_4/*r8*/, &fp_0x48);
+    pthread_mutexattr_init(&mattr);
+    pthread_mutexattr_setrecursive(&mattr, 2);
+    int res = pthread_mutex_init(&r4->Data_4/*r8*/, &mattr);
     if (res != 0)
     {
         mentor_slogf(r4, 12, 2, 0, "%s : %s - Unable to initialize mutex", "", "");
@@ -2696,7 +2696,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
         return res;
     }
     //loc_64c0
-    res = pthread_mutex_init(&r4->Data_0xc/*sl*/, &fp_0x48);
+    res = pthread_mutex_init(&r4->Data_0xc/*sl*/, &mattr);
     if (res != 0)
     {
         mentor_slogf(r4, 12, 2, 0, "%s : %s - Unable to initialize mutex", "", "");
@@ -2774,7 +2774,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                 r7->MaxUnalignedTransferSize = 0x8000;
                 r7->buff_alignment_mask = 3;
 
-                if ((r2->Data_0x50 & 0x01) == 0)
+                if ((r2->flags & 0x01) == 0)
                 {
                     r7->capabilities = 0x4000044f;
                 }
@@ -2874,7 +2874,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                                                     else
                                                     {
                                                         //loc_6950
-                                                        r4->Data_0x50 |= 0x10;
+                                                        r4->flags |= 0x10;
 
 #ifdef MB86H60
                                                         MGC_Write8(r4, MGC_O_HDRC_POWER,
@@ -2974,7 +2974,7 @@ int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 
                 delay(10);
 
-                if (r4->Data_0x50 & 0x100)
+                if (r4->flags & 0x100)
                 {
                     mentor_ulpi_write(r4, 0x05, 0x20);
 
@@ -3919,11 +3919,11 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     td->Data_0 = length;
 
 #if 1
-    fprintf(stderr, "mentor_bulk_transfer: r6->Data_0x50=0x%x\n",
-        r6->Data_0x50);
+    fprintf(stderr, "mentor_bulk_transfer: r6->flags=0x%x\n",
+        r6->flags);
 #endif
 
-    if (r6->Data_0x50 & 0x01)
+    if (r6->flags & 0x01)
     {
         //0x00008f04
 #if 1
@@ -4038,7 +4038,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
                 td->flags &= ~0x600;
             }
 
-            if (((r6->Data_0x50 & 0x04) == 0) &&
+            if (((r6->flags & 0x04) == 0) &&
                 (r5->Data_0x2c == -1))
             {
                 //0x00009288
@@ -4233,7 +4233,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
             }
         }
         //0x00009764
-        wCsrH |= (r5->Data_0x50 & 0x80)? 0x800: 0;
+        wCsrH |= (r5->flags & 0x80)? 0x800: 0;
         wCsrH |= 0x500;
         wCsrH &= 0xf00;
 
