@@ -793,7 +793,7 @@ void MENTOR_EtdConfigureRX(struct Mentor_Controller* a,
 void MENTOR_StartEtd(struct Mentor_Controller* r4, 
     struct Struct_0xa0* r6)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_StartEtd: TODO!!!\n");
 #endif
 
@@ -880,7 +880,9 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 #ifdef MB86H60
             int sb = MGC_Read16(r4, 0x16);
 //            int sb = MGC_Read16(r4, 0x106 + r7);
+#if 1
             fprintf(stderr, "MENTOR_StartEtd: 0x106 -> 0x%x\n", sb);
+#endif
 #else
             int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7];
 #endif
@@ -944,8 +946,10 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 }
                 //loc_6f58: write RXMAXP
 #ifdef MB86H60
+#if 1
                 fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n",
                     fp_0x2c | (r3 << 11));
+#endif
                 MGC_Write16(r4, 0x14, fp_0x2c | (r3 << 11));
 //                MGC_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
 #else
@@ -971,8 +975,10 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 }
                 //loc_6fc8: write RxCSR
 #ifdef MB86H60
+#if 1
                 fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n",
                     sl | 0x6d);
+#endif
                 MGC_Write16(r4, 0x16, sl | 0x6d); //01101101
 //                MGC_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
                     //Clear: RxStall, DataError/NAK Timeout, Error, RxPktRdy
@@ -1024,6 +1030,263 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 //0x00007044
 #if 1
                 fprintf(stderr, "MENTOR_StartEtd: 0x00007044: TODO!!!\n");
+#endif
+                //TODO!!!
+            }
+            //loc_7160
+            HW_Write16(r4, 0x100 + r7, sl | (r0 << 11));
+
+            MENTOR_LoadFIFO(r4, fp_0x30, r6->pData, r5);
+
+            HW_Write16(r4, 0x102 + r7, 
+                (sb & ~0x9400) | 0x2080 | 0x27);
+        }
+    }
+    //loc_71bc
+}
+
+
+/* 0x00006cc0 - todo */
+void MENTOR_RestartEtd(struct Mentor_Controller* r4, 
+    struct Struct_0xa0* r6)
+{
+#if 0
+    fprintf(stderr, "MENTOR_RestartEtd: TODO!!!\n");
+#endif
+
+    int fp_0x30;
+    //fp_0x2c = _GLOBAL_OFFSET_TABLE_;
+
+    struct Struct_0xa4* r8 = r6->Data_0x30;
+
+#if 0
+    fprintf(stderr, "MENTOR_RestartEtd: r8=%p, r8->Data_0x28=%d\n",
+        r8, r8->Data_0x28);
+#endif
+
+    if (r8->Data_0x28 >= 0)
+    {
+        //0x00006cf4
+        r8->bData_0x1f = 0;
+
+        fp_0x30 = r8->Data_0x28;
+        r4->Data_0xc4[fp_0x30] = r6;
+        r6->flags |= 0x100;
+
+        int r7 = fp_0x30 * 16;
+
+        uint16_t wCsr;
+        int retry/*r5*/ = 1000;
+#ifdef MB86H60
+        MGC_SelectEnd(r4, fp_0x30);
+        while (((wCsr = MGC_Read16(r4, 0x12)) & 0x03) && retry--)
+
+//        while (((wCsr = MGC_Read16(r4, 0x102 + r7)) & 0x03) && retry--)
+#else
+        while (((wCsr = ((volatile uint16_t*)r4->Data_0x14)[0x102/2 + r7]) & 0x03) && retry--)
+#endif
+        {
+            //loc_6d68
+#if 0
+            fprintf(stderr, "MENTOR_RestartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
+#endif
+            nanospin_ns(1000);
+        }
+
+#if 0
+        fprintf(stderr, "MENTOR_RestartEtd: r7=%d, wCsr=0x%04x, retry=%d\n", r7, wCsr, retry);
+#endif
+
+        if (retry <= 0)
+        {
+            //loc_6d9c
+            mentor_slogf(r4, 12, 2, 1, 
+                " %s : MENTOR_RestartEtd - %s: TX FIFO still not Empty (%x)",
+                "devu-dm816x-mg.so", "MENTOR_RestartEtd", wCsr);
+        }
+        //loc_6de0
+        int r5 = r6->Data_0 - r6->Data_0x14;
+
+#if 0
+        fprintf(stderr, "MENTOR_RestartEtd: r5=%d, r6->flags=0x%x\n",
+            r5, r6->flags);
+#endif
+
+        if ((r6->flags & 0x400) &&
+            (r4->Data_0x50 & 0x200) &&
+            (r5 > r8->wData_0x18) &&
+            ((r8->wData_0x18 & 0x3f) == 0) &&
+            (r8->transferType == USB_ATTRIB_BULK)) //2))
+        {
+            //0x00006e24
+            r6->Data_0x10 = r5;
+            r6->flags |= 0x800;
+            //->loc_6e58
+        }
+        else
+        {
+            //loc_6e38
+            r6->flags &= ~0x800;
+            r6->Data_0x10 = (r5 > r8->Data_0x30->Data_0)?
+                r8->Data_0x30->Data_0: r5;
+        }
+        //loc_6e58
+        if (r6->flags & 0x04)
+        {
+            //0x00006e64
+#ifdef MB86H60
+            int sb = MGC_Read16(r4, 0x16);
+//            int sb = MGC_Read16(r4, 0x106 + r7);
+#if 0
+            fprintf(stderr, "MENTOR_RestartEtd: 0x106 -> 0x%x\n", sb);
+#endif
+#else
+            int sb = ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7];
+#endif
+
+            if ((r8->transferType == USB_ATTRIB_ISOCHRONOUS/*1*/) || 
+                (r8->transferType == USB_ATTRIB_INTERRUPT/*3*/))
+            {
+                sb |= (1 << 12); //0x1000; /* PID Error ?*/
+            }
+
+            if (r6->flags & 0x800)
+            {
+                //0x00006e94
+#ifdef MB86H60
+                MGC_Write16(r4, 0x14, r8->wData_0x18);
+                MGC_Write16(r4, 0x16, sb & 0x2792);
+//                MGC_Write16(r4, 0x104 + r7, r8->wData_0x18);
+//                MGC_Write16(r4, 0x106 + r7, sb & 0x2792);
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = r8->wData_0x18;
+                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sb & 0x2792;
+#endif
+
+                if (r6->flags & 0x400)
+                {
+                    //0x00006ec8
+#if 1
+                    fprintf(stderr, "MENTOR_RestartEtd: 0x00006ec8: TODO!!!\n");
+#endif
+                    //TODO!!!
+                }
+                //loc_6f00
+#ifdef MB86H60
+                MGC_Write16(r4, 0x16, 
+                    MGC_Read16(r4, 0x16) | 0x2040 | 0x2d);
+//                MGC_Write16(r4, 0x106 + r7, 
+//                    MGC_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = 
+                    ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] | 0x2040 | 0x2d;
+#endif
+                //->loc_71bc
+            } //if (r6->flags & 0x800)
+            else
+            {
+                //loc_6f24
+                int fp_0x34;
+                int fp_0x2c;
+
+                fp_0x34 = fp_0x2c = r8->wData_0x18;
+                int r0 = r6->Data_0x10 / r8->wData_0x18;
+                int r3;
+                if ((r0 - 1) <= 0)
+                {
+                    r3 = 0;
+                    //->loc_6f58
+                }
+                else
+                {
+                    r3 = (r6->Data_0x10 / fp_0x34) - 1;
+                }
+                //loc_6f58: write RXMAXP
+#ifdef MB86H60
+#if 0
+                fprintf(stderr, "MENTOR_RestartEtd: 0x104 <- 0x%x\n",
+                    fp_0x2c | (r3 << 11));
+#endif
+                MGC_Write16(r4, 0x14, fp_0x2c | (r3 << 11));
+//                MGC_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x104/2 + r7] = fp_0x2c | (r3 << 11);
+#endif
+
+                int sl;
+                if ((r6->flags & 0x400) == 0)
+                {
+                    sl = sb & 0x9fff;
+                    //->loc_6fc8
+                }
+                else
+                {
+                    //0x00006f84
+                    sl = sb & 0x2792;
+                    sl |= 0x6000;
+
+#if 1
+                    fprintf(stderr, "MENTOR_RestartEtd: 0x00006f84: TODO!!!\n");
+#endif
+                    //TODO!!!
+                }
+                //loc_6fc8: write RxCSR
+#ifdef MB86H60
+#if 0
+                fprintf(stderr, "MENTOR_RestartEtd: 0x106 <- 0x%x\n",
+                    sl | 0x6d);
+#endif
+                MGC_Write16(r4, 0x16, sl | 0x6d); //01101101
+//                MGC_Write16(r4, 0x106 + r7, sl | 0x6d); //01101101
+                    //Clear: RxStall, DataError/NAK Timeout, Error, RxPktRdy
+                    //Set: ReqPkt
+#else
+                ((volatile uint16_t*)r4->Data_0x14)[0x106/2 + r7] = sl | 0x6d;
+#endif
+
+#if 0
+                int i;
+                for (i = 0; i < 10; i++)
+                {
+                    delay(100);
+                    uint16_t r0 = MGC_Read16(r4, 0x16);
+                    fprintf(stderr, "MENTOR_RestartEtd: 0x106 -> 0x%x\n", r0);
+                }
+#endif
+            }
+            //->loc_71bc
+        } //if (r6->flags & 0x04)
+        else
+        {
+            //loc_6fe4
+            int32_t r0 = r6->Data_0x10;
+            uint32_t sl = r8->wData_0x18;
+            r0 = r0 - 1;
+            r0 = r0 + sl;
+            r0 = r0 / sl;
+            r0 = r0 - 1;
+            if (r0 <= 0)
+            {
+                r0 = 0; 
+                //->loc_7024
+            }
+            else
+            {
+                //0x0000700c
+                r0 = r6->Data_0x10;
+                r0 = r0 - 1;
+                r0 = r0 + sl;
+                r0 = r0 / sl;
+                r0 = r0 - 1;
+            }
+            //loc_7024
+            int sb = HW_Read16(r4, 0x102 + r7);
+
+            if (r6->flags & 0x600)
+            {
+                //0x00007044
+#if 1
+                fprintf(stderr, "MENTOR_RestartEtd: 0x00007044: TODO!!!\n");
 #endif
                 //TODO!!!
             }
@@ -3588,8 +3851,8 @@ int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
         }
         else
         {
-            //0x00007614
-            MENTOR_StartEtd(r6, r5);
+            //0x00007614: Restart receive for more than 512 bytes...
+            MENTOR_RestartEtd(r6, r5);
         }
     }
     //0x00007620
