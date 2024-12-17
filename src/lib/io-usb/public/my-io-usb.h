@@ -93,8 +93,8 @@ struct Struct_10bab4
 
 struct USB_Controller_Inner4
 {
-    uint16_t wData_0; //0
-    uint16_t wData_2; //2
+    uint16_t DeviceId; //0
+    uint16_t VendorId; //2
     int fill_4[4]; //4
     uint8_t bData_0x14[4]; //0x14
     int fill_0x18[6]; //0x18

@@ -13,6 +13,7 @@
 #include <sys/slog.h>
 #include <sys/usbdi.h>
 #include <pthread.h>
+#include <queue.h>
 #include <arm/mb86h60.h>
 
 
@@ -45,7 +46,11 @@ struct Struct_0xa0
     int Data_0x20; //0x20
     int Data_0x24; //0x24
     int status; //0x28
+#if 0
     struct Struct_0x94 Data_0x2c; //0x2c
+#else
+    SIMPLEQ_ENTRY(/*_musb_transfer*/Struct_0xa0) link; //0x2c
+#endif
     struct Struct_0xa4* Data_0x30; //0x30
     struct Struct_10bab4* Data_0x34; //0x34
     void (*Func_0x38)(); //0x38
@@ -100,7 +105,7 @@ struct _bdbase
 struct Struct_0xe4
 {
     void* Data_0; //0
-    void* Data_4; //4
+    void* Data_4__; //4
     struct _bdbase* Data_8; //8
     uint8_t bData_0xc; //0xc
     int Data_0x10; //0x10
@@ -153,26 +158,34 @@ struct Mentor_Controller
     pthread_t Data_0x3c; //0x3c
     int Data_0x40; //0x40
     int Data_0x44; //0x44
-    int Data_0x48; //0x48
-    int Data_0x4c; //0x4c
+    int irq; //0x48
+    int intr_id; //0x4c
     int flags; //0x50
     int Data_0x54; //0x54
     int Data_0x58; //0x58
     struct sigevent Data_0x5c;
     int Data_0x6c; //0x6c
     uint32_t Data_0x70; //0x70
-    uint32_t Data_0x74; //0x74
+    uint32_t num_td; //0x74
     uint32_t verbosity; //0x78
     int Data_0x7c; //0x7c
     int fill_0x80; //0x80
     int Data_0x84; //0x84
     char* fconfig_string; //0x88
     struct Mentor_Controller_Inner_0x8c* Data_0x8c; //0x8c
+#if 0
     struct Struct_0x94 Data_0x90; //0x90
     struct Struct_0x94* Data_0x94; //0x94
+#else
+    SIMPLEQ_HEAD(, /*_musb_transfer*/Struct_0xa0) transfer_free_q; //0x90
+#endif
+#if 0
     struct Struct_0xa0* Data_0x98; //0x98
     struct Struct_0xa0** Data_0x9c; //0x9c
-    struct Struct_0xa0* Data_0xa0; //0xa0
+#else
+    SIMPLEQ_HEAD(, /*_musb_transfer*/Struct_0xa0) transfer_complete_q; //0x98
+#endif
+    void* transfer_mem; //0xa0
     struct Struct_0xa4* Data_0xa4; //0xa4
     struct Struct_0xa4* Data_0xa8; //0xa8
     struct Struct_0xa4* Data_0xac; //0xac
@@ -199,6 +212,7 @@ extern void MENTOR_ReadFIFO(struct Mentor_Controller*, struct Struct_0xa0*, uint
 
 
 int dma_nums = 0; //0x0000c010
+int g_dma_nums = 0; //0x0000c014
 struct _bdbase* g_bdbase; //0x0000c028, size???
     
 
@@ -447,7 +461,8 @@ void MENTOR_ProcessControlDone(struct Mentor_Controller* r5)
     InterruptLock(&r5->Data_0xd0);
 
     r5->Data_0xc4[0] = NULL;
-    r6->Data_8__ = r4->Data_0x2c.Data_0;
+
+    r6->Data_8__ = SIMPLEQ_NEXT(r4, link); //r4->Data_0x2c.Data_0;
     if (r6->Data_8__ == 0)
     {
         r6->Data_0xc = &r6->Data_8__;
@@ -455,10 +470,13 @@ void MENTOR_ProcessControlDone(struct Mentor_Controller* r5)
     r6->Data_0x10 &= ~0x01;
 
     r4->status = status;
+#if 0
     r4->Data_0x2c.Data_0 = NULL;
-
     r5->Data_0x9c[0] = r4;
     r5->Data_0x9c = &r4->Data_0x2c.Data_0;
+#else
+    SIMPLEQ_INSERT_TAIL(&r5->transfer_complete_q, r4, link);
+#endif
 
     InterruptUnlock(&r5->Data_0xd0);
     //loc_4ee8
@@ -1442,7 +1460,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
     r3->Data_0x30 = r1;
     r1->Data_0x3c = r3;
 
-    *((uint32_t*)((uint8_t*)(ip->Data_4) + 0x600c + (r7_ * 16))) = 
+    *((uint32_t*)((uint8_t*)(ip->Data_4__) + 0x600c + (r7_ * 16))) = 
         r3->Data_0x28 | 0x0a;
 
 #endif
@@ -1810,10 +1828,14 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
             InterruptLock(&r5->Data_0xd0);
 
             r4->flags = 0;
-            r4->Data_0x2c.Data_0 = NULL;
 
+#if 0
+            r4->Data_0x2c.Data_0 = NULL;
             r5->Data_0x94->Data_0 = r4;
             r5->Data_0x94 = &r4->Data_0x2c;
+#else
+            SIMPLEQ_INSERT_TAIL(&r5->transfer_free_q, r4, link);
+#endif
 
             InterruptUnlock(&r5->Data_0xd0);
 
@@ -1845,9 +1867,14 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
                 InterruptLock(&r5->Data_0xd0);
 
                 r4->flags = 0;
+
+#if 0
                 r4->Data_0x2c.Data_0 = 0;
                 r5->Data_0x94->Data_0 = r4;
                 r5->Data_0x94 = &r4->Data_0x2c;
+#else
+                SIMPLEQ_INSERT_TAIL(&r5->transfer_free_q, r4, link);
+#endif
 
                 InterruptUnlock(&r5->Data_0xd0);
 
@@ -1881,9 +1908,14 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
                     InterruptLock(&r5->Data_0xd0);
 
                     r4->flags = 0;
+
+#if 0
                     r4->Data_0x2c.Data_0 = 0;
                     r5->Data_0x94->Data_0 = r4;
                     r5->Data_0x94 = &r4->Data_0x2c;
+#else
+                    SIMPLEQ_INSERT_TAIL(&r5->transfer_free_q, r4, link);
+#endif
 
                     InterruptUnlock(&r5->Data_0xd0);
 
@@ -1900,9 +1932,14 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
                     InterruptLock(&r5->Data_0xd0);
 
                     r4->flags = 0;
+
+#if 0
                     r4->Data_0x2c.Data_0 = 0;
                     r5->Data_0x94->Data_0 = r4;
                     r5->Data_0x94 = &r4->Data_0x2c;
+#else
+                    SIMPLEQ_INSERT_TAIL(&r5->transfer_free_q, r4, link);
+#endif
 
                     InterruptUnlock(&r5->Data_0xd0);
                     //->0x00007e14
@@ -1947,7 +1984,7 @@ void mentor_bottom_half(struct Mentor_Controller* r5)
         //0x00007e7c
         InterruptLock(&r5->Data_0xd0);
 
-        struct Struct_0xa0* r4 = r5->Data_0x98;
+        struct Struct_0xa0* r4 = SIMPLEQ_FIRST(&r5->transfer_complete_q); //r5->Data_0x98;
 
 #if 0
         fprintf(stderr, "mentor_bottom_half: r5->Data_0x98=%p\n",
@@ -1960,11 +1997,14 @@ void mentor_bottom_half(struct Mentor_Controller* r5)
             break;
         }
         //0x00007ebc
-        r5->Data_0x98 = r4->Data_0x2c.Data_0;
-        if (r5->Data_0x98 == NULL)
+#if 0
+        if ((r5->transfer_complete_q.sqh_first = r4->link.sqe_next) == NULL)
         {
-            r5->Data_0x9c = &r5->Data_0x98; //fp_0x34;
+            r5->transfer_complete_q.sqh_last = &r5->transfer_complete_q.sqh_first;
         }
+#else
+        SIMPLEQ_REMOVE_HEAD(&r5->transfer_complete_q, link);
+#endif
 
         InterruptUnlock(&r5->Data_0xd0);
 
@@ -2083,7 +2123,11 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
     }
 #endif
 
+#if 0
     if (r4->Data_0x98 == 0)
+#else
+    if (SIMPLEQ_EMPTY(&r4->transfer_complete_q))
+#endif
     {
         return NULL;
     }
@@ -2120,14 +2164,14 @@ static void* mentor_interrupt_thread(void* a)
     }
     //loc_8050
 #ifdef MB86H60
-    r4->Data_0x48 = MB86H60_INTR_USB; //r7->Data_4->bData_0x14;
+    r4->irq = MB86H60_INTR_USB; //r7->Data_4->bData_0x14;
 #else
-//    r4->Data_0x48 = r7->pci_inf->bData_0x14...; //TODO!!!
+    r4->irq = ((struct pci_dev_info*)(r7->pci_inf))->Irq;
 #endif
 
-    r4->Data_0x4c = InterruptAttach(r4->Data_0x48, 
+    r4->intr_id = InterruptAttach(r4->irq, 
         mentor_interrupt_handler, r4, 0xe8, 8);
-    if (r4->Data_0x4c == -1)
+    if (r4->intr_id == -1)
     {
         mentor_slogf(r4, 12, 2, 1, "%s - %s: InterruptAttach failed.",
             "devu-dm816x-mg.so", "mentor_interrupt_thread");
@@ -2149,7 +2193,7 @@ static void* mentor_interrupt_thread(void* a)
         if (MsgReceivePulse(r4->Data_0x40, &fp_0x30, 16, 0) == -1)
         {
             //->loc_8154
-            InterruptDetach(r4->Data_0x4c);
+            InterruptDetach(r4->intr_id);
             break;
         }
         //0x0000811c
@@ -2494,30 +2538,41 @@ int MENTOR_AllocateTD(struct Mentor_Controller* r4)
 #endif
 
     uint32_t i;
-    struct Struct_0xa0* r5;
+    struct Struct_0xa0* td;
 
+#if 0
     r4->Data_0x90.Data_0 = NULL;
     r4->Data_0x94 = &r4->Data_0x90;
+#else
+    SIMPLEQ_INIT( &r4->transfer_free_q );
+#endif
 
+#if 0
     r4->Data_0x98 = NULL;
     r4->Data_0x9c = &r4->Data_0x98;
+#else
+    SIMPLEQ_INIT( &r4->transfer_complete_q );
+#endif
 
-    r5 = calloc(1, (r4->Data_0x74 + 1) * sizeof(struct Struct_0xa0));
-    if (r5 == NULL)
+    td = calloc(1, sizeof(struct Struct_0xa0) * (r4->num_td + 1));
+    if (td == NULL)
     {
         return 12;
     }
 
-    r4->Data_0xa0 = r5;
+    r4->transfer_mem = td;
 
-    memset(r5, 0, (r4->Data_0x74 + 1) * sizeof(struct Struct_0xa0));
+    memset(td, 0, (r4->num_td + 1) * sizeof(struct Struct_0xa0));
 
-    for (i = 0; i < r4->Data_0x74; i++)
+    for (i = 0; i < r4->num_td; i++, td++)
     {
-        r5->Data_0x2c.Data_0 = NULL;
-        r4->Data_0x94->Data_0 = r5;
-        r4->Data_0x94 = &r5->Data_0x2c;
-        r5++;
+#if 0
+        td->Data_0x2c.Data_0 = NULL;
+        r4->Data_0x94->Data_0 = td;
+        r4->Data_0x94 = &td->Data_0x2c;
+#else
+        SIMPLEQ_INSERT_TAIL( &r4->transfer_free_q, td, link );
+#endif
     }
 
     return 0;
@@ -2672,6 +2727,13 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
 
 #else
 
+    if (g_dma_nums == 0)
+    {
+        //0x00003c10
+        r7->Data_4__;
+    }
+    //0x00003cd8
+
 #endif
 
     return NULL;
@@ -2818,9 +2880,9 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
                            0x10001/*int flags*/,
                             MB86H60_DMA_BASE);
 #else
-    r5->Data_4 = mmap_device_memory(NULL, 0x8000, 0xb00, 0x10001, 
-                    0x47400000); //MB86H60: TODO!!!
-    if (r5->Data_4 == -1)
+    r5->Data_4__ = mmap_device_memory(NULL, 0x8000, 0xb00, 0x10001, 
+                    0x47400000);
+    if (r5->Data_4__ == -1)
     {
         mentor_slogf(r6, 12, 2, 0, "mentor_board_specific_init1: mmap_device_memory error1\n"/*TODO*/);
         sl = 12;
@@ -2829,9 +2891,10 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
         return sl;
     }
     //loc_2ef0
-    r5->Data_0 = r4->pci_inf->Data_0x68 - 0x47400400 + r5->Data_4;
+    r5->Data_0 = r5->Data_4__ + 
+        ((struct pci_dev_info*)(r4->pci_inf))->CpuBaseAddress[0] - 0x47400400;
 
-    if (r4->pci_inf->Data_0x68 == 0x47401c00)
+    if (((struct pci_dev_info*)(r4->pci_inf))->CpuBaseAddress[0] == 0x47401c00)
     {
         r5->bData_0xc = 1;
     }
@@ -2879,7 +2942,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
 #ifdef MB86H60
     //TODO!!!
 #else
-        munmap_device_memory(r5->Data_4, 0x8000);
+        munmap_device_memory(r5->Data_4__, 0x8000);
 #endif
         //loc_35f4
         free(r5);
@@ -3026,7 +3089,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     r4->Data_0x58 = 0x18;
     r4->verbosity = 5; //0;
     r4->Data_0x70 = 0xaa;
-    r4->Data_0x74 = 0x60;
+    r4->num_td = 0x60;
     r4->Data_0x7c = 1000;
     r4->Data_0x6c = 0x04;
     r4->flags = 0x40 | 0x04 | 0x01/*dma?*/;
@@ -3320,7 +3383,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
                     MENTOR_FreeTD(r4);
                 }
                 //loc_69a8
-                InterruptDetach(r4->Data_0x4c);
+                InterruptDetach(r4->intr_id);
                 mentor_destroy_completion_thread(r7);
                 //loc_69b8
                 munmap_device_memory(r4->Data_0x14, 0x2000);
@@ -3789,7 +3852,11 @@ struct Struct_0xa0* MENTOR_TD_Setup(struct Mentor_Controller* a,
 
     InterruptLock(&a->Data_0xd0);
 
+#if 0
     td = a->Data_0x90.Data_0;
+#else
+    td = SIMPLEQ_FIRST(&a->transfer_free_q);
+#endif
     if (td == NULL)
     {
         b->Data_8 = 12;
@@ -3801,11 +3868,15 @@ struct Struct_0xa0* MENTOR_TD_Setup(struct Mentor_Controller* a,
     }
     else
     {
+#if 0
         a->Data_0x90.Data_0 = td->Data_0x2c.Data_0;
         if (a->Data_0x90.Data_0 == NULL)
         {
             a->Data_0x94 = &a->Data_0x90;
         }
+#else
+        SIMPLEQ_REMOVE_HEAD(&a->transfer_free_q, link);
+#endif
 
         InterruptUnlock(&a->Data_0xd0);
 
@@ -4007,15 +4078,25 @@ int mentor_transfer_abort(struct USB_Controller* a,
     while (r3 != NULL)
     {
         //0x00005d88
+#if 0
         r5->Data_8__ = r3->Data_0x2c.Data_0;
+#else
+        r5->Data_8__ = SIMPLEQ_NEXT(r3, link);
+#endif
         if (r5->Data_8__  == NULL)
         {
             r5->Data_0xc = &r5->Data_8__;
         }
         r3->flags = 0;
+
+#if 0
         r3->Data_0x2c.Data_0 = NULL;
         r4->Data_0x94->Data_0 = r3;
         r4->Data_0x94 = &r3->Data_0x2c;
+#else   
+        SIMPLEQ_INSERT_TAIL(&r4->transfer_free_q, r3, link);
+#endif
+
         r3 = r5->Data_8__;
     }
     //0x00005dbc
@@ -4149,14 +4230,24 @@ int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
             r6->Data_0xc4[r4->Data_0x28] = NULL;
             r4->Data_0x10 &= ~0x01;
             r5->status = r7;
+
+#if 0
             r4->Data_8__ = r5->Data_0x2c.Data_0;
+#else
+            r4->Data_8__ = SIMPLEQ_NEXT(r5, link);
+#endif
             if (r4->Data_8__ == 0)
             {
                 r4->Data_0xc = &r4->Data_8__;
             }
+
+#if 0
             r5->Data_0x2c.Data_0 = 0;
             *(r6->Data_0x9c) = r5;
             r6->Data_0x9c = &r5->Data_0x2c;
+#else
+            SIMPLEQ_INSERT_TAIL(&r6->transfer_complete_q, r5, link);
+#endif
 
             InterruptUnlock(&r6->Data_0xd0);
             //->0x00007620
@@ -4200,15 +4291,22 @@ int MENTOR_ProcessOutComplete(struct Mentor_Controller* r6,
             r4->Data_0x10 = 0;
             r4->status = r3;
 
+#if 0
             r5->Data_8__ = r4->Data_0x2c.Data_0;
+#else
+            r5->Data_8__ = SIMPLEQ_NEXT(r4, link);
+#endif
             if (r5->Data_8__ == NULL)
             {
                 r5->Data_0xc = &r5->Data_8__;
             }
+#if 0
             r4->Data_0x2c.Data_0 = NULL;
-
             *(r6->Data_0x9c) = r4;
             r6->Data_0x9c = &r4->Data_0x2c;
+#else
+            SIMPLEQ_INSERT_TAIL(&r6->transfer_complete_q, r4, link);
+#endif
 
             InterruptUnlock(&r6->Data_0xd0);
             //->loc_56d0
@@ -4467,11 +4565,23 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     //0x00009088
     InterruptLock(&r6->Data_0xd0);
 
+#if 1
+#if 0
     td->Data_0x2c.Data_0 = NULL;
+#else
+    td->link.sqe_next = NULL;
+#endif
     r5->Data_0xc->Data_0 = td;
 
-    struct Struct_0x94* fp_0x30 = &td->Data_0x2c;
-    r5->Data_0xc = fp_0x30;
+#if 0
+    struct Struct_0x94* fp_0x30;
+    fp_0x30 = &td->Data_0x2c;
+#else
+#endif
+    r5->Data_0xc = &td->link.sqe_next; //fp_0x30;
+#else
+    SIMPLEQ_INSERT_TAIL()
+#endif
 
     if ((r5->Data_0x10 & 0x01) == 0)
     {
@@ -4489,14 +4599,23 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
 
                 InterruptLock(&r6->Data_0xd0);
 
+#if 0
                 r5->Data_8__ = td->Data_0x2c.Data_0;
+#else
+                r5->Data_8__ = SIMPLEQ_NEXT(td, link);
+#endif
                 if (r5->Data_8__ == 0)
                 {
                     r5->Data_0xc = &r5->Data_8__;
                 }
+
+#if 0
                 td->Data_0x2c.Data_0 = NULL;
                 r6->Data_0x94->Data_0 = td;
                 r6->Data_0x94 = fp_0x30;
+#else
+                SIMPLEQ_INSERT_TAIL(&r6->transfer_free_q, td, link);
+#endif
 
                 InterruptUnlock(&r6->Data_0xd0);
 
@@ -4666,9 +4785,16 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
     //0x00009648
     InterruptLock(&r5->Data_0xd0);
     //0x0000967c
+#if 0
     td->Data_0x2c.Data_0 = NULL;
     fp_0x30->Data_0xc->Data_0 = td;
     fp_0x30->Data_0xc = &td->Data_0x2c;
+#else
+    td->link.sqe_next = NULL;
+    fp_0x30->Data_0xc->Data_0 = td;
+    fp_0x30->Data_0xc = &td->link.sqe_next;
+    //SIMPLEQ_INSERT_TAIL()
+#endif
 
     if ((fp_0x30->Data_0x10 & 1) == 0)
     {

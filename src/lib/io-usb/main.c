@@ -224,8 +224,8 @@ int CTRL_GetOptions(char* a,
     uint32_t* sp_0xc,
     int32_t* sp_0x50,
     uint32_t* sp_0x54,
-    uint16_t* sp_0x58,
-    uint16_t* sp_0x5c,
+    uint16_t* pVendorId/*sp_0x58*/,
+    uint16_t* pDeviceId/*sp_0x5c*/,
     char r5[] /*sp_0x60*/)
 {
 #if 0
@@ -297,7 +297,7 @@ int CTRL_GetOptions(char* a,
                     //0x00103784
                     if (sp_0x24 != 0)
                     {
-                        *sp_0x58 = strtoul(sp_0x24, 0, 0);
+                        *pVendorId = strtoul(sp_0x24, 0, 0);
                     }
                     break;                
 
@@ -305,7 +305,7 @@ int CTRL_GetOptions(char* a,
                     //0x001037a8
                     if (sp_0x24 != 0)
                     {
-                        *sp_0x5c = strtoul(sp_0x24, 0, 0);
+                        *pDeviceId = strtoul(sp_0x24, 0, 0);
                     }
                     break;                
 
@@ -608,8 +608,8 @@ int CTRL_GetOptions(char* a,
                 &sp_0xac[0],
                 &sp_0xa4, 
                 &sp_0xa0, 
-                &r4->wData_2,
-                &r4->wData_0, 
+                &r4->VendorId,
+                &r4->DeviceId, 
                 &sp_0x90[0]);
 
             r4->Data_0x68 = sp_0xb0;
