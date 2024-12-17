@@ -197,10 +197,16 @@ extern void MENTOR_LoadFIFO(struct Mentor_Controller*, uint16_t, int, uint16_t);
 extern void MENTOR_ReadFIFO(struct Mentor_Controller*, struct _musb_transfer*, uint16_t, int, uint16_t);
 
 
+#ifndef MB86H60
+
 int dma_nums = 0; //0x0000c010
 int g_dma_nums = 0; //0x0000c014
+uint8_t usbss_intstat_Val[2]; //0x0000c018
+uint32_t g_usb_tx_intr[2]; //0x0000c01c
 struct _bdbase* g_bdbase; //0x0000c028, size???
-    
+uint32_t g_usb_rx_intr[2]; //0x0000c02c
+
+#endif
 
 
 #ifdef MB86H60
@@ -2623,6 +2629,16 @@ int MENTOR_BuildEDList(struct Mentor_Controller* a, struct Struct_0xa4** b)
 }
 
 
+int mentor_abort_dma_transfer(struct Mentor_Controller* a, struct Struct_0xa4* b)
+{
+#if 1
+    fprintf(stderr, "mentor_abort_dma_transfer: TODO\n");
+#endif
+
+    return 0;
+}
+
+
 
 /* 0x00003bd8 - todo */
 const struct sigevent * dma_interrupt_handler(void* a, int b)
@@ -2653,9 +2669,240 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
     if (g_dma_nums == 0)
     {
         //0x00003c10
-        r7->Data_4__;
+        uint32_t status = *((volatile uint32_t*)(r7->Data_4__ + 0x28));
+        if (status != 0)
+        {
+            *((volatile uint32_t*)(r7->Data_4__ + 0x28)) = status;
+
+            if (status & 0x01)
+            {
+                usbss_intstat_Val[0] = 1;
+                usbss_intstat_Val[1] = 1;
+            }
+        }
+        //0x00003c40
+        uint32_t r1 = *((volatile uint32_t*)(r7->Data_4__ + 0x4098));
+        uint32_t r3 = *((volatile uint32_t*)(r7->Data_4__ + 0x409c));
+        uint32_t r0 = *((volatile uint32_t*)(r7->Data_4__ + 0x40a0));
+
+        g_dma_nums = dma_nums;
+
+        g_usb_tx_intr[0] = ((r3 & 0xfff) << 3) | (r1 >> 29);
+        g_usb_rx_intr[0] = ((r3 & 0xfffe000) >> 13);
+        g_usb_tx_intr[1] = ((r0 & 0xfff) << 3) | (r3 >> 29);
+        g_usb_rx_intr[1] = ((r0 & 0xfffe000) >> 13);
     }
     //0x00003cd8
+    uint32_t fp_0x34 = g_usb_tx_intr[r7->bData_0xc];
+    uint32_t r4 = g_usb_rx_intr[r7->bData_0xc];
+
+    g_dma_nums--;
+
+    //if (r4 != 0)
+    {
+        //0x00003d20
+        //int fp_0x30 = &r7->Data_0x18;
+        int r8 = 0;
+        //int sb = &r5->Data_0xd0;
+        //int sl = 0;
+        //struct Mentor_Controller* r6 = r5;
+
+        while (r4 != 0)
+        {
+            //0x00003d38
+            if (r4 & 0x01)
+            {
+                //0x00003d40
+                uint32_t r1 = *((volatile uint32_t*)(r7->Data_4__ + 
+                    0x600c + (((r7->bData_0xc * 32) + r8 + 0x6d) * 16)));
+                
+                struct _musb_transfer* r5_ = lookup_by_paddr(r5/*r6*/, r1 & ~0x1f);
+                if (r5_ != 0)
+                {
+                    //0x00003d74
+                    struct _musb_transfer* ip = r5_->link.sqe_next;
+
+                    InterruptLock(&r5->Data_0xd0/*sb*/);
+
+                    if (ip->flags & 0x800)
+                    {
+                        //0x00003db4
+                        *((volatile uint32_t*)(r7->Data_0 + 0xd0)) &= 
+                            ~(0x03 << ((r5_->Data_0x30->Data_0x28 - 1) << 1));
+
+                        *((volatile uint32_t*)(r7->Data_0 + 0x74)) &= 
+                            ~(0x03 << ((r5_->Data_0x30->Data_0x28 - 1) << 1));
+                    }
+                    //0x00003df8
+                    InterruptUnlock(&r5->Data_0xd0/*sb*/);
+
+                    (ip->Data_0x3c)(r5/*r6*/, ip, r5_->xfer_buffer, 0/*sl*/);
+
+                    InterruptLock(&r5->Data_0xd0/*sb*/);
+
+                    if ((r5_->Data_0x34 = r7->Data_0x18) != NULL)
+                    {
+                        r7->Data_0x18->Data_0x38 = &r5_->Data_0x34;
+                    }
+                    r7->Data_0x18 = r5_;
+                    r5_->Func_0x38/*TODO!!!*/ = /*fp_0x30*/&r7->Data_0x18;
+
+                    InterruptUnlock(&r5->Data_0xd0/*sb*/);
+                }
+                //0x00003e8c
+            }
+            //0x00003e8c
+            r4 >>= 1;
+            r8++;
+        } //while (r4 != 0)
+    }
+    //0x00003e9c
+    //if (fp_0x34 != 0)
+    {
+        //0x00003ea8
+        //fp_0x48 = &r7->Data_0x18;
+        int r8 = 0x10;
+        int r6 = 0;
+        int r4 = 0;
+        int fp_0x30 = 0;
+        //sl = 0x102;
+        //sb = 0x4e1f;
+        //fp_0x4c = &r5->Data_0xd0;
+        //fp_0x3c = 0;
+        //struct Struct_0xe4* fp_0x38 = r7;
+        //r7 = fp_0x34;
+
+        while (fp_0x34 != 0)
+        {
+            //0x00003edc
+            if (fp_0x34/*r7*/ & 0x01)
+            {
+                //0x00003ee4
+                uint32_t r1 = *((volatile uint32_t*)(r7/*fp_0x38*/->Data_4__ +
+                    0x600c + (((r7/*fp_0x38*/->bData_0xc * 32) + fp_0x30 + 0x5d) * 16)));
+
+                struct _musb_transfer* fp_0x34_ = lookup_by_paddr(r5, r1 & ~0x1f);
+                if (fp_0x34_ != 0)
+                {
+                    //0x00003f24
+                    struct _musb_transfer* fp_0x44 = fp_0x34_->link.sqe_next; //Data_0x2c;
+                    int r3 = *((volatile uint16_t*)(r5->Data_0x14 + /*sl*/0x102 + r8));
+
+                    while ((r6 <= 4) && (r4 <= 19999/*sb*/))
+                    {
+                        //0x00003f48
+                        if (r3 & 0x03)
+                        {
+                            r6 = 0/*fp_0x3c*/;
+                        }
+                        else
+                        {
+                            r6++;
+                        }
+                        nanospin_ns(1000);
+
+                        r4++;
+                        r3 = *((volatile uint16_t*)(r5->Data_0x14 + /*sl*/0x102 + r8));
+                    }
+                    //0x00003f7c
+                    if ((fp_0x44 != 0) && (fp_0x44->flags & 0x800))
+                    {
+                        //0x00003f94
+                        (fp_0x44->Data_0x3c)(r5, fp_0x44, fp_0x44->Data_0x10, 0);
+                    }
+                    //0x00003fac
+                    InterruptLock(&r5->Data_0xd0/*fp_0x4c*/);
+
+                    if ((fp_0x34_->Data_0x34 = r7/*fp_0x38*/->Data_0x18) != NULL)
+                    {
+                        r7/*fp_0x38*/->Data_0x18->Data_0x38 = &fp_0x34_->Data_0x34;
+                    }
+                    r7/*fp_0x38*/->Data_0x18 = fp_0x34_;
+                    fp_0x34_->Func_0x38/*TODO!!!*/ = /*fp_0x48*/&r7->Data_0x18;
+
+                    InterruptUnlock(&r5->Data_0xd0);
+                }
+                //0x00004030
+            }
+            //0x00004030
+            r8 += 0x10;
+            fp_0x34/*r7*/ >>= 1;
+            fp_0x30++;
+            //->0x00003edc
+        } //while (fp_0x34 != 0)
+    }
+    //0x00004050
+    if (usbss_intstat_Val[r7->bData_0xc] != 0)
+    {
+        //0x0000406c
+        int sb = r7->bData_0xc << 2;
+        //if (sb < ((r7->bData_0xc + 1) << 2))
+        {
+            //0x0000407c
+            uint32_t fp_0x30 = (sb + 0x1008) << 2;
+            uint32_t sl = sb << 2;
+
+            sl = sl + 5;
+            //r8 = r7;
+            //r7 = r5;
+            while (sb < ((r7->bData_0xc + 1) << 2))
+            {
+                //0x0000409c
+                uint32_t r6 = *((volatile uint32_t*)(r7/*r8*/->Data_4__ + fp_0x30));
+                if (r6 != 0)
+                {
+                    int r5_ = sl - 4;
+                    while ((r5_ != sl)) // && (r6 != 0))
+                    {
+                        //0x000040b4
+                        //int r5_ = sl - 4;
+                        //0x000040b8
+                        if (r6 & 0xff)
+                        {
+                            //0x000040c0
+                            int r3 = r5_;
+                            if (r5_ > 0x0f)
+                            {
+                                r3 = r5_ - 0x0f;
+                            }
+
+                            struct _musb_transfer* r4 = r5/*r7*/->Data_0xc4[r3];
+                            if (r4 != NULL)
+                            {
+                                //0x000040dc
+                                mentor_abort_dma_transfer(r5/*r7*/, r4->Data_0x30);
+
+                                (r4->Data_0x3c)(r5/*r7*/, r4, NULL, 8);
+                            }
+                            //0x00004100
+                        }
+                        //0x00004100
+                        r5_++;
+                        r6 >>= 8;
+                        //->0x000040b8
+                    }
+                    //0x00004110
+                }
+                //0x00004110
+                sb++;
+                fp_0x30 += 4;
+                sl += 4;
+            } //while (sb < ((r7->bData_0xc + 1) << 2))
+        }
+        //0x0000413c
+        usbss_intstat_Val[r7->bData_0xc] = 0;
+
+    } //if (usbss_intstat_Val[r7->bData_0xc] != 0)
+    //0x00004150
+    if (g_dma_nums == 0)
+    {
+        *((volatile uint32_t*)(r7->Data_4__ + 0x20)) = 0;
+    }
+
+    if (!SIMPLEQ_EMPTY(&r5->transfer_complete_q))
+    {
+        return &r5->Data_0x5c;
+    }
 
 #endif
 
@@ -4448,11 +4695,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     InterruptLock(&r6->Data_0xd0);
 
 #if 1
-#if 0
-    td->Data_0x2c.Data_0 = NULL;
-#else
     td->link.sqe_next = NULL;
-#endif
     r5->Data_0xc->Data_0 = td;
 
 #if 0
