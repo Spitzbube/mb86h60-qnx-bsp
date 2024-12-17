@@ -82,15 +82,30 @@ struct Struct_0xa4
 };
     
 
+
+struct _bdbase
+{
+    struct _bdbase_inner 
+    {
+        int fill_0[13]; //0
+        int Data_0x34; //0x34
+        int Data_0x38; //0x38
+        int fill_0x3c; //0x3c
+        //0x40
+    } Data_0[241]; //0 +0xf1 * 0x40 = 0x3c40
+    //0x3c40
+};
+
+
 struct Struct_0xe4
 {
     void* Data_0; //0
     void* Data_4; //4
-    int fill_8; //8
+    struct _bdbase* Data_8; //8
     uint8_t bData_0xc; //0xc
     int Data_0x10; //0x10
-    int fill_0x14; //0x14
-    int Data_0x18; //0x18
+    int Data_0x14; //0x14
+    struct _bdbase_inner* Data_0x18; //0x18
     struct
     {
         int fill_0[14]; //0
@@ -183,6 +198,11 @@ extern void MENTOR_LoadFIFO(struct Mentor_Controller*, uint16_t, int, uint16_t);
 extern void MENTOR_ReadFIFO(struct Mentor_Controller*, struct Struct_0xa0*, uint16_t, int, uint16_t);
 
 
+int dma_nums = 0; //0x0000c010
+struct _bdbase* g_bdbase; //0x0000c028, size???
+    
+
+
 #ifdef MB86H60
 
 volatile uint8_t bUsbIntStatus;
@@ -212,6 +232,27 @@ void dma_SetUsbMode_LengthInput(struct Mentor_Controller* c, int a)
 	a = (a << 1) & mask;
 
 	dma_dwUsbMode = (dma_dwUsbMode & ~mask) | a;
+
+    ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_MODE/sizeof(uint32_t)] = dma_dwUsbMode;
+}
+
+void dma_SetUsbMode_PacedEpWriteChannel(struct Mentor_Controller* c, uint32_t value)
+{
+    uint32_t mask = MB86H60_DMA_USB_MODE_PACED_EP_WRITE_CHANNEL;
+    value = (value << 3) & mask;
+
+    dma_dwUsbMode = (dma_dwUsbMode & ~mask) | value;
+
+    ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_MODE/sizeof(uint32_t)] = dma_dwUsbMode;
+}
+
+
+void dma_SetUsbMode_PacedEpReadChannel(struct Mentor_Controller* c, uint32_t value)
+{
+    uint32_t mask = MB86H60_DMA_USB_MODE_PACED_EP_READ_CHANNEL;
+    value = (value << 5) & mask;
+
+    dma_dwUsbMode = (dma_dwUsbMode & ~mask) | value;
 
     ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_MODE/sizeof(uint32_t)] = dma_dwUsbMode;
 }
@@ -789,7 +830,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
     fprintf(stderr, "MENTOR_StartEtd: TODO!!!\n");
 #endif
 
-    int fp_0x30;
+    int ep; //fp_0x30;
     //fp_0x2c = _GLOBAL_OFFSET_TABLE_;
 
     struct Struct_0xa4* r8 = r6->Data_0x30;
@@ -804,11 +845,11 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
         //0x00006cf4
         r8->bData_0x1f = 0;
 
-        fp_0x30 = r8->Data_0x28;
-        r4->Data_0xc4[fp_0x30] = r6;
+        ep = r8->Data_0x28;
+        r4->Data_0xc4[ep] = r6;
         r6->flags |= 0x100;
 
-        int r7 = fp_0x30 * 16;
+        int r7 = ep * 16;
 
         uint16_t wCsr;
         int retry/*r5*/ = 1000;
@@ -928,13 +969,13 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 {
                     //0x00006f84
                     sl = sb & 0x2792;
-                    sl |= 0x6000;
+                    sl |= (RXCSR_DMA_REQ_EN | RXCSR_AUTOREQ); //0x6000;
 
                     mentor_start_dma_transfer(r4,
                         r8,
                         r6,
                         1,
-                        fp_0x30,
+                        ep,
                         r8->Data_0x2c,
                         r6->Data_8 + r6->bytes_xfered,
                         r5);
@@ -987,7 +1028,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
             //loc_7160
             HW_Write16(r4, 0x100 + r7, sl | (r0 << 11));
 
-            MENTOR_LoadFIFO(r4, fp_0x30, r6->xfer_buffer, r5);
+            MENTOR_LoadFIFO(r4, ep, r6->xfer_buffer, r5);
 
             HW_Write16(r4, 0x102 + r7, 
                 (sb & ~0x9400) | 0x2080 | 0x27);
@@ -1200,15 +1241,54 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
 /* 0x000025c8 - todo */
 int mentor_start_dma_transfer(struct Mentor_Controller* r0, 
     struct Struct_0xa4* r1, struct Struct_0xa0* r2, int r3_,
-    int r4/*sp_0x2c*/, int f/*sp_0x30*/, int r6/*sp_0x34*/, int r5/*sp_0x38*/)
+    int r4/*sp_0x2c*/, int f/*sp_0x30*/, int r6/*sp_0x34*/, uint32_t r5/*sp_0x38*/)
 {
-#if 0
-    fprintf(stderr, "mentor_start_dma_transfer: TODO!!!\n");
-#endif
+#ifdef MB86H60
+
+    fprintf(stderr, "mentor_start_dma_transfer: rx=%d, ep=%d, f=%d, r6=0x%x, r5=%d\n",
+        r3_, r4, f, r6, r5);
+
+    int channel = 3;
+    int ch_offset = 0x40 * channel;
+
+    uint32_t fifo_addr = 0x880 + (r4/*bEndpoint*/ << 4);
+    uint32_t maxPacketSize = 512;
+    uint32_t line = r5 / maxPacketSize;
+
+    if (r3_)
+    {
+        //rx
+        dma_SetUsbMode_PacedEpReadChannel(r0, r4);
+
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LENGTH + ch_offset)/sizeof(uint32_t)] = r5;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LLADDR + ch_offset)/sizeof(uint32_t)] = 0;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDADDR + ch_offset)/sizeof(uint32_t)] = fifo_addr;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDLINE + ch_offset)/sizeof(uint32_t)] = 0;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDINC + ch_offset)/sizeof(uint32_t)] = 4;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDLPADDR + ch_offset)/sizeof(uint32_t)] = fifo_addr;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRADDR + ch_offset)/sizeof(uint32_t)] = r6;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLINE + ch_offset)/sizeof(uint32_t)] = line;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRINC + ch_offset)/sizeof(uint32_t)] = maxPacketSize;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLPADDR + ch_offset)/sizeof(uint32_t)] = 0;
+
+        uint32_t dwConfig = (0x07 << 8) | (1 << 2);
+
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_CONFIG + ch_offset)/sizeof(uint32_t)] = dwConfig;
+    }
+    else
+    {
+        //tx
+        dma_SetUsbMode_PacedEpWriteChannel(r0, r4);
+
+        //TODO!!!
+    }
+
+#else
 
     struct Struct_0xe4* ip = r0->Data_0xe4;
 
     InterruptLock(&r0->Data_0xd0);
+
 
     struct
     {
@@ -1364,6 +1444,8 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
     *((uint32_t*)((uint8_t*)(ip->Data_4) + 0x600c + (r7_ * 16))) = 
         r3->Data_0x28 | 0x0a;
+
+#endif
 
     return 0;
 }
@@ -1910,6 +1992,7 @@ void mentor_bottom_half(struct Mentor_Controller* r5)
 }
 
 
+
 /* 0x00005a04 - todo */
 const struct sigevent * mentor_interrupt_handler(void* a, int b)
 {
@@ -1922,6 +2005,7 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
 
 #ifdef MB86H60
     int status = dma_GetUsbIntStatus(r4);
+    dma_SetUsbIntClear(r4, status);
     if (status & 1) //USB General IRQ?
     {
 #endif
@@ -1965,8 +2049,38 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
     //loc_5a90
     mentor_clr_ext_int(r4);
 #ifdef MB86H60
-        dma_SetUsbIntClear(r4, 1);
+//        dma_SetUsbIntClear(r4, 1);
     } //if (status & 1)
+    
+    if (status & (7 << 1))
+    {
+        //USB EP DMA Write IRQ
+        int ep;
+        for (ep = 1; ep <= 3; ep++)
+        {
+            int ep_mask = (1 << ep);
+            if (status & ep_mask)
+            {
+                //Handle write irq  for ep...
+            }
+        }
+//        dma_SetUsbIntClear(r4, (7 << 1));
+    }
+    
+    if (status & (7 << 4))
+    {
+        //USB EP DMA Read IRQ
+        int ep;
+        for (ep = 1; ep <= 3; ep++)
+        {
+            int ep_mask = (1 << (3 + ep));
+            if (status & ep_mask)
+            {
+                //Handle read irq  for ep...
+            }
+        }
+//        dma_SetUsbIntClear(r4, (7 << 4));
+    }
 #endif
 
     if (r4->Data_0x98 == 0)
@@ -2011,7 +2125,8 @@ static void* mentor_interrupt_thread(void* a)
 //    r4->Data_0x48 = r7->pci_inf->bData_0x14...; //TODO!!!
 #endif
 
-    r4->Data_0x4c = InterruptAttach(r4->Data_0x48, mentor_interrupt_handler, r4, 0xe8, 8);
+    r4->Data_0x4c = InterruptAttach(r4->Data_0x48, 
+        mentor_interrupt_handler, r4, 0xe8, 8);
     if (r4->Data_0x4c == -1)
     {
         mentor_slogf(r4, 12, 2, 1, "%s - %s: InterruptAttach failed.",
@@ -2530,6 +2645,146 @@ int MENTOR_BuildEDList(struct Mentor_Controller* a, struct Struct_0xa4** b)
 }
 
 
+
+/* 0x00003bd8 - todo */
+const struct sigevent * dma_interrupt_handler(void* a, int b)
+{
+#if 0
+    fprintf(stderr, "dma_interrupt_handler: TODO\n");
+#endif
+
+    struct Mentor_Controller* r5 = a;
+    struct Struct_0xe4* r7 = r5->Data_0xe4;
+
+#ifdef MB86H60
+
+    // Read IRQ status
+    uint32_t status = ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_INT_STATUS/sizeof(uint32_t)];
+
+    //Stop the channel by config reg
+    int channel = 3;
+    int ch_offset = 0x40 * channel;
+
+    ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_CONFIG + ch_offset)/sizeof(uint32_t)] = 0;
+
+    // Clear IRQ
+    ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_INT_CLEAR/sizeof(uint32_t)] = status;
+
+#else
+
+#endif
+
+    return NULL;
+}
+
+
+
+static int dma_init(struct Mentor_Controller* r6)
+{
+    int sl;
+    struct Struct_0xe4* r4_ = r6->Data_0xe4;
+
+    mentor_slogf(r6, 12, 2, 3, "devu-dm816x-mg.so: init dma");
+
+    //0x0000305c
+
+#ifdef MB86H60
+    r4_->Data_0x10 = MB86H60_INTR_DMA;
+
+    r4_->Data_0x14 = InterruptAttach(r4_->Data_0x10, 
+        dma_interrupt_handler, r6, 0xe8, 0x08);
+
+#else
+    r4_->Data_0x14 = InterruptAttach(r4_->Data_0x10, 
+        dma_interrupt_handler, r6, 0xe8, 0x08);
+#endif
+
+    if (r4_->Data_0x14 == -1)
+    {
+        //0x00003088
+        sl = errno;
+
+        mentor_slogf(r6, 12, 2, 0, "devu-dm816x-mg.so: %s - failed to attached dma intr",
+            "dma_init");
+
+        return sl;
+    }
+
+#ifdef MB86H60
+    //TODO!!!
+
+#else
+    //loc_30cc
+    if (dma_nums == 0)
+    {
+        //0x000030e0
+        struct Struct_0xe4* r7 = r6->Data_0xe4;
+
+        r7->Data_8 = mmap(NULL, 0x8000, 0xb00, 0x90002, -1, 0);
+        if (r7->Data_8 == -1)
+        {
+            //0x00003110
+            mentor_slogf(r6, 12, 2, 0,
+                "devu-dm816x-mg.so : %s - failed to alloc descriptor ram",
+                "create_bds");
+            sl = 12;
+            //->loc_33a0
+        }
+        else
+        {
+            //loc_3148
+            off64_t fp_0x30;
+
+            sl = mem_offset64(r7->Data_8, -1, 0x8000, &fp_0x30, NULL);
+            if (sl != 0)
+            {
+                //0x00003168
+                mentor_slogf(r6, 12, 2, 0,
+                    "devu-dm816x-mg.so : %s - failed to get bdesc paddr",
+                    "create_bds");
+                //->loc_3394
+                munmap(r7->Data_8, 0x8000);
+                //loc_33a0
+                mentor_slogf(r6, 12, 2, 0,
+                    "devu-dm816x-mg.so : %s - failed to create BDs",
+                    "dma_init");
+                //->loc_35bc
+            }
+            //loc_319c
+        }
+    }
+    //loc_3408
+    r4_->Data_8 = &g_bdbase[r4_->bData_0xc];
+    r4_->Data_0x18 = 0;
+    r4_->Data_0x1c = 0;
+    //r5 = &r4_->Data_0x18;
+    //ip = 0x34;
+    //r0 = 0x38;
+    int r3_;
+    for (r3_ = 0; r3_ < 241; r3_++) //r3_ < 0x3c40; r3_ += 0x40)
+    {
+        //loc_3440
+        r4_->Data_8->Data_0[r3_].Data_0x34 = r4_->Data_0x18;
+        if (r4_->Data_8->Data_0[r3_].Data_0x34 != NULL)
+        {
+            r4_->Data_0x18->Data_0x38 = &r4_->Data_8->Data_0[r3_].Data_0x34;
+        }
+        r4_->Data_0x18 = &r4_->Data_8->Data_0[r3_];
+        r4_->Data_8->Data_0[r3_].Data_0x38 = &r4_->Data_0x18;
+    }
+    //0x00003484
+
+
+    fprintf(stderr, "mentor_board_specific_init1: init dma: TODO!!!\n");
+
+    //TODO!!!
+#endif
+
+    return 0;
+}
+
+
+
 /* 0x00002e08 - todo */
 int mentor_board_specific_init1(struct Mentor_Controller* r6)
 {
@@ -2613,16 +2868,24 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
     //0x00003030
     r5->Data_0x10 = 0x11;
 
-//    r4 = r6->Data_0xe4;
+    sl = dma_init(r6);
+    if (sl != 0)
+    {
+        //->loc_35bc
+        mentor_slogf(r6, 12, 2, 0, 
+            "devu-dm816x-mg.so : %s - couldn't init the dma... restart the driver with nodma option",
+            "mentor_board_specific_init1");
 
-    mentor_slogf(r6, 12, 2, 3, "devu-dm816x-mg.so: init dma");
-
-    fprintf(stderr, "mentor_board_specific_init1: init dma: TODO!!!\n");
-
+#ifdef MB86H60
     //TODO!!!
-
-    return 0;
-
+#else
+        munmap_device_memory(r5->Data_4, 0x8000);
+#endif
+        //loc_35f4
+        free(r5);
+    }
+    //loc_35fc
+    return sl;
 }
 
 
@@ -2638,8 +2901,13 @@ int mentor_board_specific_init2(struct Mentor_Controller* ctrl)
     MGC_Write16(ctrl, MGC_O_HDRC_INTRTXE, 0xffff);
     MGC_Write16(ctrl, MGC_O_HDRC_INTRRXE, 0xfffe);
     MGC_Write8(ctrl, MGC_O_HDRC_INTRUSBE, (1 << 4)); //0xff);
-    dma_SetUsbIntMask(ctrl, 0x7e); //Bit 0: USB General IRQ
-    //TODO: USB DMA Endpoint Read/Write Request IRQ (for endpoints 1, 2, 3)
+
+    uint32_t dma_usb_int_mask = 0x7f;
+    dma_usb_int_mask &= ~(1 << 0); //Bit 0: USB General IRQ
+//    dma_usb_int_mask &= ~(7 << 1); //Bit 1...3: USB DMA Endpoint Write Request IRQ
+//    dma_usb_int_mask &= ~(7 << 4); //Bit 4...6: USB DMA Endpoint Read Request IRQ
+//    dma_usb_int_mask &= ~(1 << 5);
+    dma_SetUsbIntMask(ctrl, dma_usb_int_mask); 
 
 #else
     struct Struct_0xe4* r3 = ctrl->Data_0xe4;

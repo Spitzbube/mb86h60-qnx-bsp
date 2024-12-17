@@ -3,6 +3,17 @@
 #define MUSB_CSR0					0x102  // 16-bit
 
 
+#define MUSB_RXCSR(n)				( 0x106 + ( 0x10 * (n) ) ) // 16-bit
+#define MUSB_IDX_RXCSR				0x16	// 16-bit
+
+	/* peripheral */
+	#define RXCSR_DMA_REQ_EN				( 1 << 13 )
+
+	/* host mode */ 	
+	//#define RXCSR_DMA_REQ_EN				( 1 << 13 )
+	#define RXCSR_AUTOREQ					( 1 << 14 )
+
+
 #define MUSB_COUNT0					0x108	// 16-bit
 
 
