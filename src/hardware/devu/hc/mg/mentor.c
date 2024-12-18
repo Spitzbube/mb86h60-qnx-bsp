@@ -83,21 +83,6 @@ struct Struct_0xa4
 };
     
 
-
-struct _bdbase
-{
-    struct _bdbase_inner 
-    {
-        int fill_0[13]; //0
-        int Data_0x34; //0x34
-        int Data_0x38; //0x38
-        int fill_0x3c; //0x3c
-        //0x40
-    } Data_0[241]; //0 +0xf1 * 0x40 = 0x3c40
-    //0x3c40
-};
-
-
 struct Struct_0xe4_Inner_0x1c
 {
     int Data_0; //0
@@ -118,7 +103,8 @@ struct Struct_0xe4_Inner_0x1c
 #else
     LIST_ENTRY(Struct_0xe4_Inner_0x1c) link; //0x34
 #endif
-    //???
+    int fill_0x3c; //0x3c
+    //0x40???
 };
 
 
@@ -126,7 +112,7 @@ struct Struct_0xe4
 {
     void* Data_0; //0
     void* Data_4__; //4
-    struct _bdbase* Data_8; //8
+    struct Struct_0xe4_Inner_0x1c* Data_8; //8
     uint8_t bData_0xc; //0xc
     int Data_0x10; //0x10
     int Data_0x14; //0x14
@@ -205,7 +191,7 @@ struct Mentor_Controller
     int fill_0xcc; //0xcc
     struct intrspin Data_0xd0; //0xd0
     uint16_t wData_0xd4; //0xd4
-    struct Struct_0xe4* Data_0xe4; //0xe4
+    struct Struct_0xe4* dma_hdl; //0xe4
     //0xe8
 };
 
@@ -223,7 +209,7 @@ int dma_nums = 0; //0x0000c010
 int g_dma_nums = 0; //0x0000c014
 uint8_t usbss_intstat_Val[2]; //0x0000c018
 uint32_t g_usb_tx_intr[2]; //0x0000c01c
-struct _bdbase* g_bdbase; //0x0000c028, size???
+struct Struct_0xe4_Inner_0x1c g_bdbase[2][241]; //0x0000c028, size???, TODO!!!
 uint32_t g_usb_rx_intr[2]; //0x0000c02c
 
 #endif
@@ -1311,12 +1297,11 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
 #else
 
-    struct Struct_0xe4* ip = r0->Data_0xe4;
+    struct Struct_0xe4* ip = r0->dma_hdl;
 
     InterruptLock(&r0->Data_0xd0);
 
     struct Struct_0xe4_Inner_0x1c* r3 = ip->Data_0x18.lh_first;
-
     if (r3 == NULL)
     {
         //0x00002624
@@ -1324,26 +1309,8 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         return 12; //->0x000028d8
     }
     //0x00002640
-#if 0
-    if (r3->link.le_next != NULL)
-    {
-        r3->link.le_next->link.le_prev = r3->link.le_prev;
-    }
-    *(r3->link.le_prev) = r3->link.le_next;
-#else
     LIST_REMOVE(r3, link);
-#endif
-
-#if 0
-    if ((r3->link.le_next = ip->Data_0x1c.lh_first) != NULL)
-    {
-        ip->Data_0x1c.lh_first->link.le_prev = &r3->link.le_next;
-    }
-    ip->Data_0x1c.lh_first = r3;
-    r3->link.le_prev = &ip->Data_0x1c.lh_first;
-#else
     LIST_INSERT_HEAD(&ip->Data_0x1c, r3, link);
-#endif
 
     InterruptUnlock(&r0->Data_0xd0);
 
@@ -1723,7 +1690,7 @@ void mentor_get_ext_intstatus(struct Mentor_Controller* ctrl,
 #define AM35X_TX_INTR_MASK	(AM35X_TX_EP_MASK << AM35X_INTR_TX_SHIFT)
 #define AM35X_RX_INTR_MASK	(AM35X_RX_EP_MASK << AM35X_INTR_RX_SHIFT)
 
-    struct Struct_0xe4* r4 = ctrl->Data_0xe4;
+    struct Struct_0xe4* r4 = ctrl->dma_hdl;
 
     /* Get endpoint interrupts */
     uint32_t epintr = ((volatile uint32_t*)(r4->Data_0))[0x30/4];
@@ -2649,7 +2616,7 @@ struct Struct_0xe4_Inner_0x1c* lookup_by_paddr(struct Mentor_Controller* r3, uin
     fprintf(stderr, "lookup_by_paddr: TODO\n");
 #endif
 
-    struct Struct_0xe4* r2 = r3->Data_0xe4;
+    struct Struct_0xe4* r2 = r3->dma_hdl;
 
     InterruptLock(&r3->Data_0xd0);
 
@@ -2678,7 +2645,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
 #endif
 
     struct Mentor_Controller* r5 = a;
-    struct Struct_0xe4* r7 = r5->Data_0xe4;
+    struct Struct_0xe4* r7 = r5->dma_hdl;
 
 #ifdef MB86H60
 
@@ -2934,7 +2901,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
 static int dma_init(struct Mentor_Controller* r6)
 {
     int sl;
-    struct Struct_0xe4* r4_ = r6->Data_0xe4;
+    struct Struct_0xe4* r4_ = r6->dma_hdl;
 
     mentor_slogf(r6, 12, 2, 3, "devu-dm816x-mg.so: init dma");
 
@@ -2970,7 +2937,7 @@ static int dma_init(struct Mentor_Controller* r6)
     if (dma_nums == 0)
     {
         //0x000030e0
-        struct Struct_0xe4* r7 = r6->Data_0xe4;
+        struct Struct_0xe4* r7 = r6->dma_hdl;
 
         r7->Data_8 = mmap(NULL, 0x8000, 0xb00, 0x90002, -1, 0);
         if (r7->Data_8 == -1)
@@ -3003,26 +2970,22 @@ static int dma_init(struct Mentor_Controller* r6)
                 //->loc_35bc
             }
             //loc_319c
+
+            //TODO!!!
         }
     }
     //loc_3408
-    r4_->Data_8 = &g_bdbase[r4_->bData_0xc];
+    r4_->Data_8 = g_bdbase[r4_->bData_0xc]; //TODO!!!
     r4_->Data_0x18.lh_first = NULL;
     r4_->Data_0x1c.lh_first = NULL;
     //r5 = &r4_->Data_0x18;
     //ip = 0x34;
     //r0 = 0x38;
-    int r3_;
-    for (r3_ = 0; r3_ < 241; r3_++) //r3_ < 0x3c40; r3_ += 0x40)
+    uint32_t i;
+    for (i = 0; i < 241; i++)
     {
         //loc_3440
-        r4_->Data_8->Data_0[r3_].Data_0x34 = r4_->Data_0x18.lh_first;
-        if (r4_->Data_8->Data_0[r3_].Data_0x34 != NULL)
-        {
-            r4_->Data_0x18.lh_first->link.le_prev = &r4_->Data_8->Data_0[r3_].Data_0x34;
-        }
-        r4_->Data_0x18.lh_first = &r4_->Data_8->Data_0[r3_];
-        r4_->Data_8->Data_0[r3_].Data_0x38 = &r4_->Data_0x18;
+        LIST_INSERT_HEAD(&r4_->Data_0x18, &r4_->Data_8[i], link);
     }
     //0x00003484
 
@@ -3053,7 +3016,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
     r6->Data_0x38 = 0x400;
     r6->Data_0x18 = 16;
     r6->flags |= 0x200;
-    r6->Data_0xe4 = r5 = calloc(1, 0x20);
+    r6->dma_hdl = r5 = calloc(1, 0x20);
 
     if (r5 == NULL)
     {
@@ -3064,7 +3027,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
     }
     //loc_2e90
 #ifdef MB86H60
-    dma_regs = mmap_device_memory(NULL/*void * addr*/,
+    r5->Data_4__ = dma_regs = mmap_device_memory(NULL/*void * addr*/,
                            MB86H60_DMA_SIZE/*size_t len*/,
                            0xb00/*int prot*/,
                            0x10001/*int flags*/,
@@ -3163,7 +3126,7 @@ int mentor_board_specific_init2(struct Mentor_Controller* ctrl)
     dma_SetUsbIntMask(ctrl, dma_usb_int_mask); 
 
 #else
-    struct Struct_0xe4* r3 = ctrl->Data_0xe4;
+    struct Struct_0xe4* r3 = ctrl->dma_hdl;
 
     ((volatile uint32_t*)(r3->Data_0))[0x40/4] = 0xfffeffff; //Rx/Tx?
     ((volatile uint32_t*)(r3->Data_0))[0x44/4] = 0x1ff; //Usb Core?
