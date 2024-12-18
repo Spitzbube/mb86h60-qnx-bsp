@@ -107,12 +107,19 @@ struct Struct_0xe4
     int Data_0x10; //0x10
     int Data_0x14; //0x14
     struct _bdbase_inner* Data_0x18; //0x18
-    struct
+    struct Struct_0xe4_Inner_0x1c
     {
-        int fill_0[14]; //0
-        int Data_0x38; //0x38
+        int fill_0[10]; //0
+        uint32_t Data_0x28; //0x28
+        int fill_0x2c[2]; //0x2c
+#if 0
+        struct Struct_0xe4_Inner_0x1c* le_next; //0x34
+        struct Struct_0xe4_Inner_0x1c** le_prev; //0x38
+#else
+        LIST_ENTRY(Struct_0xe4_Inner_0x1c) link; //0x34
+#endif
         //???
-    }* Data_0x1c; //0x1c
+    }* lh_first; //0x1c
     //0x20
 };
 
@@ -1335,13 +1342,13 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         r3->Data_0x34->Data_0x38 = r3->Data_0x38;
     }
     r3->Data_0x38->Data_0 = r3->Data_0x34;
-    r3->Data_0x34 = ip->Data_0x1c;
-    if (r3->Data_0x34 != 0)
+    
+    if ((r3->Data_0x34 = ip->lh_first) != NULL)
     {
-        ip->Data_0x1c->Data_0x38 = &r3->Data_0x34;
+        ip->lh_first->link.le_prev = &r3->Data_0x34;
     }
-    ip->Data_0x1c = r3;
-    r3->Data_0x38 = &ip->Data_0x1c;
+    ip->lh_first = r3;
+    r3->Data_0x38 = &ip->lh_first;
 
     InterruptUnlock(&r0->Data_0xd0);
 
@@ -2639,6 +2646,62 @@ int mentor_abort_dma_transfer(struct Mentor_Controller* a, struct Struct_0xa4* b
 }
 
 
+/* 0x000028e8 - complete */
+struct Struct_0xe4_Inner_0x1c* lookup_by_paddr(struct Mentor_Controller* r3, uint32_t b)
+{
+#if 0
+    fprintf(stderr, "lookup_by_paddr: TODO\n");
+#endif
+
+    struct Struct_0xe4* r2 = r3->Data_0xe4;
+
+    InterruptLock(&r3->Data_0xd0);
+
+#if 0
+    struct Struct_0xe4_Inner_0x1c* r0 = r2->Data_0x1c;
+    while (r0 != NULL)
+    {
+        //0x0000293c
+        if (r0->Data_0x28 == b)
+        {
+            //0x00002958
+#if 1
+            if (r0->link.le_next != NULL)
+            {
+                r0->link.le_next->link.le_prev = r0->link.le_prev;
+            }
+            *(r0->link.le_prev) = r0->link.le_next;
+#else
+            LIST_REMOVE(r0, link);
+#endif
+            //->0x00002984
+            break;
+        }
+        //0x00002978
+        r0 = r0->link.le_next;
+    }
+#else
+    struct Struct_0xe4_Inner_0x1c* r0; // = r2->Data_0x1c;
+    LIST_FOREACH(r0, r2, link)
+    {
+        //0x0000293c
+        if (r0->Data_0x28 == b)
+        {
+            //0x00002958
+            LIST_REMOVE(r0, link);
+            //->0x00002984
+            break;
+        }
+        //0x00002978
+    }
+#endif
+    //0x00002984
+    InterruptUnlock(&r3->Data_0xd0);
+
+    return r0;
+}
+
+
 
 /* 0x00003bd8 - todo */
 const struct sigevent * dma_interrupt_handler(void* a, int b)
@@ -2988,7 +3051,7 @@ static int dma_init(struct Mentor_Controller* r6)
     //loc_3408
     r4_->Data_8 = &g_bdbase[r4_->bData_0xc];
     r4_->Data_0x18 = 0;
-    r4_->Data_0x1c = 0;
+    r4_->lh_first = NULL;
     //r5 = &r4_->Data_0x18;
     //ip = 0x34;
     //r0 = 0x38;
