@@ -2785,18 +2785,9 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     (ip->Data_0x3c)(r5/*r6*/, ip, r5_->Data_0xc, 0/*sl*/);
 
                     InterruptLock(&r5->Data_0xd0/*sb*/);
-
-#if 0
-                    if ((r5_->link.le_next = r7->Data_0x18.lh_first) != NULL)
-                    {
-                        r7->Data_0x18.lh_first->link.le_prev = &r5_->link.le_next;
-                    }
-                    r7->Data_0x18.lh_first = r5_;
-                    r5_->link.le_prev = /*fp_0x30*/&r7->Data_0x18.lh_first;
-#else
+                    //0x00003e54
                     LIST_INSERT_HEAD(&r7->Data_0x18, r5_, link);
-#endif
-
+                    //0x00003e74
                     InterruptUnlock(&r5->Data_0xd0/*sb*/);
                 }
                 //0x00003e8c
@@ -2862,18 +2853,9 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     }
                     //0x00003fac
                     InterruptLock(&r5->Data_0xd0/*fp_0x4c*/);
-
-#if 0
-                    if ((fp_0x34_->link.le_next = r7/*fp_0x38*/->Data_0x18.lh_first) != NULL)
-                    {
-                        r7/*fp_0x38*/->Data_0x18.lh_first->link.le_prev = &fp_0x34_->link.le_next;
-                    }
-                    r7/*fp_0x38*/->Data_0x18.lh_first = fp_0x34_;
-                    fp_0x34_->link.le_prev = /*fp_0x48*/&r7->Data_0x18.lh_first;
-#else
+                    //0x00003fe4
                     LIST_INSERT_HEAD(&r7/*fp_0x38*/->Data_0x18, fp_0x34_, link);
-#endif
-
+                    //0x00004018
                     InterruptUnlock(&r5->Data_0xd0);
                 }
                 //0x00004030
