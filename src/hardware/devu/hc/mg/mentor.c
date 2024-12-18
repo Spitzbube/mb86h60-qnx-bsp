@@ -1342,7 +1342,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         r3->Data_0x34->Data_0x38 = r3->Data_0x38;
     }
     r3->Data_0x38->Data_0 = r3->Data_0x34;
-    
+
     if ((r3->Data_0x34 = ip->lh_first) != NULL)
     {
         ip->lh_first->link.le_prev = &r3->Data_0x34;
@@ -2657,48 +2657,19 @@ struct Struct_0xe4_Inner_0x1c* lookup_by_paddr(struct Mentor_Controller* r3, uin
 
     InterruptLock(&r3->Data_0xd0);
 
-#if 0
-    struct Struct_0xe4_Inner_0x1c* r0 = r2->Data_0x1c;
-    while (r0 != NULL)
+    struct Struct_0xe4_Inner_0x1c* p;
+    LIST_FOREACH(p, r2, link)
     {
-        //0x0000293c
-        if (r0->Data_0x28 == b)
+        if (p->Data_0x28 == b)
         {
-            //0x00002958
-#if 1
-            if (r0->link.le_next != NULL)
-            {
-                r0->link.le_next->link.le_prev = r0->link.le_prev;
-            }
-            *(r0->link.le_prev) = r0->link.le_next;
-#else
-            LIST_REMOVE(r0, link);
-#endif
-            //->0x00002984
+            LIST_REMOVE(p, link);
             break;
         }
-        //0x00002978
-        r0 = r0->link.le_next;
     }
-#else
-    struct Struct_0xe4_Inner_0x1c* r0; // = r2->Data_0x1c;
-    LIST_FOREACH(r0, r2, link)
-    {
-        //0x0000293c
-        if (r0->Data_0x28 == b)
-        {
-            //0x00002958
-            LIST_REMOVE(r0, link);
-            //->0x00002984
-            break;
-        }
-        //0x00002978
-    }
-#endif
-    //0x00002984
+
     InterruptUnlock(&r3->Data_0xd0);
 
-    return r0;
+    return p;
 }
 
 
