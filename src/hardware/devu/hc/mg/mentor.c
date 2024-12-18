@@ -98,6 +98,29 @@ struct _bdbase
 };
 
 
+struct Struct_0xe4_Inner_0x1c
+{
+    int fill_0[3]; //0
+    int Data_0xc; //0xc
+    int fill_0x10[6]; //0x10
+    uint32_t Data_0x28; //0x28
+    struct _musb_transfer* Data_0x2c; //0x2c
+    struct
+    {
+        int fill_0[10]; //0
+        int Data_0x28; //0x28
+        //
+    }* Data_0x30; //0x30
+#if 0
+    struct Struct_0xe4_Inner_0x1c* le_next; //0x34
+    struct Struct_0xe4_Inner_0x1c** le_prev; //0x38
+#else
+    LIST_ENTRY(Struct_0xe4_Inner_0x1c) link; //0x34
+#endif
+    //???
+};
+
+
 struct Struct_0xe4
 {
     void* Data_0; //0
@@ -106,20 +129,9 @@ struct Struct_0xe4
     uint8_t bData_0xc; //0xc
     int Data_0x10; //0x10
     int Data_0x14; //0x14
-    struct _bdbase_inner* Data_0x18; //0x18
-    struct Struct_0xe4_Inner_0x1c
-    {
-        int fill_0[10]; //0
-        uint32_t Data_0x28; //0x28
-        int fill_0x2c[2]; //0x2c
-#if 0
-        struct Struct_0xe4_Inner_0x1c* le_next; //0x34
-        struct Struct_0xe4_Inner_0x1c** le_prev; //0x38
-#else
-        LIST_ENTRY(Struct_0xe4_Inner_0x1c) link; //0x34
-#endif
-        //???
-    }* lh_first; //0x1c
+//    struct _bdbase_inner* Data_0x18; //0x18
+    LIST_HEAD(, Struct_0xe4_Inner_0x1c) Data_0x18; //0x18
+    LIST_HEAD(, Struct_0xe4_Inner_0x1c) Data_0x1c; //0x1c
     //0x20
 };
 
@@ -1328,7 +1340,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
             //???
         }* Data_0x38; //0x38
         //???
-    }* r3 = ip->Data_0x18;
+    }* r3 = ip->Data_0x18.lh_first;
 
     if (r3 == NULL)
     {
@@ -1343,12 +1355,12 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
     }
     r3->Data_0x38->Data_0 = r3->Data_0x34;
 
-    if ((r3->Data_0x34 = ip->lh_first) != NULL)
+    if ((r3->Data_0x34 = ip->Data_0x1c.lh_first) != NULL)
     {
-        ip->lh_first->link.le_prev = &r3->Data_0x34;
+        ip->Data_0x1c.lh_first->link.le_prev = &r3->Data_0x34;
     }
-    ip->lh_first = r3;
-    r3->Data_0x38 = &ip->lh_first;
+    ip->Data_0x1c.lh_first = r3;
+    r3->Data_0x38 = &ip->Data_0x1c;
 
     InterruptUnlock(&r0->Data_0xd0);
 
@@ -2658,7 +2670,7 @@ struct Struct_0xe4_Inner_0x1c* lookup_by_paddr(struct Mentor_Controller* r3, uin
     InterruptLock(&r3->Data_0xd0);
 
     struct Struct_0xe4_Inner_0x1c* p;
-    LIST_FOREACH(p, r2, link)
+    LIST_FOREACH(p, &r2->Data_0x1c, link)
     {
         if (p->Data_0x28 == b)
         {
@@ -2750,11 +2762,11 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                 uint32_t r1 = *((volatile uint32_t*)(r7->Data_4__ + 
                     0x600c + (((r7->bData_0xc * 32) + r8 + 0x6d) * 16)));
                 
-                struct _musb_transfer* r5_ = lookup_by_paddr(r5/*r6*/, r1 & ~0x1f);
-                if (r5_ != 0)
+                struct Struct_0xe4_Inner_0x1c* r5_ = lookup_by_paddr(r5/*r6*/, r1 & ~0x1f);
+                if (r5_ != NULL)
                 {
                     //0x00003d74
-                    struct _musb_transfer* ip = r5_->link.sqe_next;
+                    struct _musb_transfer* ip = r5_->Data_0x2c;
 
                     InterruptLock(&r5->Data_0xd0/*sb*/);
 
@@ -2770,16 +2782,20 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     //0x00003df8
                     InterruptUnlock(&r5->Data_0xd0/*sb*/);
 
-                    (ip->Data_0x3c)(r5/*r6*/, ip, r5_->xfer_buffer, 0/*sl*/);
+                    (ip->Data_0x3c)(r5/*r6*/, ip, r5_->Data_0xc, 0/*sl*/);
 
                     InterruptLock(&r5->Data_0xd0/*sb*/);
 
-                    if ((r5_->Data_0x34 = r7->Data_0x18) != NULL)
+#if 0
+                    if ((r5_->link.le_next = r7->Data_0x18.lh_first) != NULL)
                     {
-                        r7->Data_0x18->Data_0x38 = &r5_->Data_0x34;
+                        r7->Data_0x18.lh_first->link.le_prev = &r5_->link.le_next;
                     }
-                    r7->Data_0x18 = r5_;
-                    r5_->Func_0x38/*TODO!!!*/ = /*fp_0x30*/&r7->Data_0x18;
+                    r7->Data_0x18.lh_first = r5_;
+                    r5_->link.le_prev = /*fp_0x30*/&r7->Data_0x18.lh_first;
+#else
+                    LIST_INSERT_HEAD(&r7->Data_0x18, r5_, link);
+#endif
 
                     InterruptUnlock(&r5->Data_0xd0/*sb*/);
                 }
@@ -2815,11 +2831,11 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                 uint32_t r1 = *((volatile uint32_t*)(r7/*fp_0x38*/->Data_4__ +
                     0x600c + (((r7/*fp_0x38*/->bData_0xc * 32) + fp_0x30 + 0x5d) * 16)));
 
-                struct _musb_transfer* fp_0x34_ = lookup_by_paddr(r5, r1 & ~0x1f);
+                struct Struct_0xe4_Inner_0x1c* fp_0x34_ = lookup_by_paddr(r5, r1 & ~0x1f);
                 if (fp_0x34_ != 0)
                 {
                     //0x00003f24
-                    struct _musb_transfer* fp_0x44 = fp_0x34_->link.sqe_next; //Data_0x2c;
+                    struct _musb_transfer* fp_0x44 = fp_0x34_->Data_0x2c;
                     int r3 = *((volatile uint16_t*)(r5->Data_0x14 + /*sl*/0x102 + r8));
 
                     while ((r6 <= 4) && (r4 <= 19999/*sb*/))
@@ -2847,12 +2863,16 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     //0x00003fac
                     InterruptLock(&r5->Data_0xd0/*fp_0x4c*/);
 
-                    if ((fp_0x34_->Data_0x34 = r7/*fp_0x38*/->Data_0x18) != NULL)
+#if 0
+                    if ((fp_0x34_->link.le_next = r7/*fp_0x38*/->Data_0x18.lh_first) != NULL)
                     {
-                        r7/*fp_0x38*/->Data_0x18->Data_0x38 = &fp_0x34_->Data_0x34;
+                        r7/*fp_0x38*/->Data_0x18.lh_first->link.le_prev = &fp_0x34_->link.le_next;
                     }
-                    r7/*fp_0x38*/->Data_0x18 = fp_0x34_;
-                    fp_0x34_->Func_0x38/*TODO!!!*/ = /*fp_0x48*/&r7->Data_0x18;
+                    r7/*fp_0x38*/->Data_0x18.lh_first = fp_0x34_;
+                    fp_0x34_->link.le_prev = /*fp_0x48*/&r7->Data_0x18.lh_first;
+#else
+                    LIST_INSERT_HEAD(&r7/*fp_0x38*/->Data_0x18, fp_0x34_, link);
+#endif
 
                     InterruptUnlock(&r5->Data_0xd0);
                 }
@@ -3021,8 +3041,8 @@ static int dma_init(struct Mentor_Controller* r6)
     }
     //loc_3408
     r4_->Data_8 = &g_bdbase[r4_->bData_0xc];
-    r4_->Data_0x18 = 0;
-    r4_->lh_first = NULL;
+    r4_->Data_0x18.lh_first = NULL;
+    r4_->Data_0x1c.lh_first = NULL;
     //r5 = &r4_->Data_0x18;
     //ip = 0x34;
     //r0 = 0x38;
@@ -3030,12 +3050,12 @@ static int dma_init(struct Mentor_Controller* r6)
     for (r3_ = 0; r3_ < 241; r3_++) //r3_ < 0x3c40; r3_ += 0x40)
     {
         //loc_3440
-        r4_->Data_8->Data_0[r3_].Data_0x34 = r4_->Data_0x18;
+        r4_->Data_8->Data_0[r3_].Data_0x34 = r4_->Data_0x18.lh_first;
         if (r4_->Data_8->Data_0[r3_].Data_0x34 != NULL)
         {
-            r4_->Data_0x18->Data_0x38 = &r4_->Data_8->Data_0[r3_].Data_0x34;
+            r4_->Data_0x18.lh_first->link.le_prev = &r4_->Data_8->Data_0[r3_].Data_0x34;
         }
-        r4_->Data_0x18 = &r4_->Data_8->Data_0[r3_];
+        r4_->Data_0x18.lh_first = &r4_->Data_8->Data_0[r3_];
         r4_->Data_8->Data_0[r3_].Data_0x38 = &r4_->Data_0x18;
     }
     //0x00003484
