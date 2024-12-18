@@ -78,7 +78,7 @@ struct Struct_0xa4
     struct fp_0x34_Inner_0x18_Inner_0x10* Data_0x30; //0x30
     struct Struct_112b08* Data_0x34; //0x34
     int Data_0x38; //0x38
-    void* Data_0x3c; //0x3c
+    struct Struct_0xe4_Inner_0x1c* Data_0x3c; //0x3c
     //0x40 = 64
 };
     
@@ -100,17 +100,18 @@ struct _bdbase
 
 struct Struct_0xe4_Inner_0x1c
 {
-    int fill_0[3]; //0
+    int Data_0; //0
+    int Data_4; //4
+    int Data_8; //8
     int Data_0xc; //0xc
-    int fill_0x10[6]; //0x10
+    int Data_0x10; //0x10
+    int Data_0x14; //0x14
+    int Data_0x18; //0x18
+    int Data_0x1c; //0x1c
+    int fill_0x20[2]; //0x20
     uint32_t Data_0x28; //0x28
-    struct _musb_transfer* Data_0x2c; //0x2c
-    struct
-    {
-        int fill_0[10]; //0
-        int Data_0x28; //0x28
-        //
-    }* Data_0x30; //0x30
+    struct _musb_transfer* td; //0x2c
+    struct Struct_0xa4* Data_0x30; //0x30
 #if 0
     struct Struct_0xe4_Inner_0x1c* le_next; //0x34
     struct Struct_0xe4_Inner_0x1c** le_prev; //0x38
@@ -1264,33 +1265,34 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
 
 /* 0x000025c8 - todo */
 int mentor_start_dma_transfer(struct Mentor_Controller* r0, 
-    struct Struct_0xa4* r1, struct _musb_transfer* r2, int r3_,
-    int r4/*sp_0x2c*/, int f/*sp_0x30*/, int r6/*sp_0x34*/, uint32_t r5/*sp_0x38*/)
+    struct Struct_0xa4* r1, struct _musb_transfer* td/*r2*/, int rx/*r3*/,
+    int ep/*r4*//*sp_0x2c*/, int f/*sp_0x30*/, 
+    uint32_t start_addr_paddr/*r6*//*sp_0x34*/, uint32_t length/*r5*//*sp_0x38*/)
 {
 #ifdef MB86H60
 
-    fprintf(stderr, "mentor_start_dma_transfer: rx=%d, ep=%d, f=%d, r6=0x%x, r5=%d\n",
-        r3_, r4, f, r6, r5);
+    fprintf(stderr, "mentor_start_dma_transfer: rx=%d, ep=%d, f=%d, start_addr_paddr=0x%x, length=%d\n",
+        rx, ep, f, start_addr_paddr, length);
 
     int channel = 3;
     int ch_offset = 0x40 * channel;
 
     uint32_t fifo_addr = 0x880 + (r4/*bEndpoint*/ << 4);
     uint32_t maxPacketSize = 512;
-    uint32_t line = r5 / maxPacketSize;
+    uint32_t line = length / maxPacketSize;
 
-    if (r3_)
+    if (rx)
     {
         //rx
         dma_SetUsbMode_PacedEpReadChannel(r0, r4);
 
-        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LENGTH + ch_offset)/sizeof(uint32_t)] = r5;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LENGTH + ch_offset)/sizeof(uint32_t)] = length;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LLADDR + ch_offset)/sizeof(uint32_t)] = 0;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDADDR + ch_offset)/sizeof(uint32_t)] = fifo_addr;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDLINE + ch_offset)/sizeof(uint32_t)] = 0;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDINC + ch_offset)/sizeof(uint32_t)] = 4;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDLPADDR + ch_offset)/sizeof(uint32_t)] = fifo_addr;
-        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRADDR + ch_offset)/sizeof(uint32_t)] = r6;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRADDR + ch_offset)/sizeof(uint32_t)] = start_addr_paddr;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLINE + ch_offset)/sizeof(uint32_t)] = line;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRINC + ch_offset)/sizeof(uint32_t)] = maxPacketSize;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLPADDR + ch_offset)/sizeof(uint32_t)] = 0;
@@ -1313,34 +1315,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
     InterruptLock(&r0->Data_0xd0);
 
-
-    struct
-    {
-        int Data_0; //0
-        int Data_4; //4
-        int Data_8; //8
-        int Data_0xc; //0xc
-        int Data_0x10; //0x10
-        int Data_0x14; //0x14
-        int Data_0x18; //0x18
-        int Data_0x1c; //0x1c
-        int fill_0x20[2]; //0x20
-        int Data_0x28; //0x28
-        struct _musb_transfer* Data_0x2c; //0x2c
-        struct Struct_0xa4* Data_0x30; //0x30
-        struct
-        {
-            int fill_0[14]; //0
-            int Data_0x38; //0x38
-            //???
-        }* Data_0x34; //0x34
-        struct
-        {
-            int Data_0; //0
-            //???
-        }* Data_0x38; //0x38
-        //???
-    }* r3 = ip->Data_0x18.lh_first;
+    struct Struct_0xe4_Inner_0x1c* r3 = ip->Data_0x18.lh_first;
 
     if (r3 == NULL)
     {
@@ -1348,26 +1323,34 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         InterruptUnlock(&r0->Data_0xd0);
         return 12; //->0x000028d8
     }
-    //0x00002640    
-    if (r3->Data_0x34 != NULL)
+    //0x00002640
+#if 0
+    if (r3->link.le_next != NULL)
     {
-        r3->Data_0x34->Data_0x38 = r3->Data_0x38;
+        r3->link.le_next->link.le_prev = r3->link.le_prev;
     }
-    r3->Data_0x38->Data_0 = r3->Data_0x34;
+    *(r3->link.le_prev) = r3->link.le_next;
+#else
+    LIST_REMOVE(r3, link);
+#endif
 
-    if ((r3->Data_0x34 = ip->Data_0x1c.lh_first) != NULL)
+#if 0
+    if ((r3->link.le_next = ip->Data_0x1c.lh_first) != NULL)
     {
-        ip->Data_0x1c.lh_first->link.le_prev = &r3->Data_0x34;
+        ip->Data_0x1c.lh_first->link.le_prev = &r3->link.le_next;
     }
     ip->Data_0x1c.lh_first = r3;
-    r3->Data_0x38 = &ip->Data_0x1c;
+    r3->link.le_prev = &ip->Data_0x1c.lh_first;
+#else
+    LIST_INSERT_HEAD(&ip->Data_0x1c, r3, link);
+#endif
 
     InterruptUnlock(&r0->Data_0xd0);
 
     int r7_;
     int r8_;
 
-    if ((r2->Data_0x34->direction & 0x80) == 0)
+    if ((td->Data_0x34->direction & 0x80) == 0)
     {
         //0x000026a8
         InterruptLock(&r0->Data_0xd0);
@@ -1378,7 +1361,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         int sp4;
         int sp8;
         
-        int r8 = r4 - 1;
+        int r8 = ep - 1;
         sp = r8;
         int sb = r8 * 2;
         sp8 = sb;
@@ -1387,7 +1370,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         sb = ~r8;
         r8 = sb & sl;
 
-        if (r2->flags & 0x800)
+        if (td->flags & 0x800)
         {
             r8 |= sp4;
         }
@@ -1398,7 +1381,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
         sb = sb & r8;
 
-        if (r2->flags & 0x800)
+        if (td->flags & 0x800)
         {
             sb |= (1 << sp8);
         }
@@ -1407,27 +1390,27 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
         InterruptUnlock(&r0->Data_0xd0);
 
-        if (r2->flags & 0x800)
+        if (td->flags & 0x800)
         {
             //0x00002768
-            *((volatile uint32_t*)((uint8_t*)(ip->Data_0) + 4*(r4 + 0x1f))) =
-                (r1->wData_0x18 - 1 + r5) & -r1->wData_0x18;
+            *((volatile uint32_t*)((uint8_t*)(ip->Data_0) + 4*(ep + 0x1f))) =
+                (r1->wData_0x18 - 1 + length) & -r1->wData_0x18;
 
             //->0x000027a4
         }
         else
         {
             //0x00002790
-            *((volatile uint32_t*)((uint8_t*)(ip->Data_0) + 4*(r4 + 0x1f))) = 0;
+            *((volatile uint32_t*)((uint8_t*)(ip->Data_0) + 4*(ep + 0x1f))) = 0;
         }
         //0x000027a4
         r7_ = (ip->bData_0xc * 15) + sp;
-        r8_ = (ip->bData_0xc * 32) + r4 + 0x6c;
+        r8_ = (ip->bData_0xc * 32) + ep + 0x6c;
 
         r3->Data_0xc = 0;
         r3->Data_0 = 0x80000000;
         //->0x0000287c
-    }
+    } //if ((r2->Data_0x34->direction & 0x80) == 0)
     else
     {
         //0x000027d0
@@ -1435,12 +1418,12 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
         //0x00002808
         int sl = *((volatile uint32_t*)((uint8_t*)(ip->Data_0) + 0x70));
 
-        int sb = r4 - 1;
+        int sb = ep - 1;
         sb = sb << 1;
         sb = 0x03 << sb;
         int r8 = sl & ~sb;
 
-        if (r2->flags & 0x800)
+        if (td->flags & 0x800)
         {
             r8 = r8 | sb;
         }
@@ -1449,21 +1432,22 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
         InterruptUnlock(&r0->Data_0xd0);
 
-        r7_ = ((ip->bData_0xc * 15) + 0x0f + r4) * 2;
-        r8_ = (ip->bData_0xc * 32) + r4 + 0x5c;
+        r7_ = ((ip->bData_0xc * 15) + 0x0f + ep) * 2;
+        r8_ = (ip->bData_0xc * 32) + ep + 0x5c;
 
-        r3->Data_0 = ((r5 & ~0xff000000) & ~0xc00000) | 0x80000000;
-        r3->Data_0xc = r5;
+        r3->Data_0 = ((length & ~0xff000000) & ~0xc00000) | 0x80000000;
+        r3->Data_0xc = length;
     }
     //0x0000287c
-    r3->Data_4 = (r4 << 27) & 0x78000000;
+    r3->Data_4 = (ep << 27) & 0x78000000;
     r3->Data_8 = (r8_ & 0xffff) | 0x14000000;
-    r3->Data_0x10 = r6;
-    r3->Data_0x18 = r5 | 0x80000000;
-    r3->Data_0x1c = r6;
+    r3->Data_0x10 = start_addr_paddr;
+    r3->Data_0x18 = length | 0x80000000;
+    r3->Data_0x1c = start_addr_paddr;
     r3->Data_0x14 = 0;
-    r3->Data_0x2c = r2;
+    r3->td = td;
     r3->Data_0x30 = r1;
+
     r1->Data_0x3c = r3;
 
     *((uint32_t*)((uint8_t*)(ip->Data_4__) + 0x600c + (r7_ * 16))) = 
@@ -2766,11 +2750,11 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                 if (r5_ != NULL)
                 {
                     //0x00003d74
-                    struct _musb_transfer* ip = r5_->Data_0x2c;
+                    struct _musb_transfer* td/*ip*/ = r5_->td;
 
                     InterruptLock(&r5->Data_0xd0/*sb*/);
 
-                    if (ip->flags & 0x800)
+                    if (td->flags & 0x800)
                     {
                         //0x00003db4
                         *((volatile uint32_t*)(r7->Data_0 + 0xd0)) &= 
@@ -2782,7 +2766,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     //0x00003df8
                     InterruptUnlock(&r5->Data_0xd0/*sb*/);
 
-                    (ip->Data_0x3c)(r5/*r6*/, ip, r5_->Data_0xc, 0/*sl*/);
+                    (td->Data_0x3c)(r5/*r6*/, td, r5_->Data_0xc, 0/*sl*/);
 
                     InterruptLock(&r5->Data_0xd0/*sb*/);
                     //0x00003e54
@@ -2826,7 +2810,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                 if (fp_0x34_ != 0)
                 {
                     //0x00003f24
-                    struct _musb_transfer* fp_0x44 = fp_0x34_->Data_0x2c;
+                    struct _musb_transfer* td/*fp_0x44*/ = fp_0x34_->td;
                     int r3 = *((volatile uint16_t*)(r5->Data_0x14 + /*sl*/0x102 + r8));
 
                     while ((r6 <= 4) && (r4 <= 19999/*sb*/))
@@ -2846,10 +2830,10 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                         r3 = *((volatile uint16_t*)(r5->Data_0x14 + /*sl*/0x102 + r8));
                     }
                     //0x00003f7c
-                    if ((fp_0x44 != 0) && (fp_0x44->flags & 0x800))
+                    if ((td != NULL) && (td->flags & 0x800))
                     {
                         //0x00003f94
-                        (fp_0x44->Data_0x3c)(r5, fp_0x44, fp_0x44->Data_0x10, 0);
+                        (td->Data_0x3c)(r5, td, td->Data_0x10, 0);
                     }
                     //0x00003fac
                     InterruptLock(&r5->Data_0xd0/*fp_0x4c*/);
