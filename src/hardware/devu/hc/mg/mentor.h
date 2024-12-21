@@ -7,9 +7,11 @@
 #define MUSB_IDX_RXCSR				0x16	// 16-bit
 
 	/* peripheral */
+	#define RXCSR_RXPKTRDY					( 1 << 0 )
 	#define RXCSR_DMA_REQ_EN				( 1 << 13 )
 
 	/* host mode */ 	
+	//#define RXCSR_RXPKTRDY				( 1 << 0 )
 	//#define RXCSR_DMA_REQ_EN				( 1 << 13 )
 	#define RXCSR_AUTOREQ					( 1 << 14 )
 

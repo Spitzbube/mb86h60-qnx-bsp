@@ -37,7 +37,7 @@ struct _musb_transfer
 {
     volatile uint32_t xfer_length; //0
     volatile uint32_t flags; //4
-    int Data_8__; //8
+    uint32_t xfer_buffer_paddr; //8
     uint32_t xfer_buffer; //0xc
     int Data_0x10; //0x10
     volatile uint32_t bytes_xfered; //0x14
@@ -1002,7 +1002,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                         1,
                         ep,
                         r8->Data_0x2c,
-                        r6->Data_8__ + r6->bytes_xfered,
+                        r6->xfer_buffer_paddr + r6->bytes_xfered,
                         r5);
                 }
                 //loc_6fc8: write RxCSR
@@ -1206,7 +1206,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                         1,
                         fp_0x30,
                         r8->Data_0x2c,
-                        r6->Data_8__ + r6->bytes_xfered,
+                        r6->xfer_buffer_paddr + r6->bytes_xfered,
                         r5);
                 }
                 //loc_6fc8: write RxCSR
@@ -1552,7 +1552,7 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
 
                                         mentor_start_dma_transfer(sl, sb, r8, 0, 
                                             r6, sb->Data_0x2c, 
-                                            r8->Data_8__ + r8->bytes_xfered,
+                                            r8->xfer_buffer_paddr + r8->bytes_xfered,
                                             r3/*r1*/);
                                         //->loc_59e8
                                     }
@@ -1774,11 +1774,11 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
             hex_dump("MENTOR_URB_complete(xfer_buffer)", (void*) r4->xfer_buffer, r4->xfer_length);
         }
 
-        if (r4->Data_8__ != 0)
+        if (r4->xfer_buffer_paddr != 0)
         {
-//            hex_dump("MENTOR_URB_complete(Data_8__)", (void*) r4->Data_8__, r4->xfer_length);
-            fprintf(stderr, "MENTOR_URB_complete: r4->Data_8__=0x%x\n",
-                r4->Data_8__);
+//            hex_dump("MENTOR_URB_complete(xfer_buffer_paddr)", (void*) r4->xfer_buffer_paddr, r4->xfer_length);
+            fprintf(stderr, "MENTOR_URB_complete: r4->xfer_buffer_paddr=0x%x\n",
+                r4->xfer_buffer_paddr);
         }
     }
 #endif
@@ -2072,6 +2072,17 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
             if (status & ep_mask)
             {
                 //Handle read irq  for ep...
+                //Refer: MGC_HdrcDmaChannelStatusChanged()
+
+                uint32_t rxCsr = HW_Read16(r4, 0x106 + ep * 16);
+                //Clear Packet Ready Bit
+                //TODO: Remainder in the FIFO for transfer length %4 != 0???
+                rxCsr &= ~RXCSR_RXPKTRDY;
+                HW_Write16(r4, 0x106 + ep * 16, rxCsr);
+
+                //Clear DMA bits
+                rxCsr &= ~RXCSR_DMA_REQ_EN;
+                HW_Write16(r4, 0x106 + ep * 16, rxCsr);
             }
         }
 //        dma_SetUsbIntClear(r4, (7 << 4));
@@ -3309,7 +3320,7 @@ int mentor_board_specific_init2(struct Mentor_Controller* ctrl)
     uint32_t dma_usb_int_mask = 0x7f;
     dma_usb_int_mask &= ~(1 << 0); //Bit 0: USB General IRQ
 //    dma_usb_int_mask &= ~(7 << 1); //Bit 1...3: USB DMA Endpoint Write Request IRQ
-//    dma_usb_int_mask &= ~(7 << 4); //Bit 4...6: USB DMA Endpoint Read Request IRQ
+    dma_usb_int_mask &= ~(7 << 4); //Bit 4...6: USB DMA Endpoint Read Request IRQ
 //    dma_usb_int_mask &= ~(1 << 5);
     dma_SetUsbIntMask(ctrl, dma_usb_int_mask); 
 
@@ -4572,6 +4583,7 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
             r3->Data_0x34 += r4->bytes_xfered;
             r4->Data_0x24++;
 
+#if 1 //TODO!!!
             struct Struct_0x1c
             {
                 int Data_0; //0
@@ -4579,7 +4591,8 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
                 //12
             };
         
-            r4->Data_8__ = *((int*)(r4->Data_0x1c__ + r4->Data_0x24 * 12));
+            r4->xfer_buffer_paddr = *((int*)(r4->Data_0x1c__ + r4->Data_0x24 * 12));
+#endif
 
             r4->xfer_length = r3->Data_8;
             r4->bytes_xfered = 0;
@@ -4807,7 +4820,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     }
     //loc_8edc
     td->xfer_buffer = (uint32_t) buffer; //fp_0x34;
-    td->Data_8__ = r8->Data_0x5c->pData;
+    td->xfer_buffer_paddr = r8->Data_0x5c->pData;
     td->xfer_length = length;
 
 #if 1
@@ -4842,7 +4855,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
             td->Data_0x20 = r3->wData_0 - 1;
             td->Data_0x24 = 0;
 
-            td->Data_8__ = r2->Data_0;
+            td->xfer_buffer_paddr = r2->Data_0;
             td->xfer_length = r2->Data_8;
 
             if (flags/*sb*/ & 0x04)
