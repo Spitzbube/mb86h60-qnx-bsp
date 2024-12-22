@@ -57,7 +57,7 @@ struct _musb_transfer
     volatile uint32_t flags; //4
     uint32_t xfer_buffer_paddr; //8
     uint32_t xfer_buffer; //0xc
-    int Data_0x10; //0x10
+    uint32_t Data_0x10; //0x10
     volatile uint32_t bytes_xfered; //0x14
     struct _musb_transfer_Inner_0x18* Data_0x18; //0x18
     struct _musb_transfer_Inner_0x18_Inner_8* Data_0x1c; //0x1c
@@ -939,8 +939,12 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
         {
             //loc_6e38
             r6->flags &= ~0x800;
-            r6->Data_0x10 = (r5 > r8->Data_0x30->Data_0)?
-                r8->Data_0x30->Data_0: r5;
+
+            if (r5 > r8->Data_0x30->Data_0)
+            {
+                r5 = r8->Data_0x30->Data_0;
+            }
+            r6->Data_0x10 = r5;
         }
         //loc_6e58
         if (r6->flags & 0x04)
@@ -966,21 +970,14 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 if (r6->flags & 0x400)
                 {
                     //0x00006ec8
-#if 0
-                    fprintf(stderr, "MENTOR_StartEtd: 0x00006ec8: TODO!!!\n");
-#else
                     mentor_start_dma_transfer(r4, r8, r6, 1/*rx*/,
                         ep, r8->Data_0x2c, 
                         r6->xfer_buffer_paddr + r6->bytes_xfered, 
                         r5);
-#endif
                 }
                 //loc_6f00
                 HW_Write16(r4, 0x106 + r7, HW_Read16(r4, 0x106 + r7) | 
-                    RXCSR_DMA_REQ_EN | 
-//                    RXCSR_DMA_REQ_TYPE1 |
-//                    RXCSR_AUTOREQ |
-                    0x40 | 0x2d);
+                    RXCSR_DMA_REQ_EN | 0x6d);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -990,24 +987,18 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 int fp_0x2c;
 
                 fp_0x34 = fp_0x2c = r8->wData_0x18;
+                uint32_t r3 = 0;
                 int r0 = r6->Data_0x10 / r8->wData_0x18;
-                int r3;
-                if ((r0 - 1) <= 0)
-                {
-                    r3 = 0;
-                    //->loc_6f58
-                }
-                else
+                if ((r0 - 1) > 0)
                 {
                     r3 = (r6->Data_0x10 / fp_0x34) - 1;
                 }
                 //loc_6f58: write RXMAXP
+                fp_0x2c |= (r3 << 11);
 #if 1
-                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n",
-                    fp_0x2c | (r3 << 11));
+                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", fp_0x2c);
 #endif
-
-                HW_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
+                HW_Write16(r4, 0x104 + r7, fp_0x2c);
 
                 int sl;
                 if ((r6->flags & 0x400) == 0)
@@ -1186,18 +1177,14 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                 if (r6->flags & 0x400)
                 {
                     //0x00006ec8
-#if 0
-                    fprintf(stderr, "MENTOR_RestartEtd: 0x00006ec8: TODO!!!\n");
-#else
                     mentor_start_dma_transfer(r4, r8, r6, 1/*rx*/,
                         ep, r8->Data_0x2c, 
                         r6->xfer_buffer_paddr + r6->bytes_xfered, 
                         r5);
-#endif
                 }
                 //loc_6f00
-                HW_Write16(r4, 0x106 + r7, 
-                    HW_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
+                HW_Write16(r4, 0x106 + r7, HW_Read16(r4, 0x106 + r7) | 
+                    RXCSR_DMA_REQ_EN | 0x6d);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -1207,19 +1194,18 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                 int fp_0x2c;
 
                 fp_0x34 = fp_0x2c = r8->wData_0x18;
+                uint32_t r3 = 0;
                 int r0 = r6->Data_0x10 / r8->wData_0x18;
-                int r3;
-                if ((r0 - 1) <= 0)
-                {
-                    r3 = 0;
-                    //->loc_6f58
-                }
-                else
+                if ((r0 - 1) > 0)
                 {
                     r3 = (r6->Data_0x10 / fp_0x34) - 1;
                 }
                 //loc_6f58: write RXMAXP
-                HW_Write16(r4, 0x104 + r7, fp_0x2c | (r3 << 11));
+                fp_0x2c |= (r3 << 11);
+#if 0
+                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", fp_0x2c);
+#endif
+                HW_Write16(r4, 0x104 + r7, fp_0x2c);
 
                 int sl;
                 if ((r6->flags & 0x400) == 0)
@@ -1332,10 +1318,12 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
     uint32_t fifo_addr = 0x880 + (ep << 4);
     uint32_t maxPacketSize = 512;
 
+#if 1
     if (length > maxPacketSize)
     {
         length = maxPacketSize;
     }
+#endif
 
     uint32_t line = length / maxPacketSize;
 
@@ -3005,10 +2993,12 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
     }
 #endif
 
+#if 1
     if (!SIMPLEQ_EMPTY(&r5->transfer_complete_q))
     {
         return &r5->Data_0x5c;
     }
+#endif
 
     return NULL;
 }
