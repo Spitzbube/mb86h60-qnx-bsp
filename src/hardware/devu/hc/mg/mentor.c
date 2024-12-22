@@ -19,8 +19,8 @@
 
 //_GLOBAL_OFFSET_TABLE_ //0x0000bd5c
 
-struct Mentor_Controller;
-#define USB_CONTROLLER_PRIV_T struct Mentor_Controller
+struct _hctrl_t;
+#define USB_CONTROLLER_PRIV_T struct _hctrl_t
 #include <sys/io-usb.h>
 #include "my-io-usb.h"
 
@@ -60,15 +60,15 @@ struct _musb_transfer
     uint32_t Data_0x10; //0x10
     volatile uint32_t bytes_xfered; //0x14
     struct _musb_transfer_Inner_0x18* Data_0x18; //0x18
-    struct _musb_transfer_Inner_0x18_Inner_8* Data_0x1c; //0x1c
+    struct _musb_transfer_Inner_0x18_Inner_8* Data_0x1c__; //0x1c
     int Data_0x20; //0x20
     volatile int Data_0x24; //0x24
     int status; //0x28
     SIMPLEQ_ENTRY(_musb_transfer) link; //0x2c
     struct Struct_0xa4* Data_0x30; //0x30
     struct Struct_10bab4* Data_0x34; //0x34
-    void (*Func_0x38)(struct Mentor_Controller*, struct _musb_transfer*, uint32_t, int); //0x38
-    void (*Func_0x3c)(struct Mentor_Controller*, struct _musb_transfer*, uint32_t, int); //0x3c
+    void (*Func_0x38)(struct _hctrl_t*, struct _musb_transfer*, uint32_t, int); //0x38
+    void (*Func_0x3c)(struct _hctrl_t*, struct _musb_transfer*, uint32_t, int); //0x3c
     int fill_0x40; //0x40
     //0x44
 };
@@ -167,7 +167,7 @@ struct Mentor_Controller_Inner_0x8c
 };
 
 
-struct Mentor_Controller
+struct _hctrl_t
 {
     struct USB_Controller* Data_0; //0
     pthread_mutex_t Data_4; //4
@@ -213,6 +213,7 @@ struct Mentor_Controller
     int fill_0xcc; //0xcc
     struct intrspin Data_0xd0; //0xd0
     uint16_t wData_0xd4; //0xd4
+    int fill_0xd8[3]; //0xd8
     struct Struct_0xe4* dma_hdl; //0xe4
     //0xe8
 };
@@ -221,8 +222,8 @@ struct Mentor_Controller
 #include "mu_hdrdf.h"
 
 
-extern void MENTOR_LoadFIFO(struct Mentor_Controller*, uint16_t, int, uint16_t);
-extern void MENTOR_ReadFIFO(struct Mentor_Controller*, struct _musb_transfer*, uint16_t, int, uint16_t);
+extern void MENTOR_LoadFIFO(struct _hctrl_t*, uint16_t, int, uint16_t);
+extern void MENTOR_ReadFIFO(struct _hctrl_t*, struct _musb_transfer*, uint16_t, int, uint16_t);
 
 
 #ifndef MB86H60
@@ -255,22 +256,22 @@ void* dma_regs = NULL;
 uint32_t dma_dwUsbMode = 0;
 
 
-void dma_SetUsbIntMask(struct Mentor_Controller* c, int a)
+void dma_SetUsbIntMask(struct _hctrl_t* c, int a)
 {
     ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_INT_MASK/sizeof(uint32_t)] = a;
 }
 
-uint32_t dma_GetUsbIntStatus(struct Mentor_Controller* c)
+uint32_t dma_GetUsbIntStatus(struct _hctrl_t* c)
 {
     return ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_INT_STATUS/sizeof(uint32_t)];
 }
 
-void dma_SetUsbIntClear(struct Mentor_Controller* c, int a)
+void dma_SetUsbIntClear(struct _hctrl_t* c, int a)
 {
     ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_INT_CLEAR/sizeof(uint32_t)] = a;
 }
 
-void dma_SetUsbMode_LengthInput(struct Mentor_Controller* c, int a)
+void dma_SetUsbMode_LengthInput(struct _hctrl_t* c, int a)
 {
 	int mask = MB86H60_DMA_USB_MODE_LENGTH_INPUT;
 	a = (a << 1) & mask;
@@ -280,7 +281,7 @@ void dma_SetUsbMode_LengthInput(struct Mentor_Controller* c, int a)
     ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_USB_MODE/sizeof(uint32_t)] = dma_dwUsbMode;
 }
 
-void dma_SetUsbMode_PacedEpWriteChannel(struct Mentor_Controller* c, uint32_t value)
+void dma_SetUsbMode_PacedEpWriteChannel(struct _hctrl_t* c, uint32_t value)
 {
     uint32_t mask = MB86H60_DMA_USB_MODE_PACED_EP_WRITE_CHANNEL;
     value = (value << 3) & mask;
@@ -291,7 +292,7 @@ void dma_SetUsbMode_PacedEpWriteChannel(struct Mentor_Controller* c, uint32_t va
 }
 
 
-void dma_SetUsbMode_PacedEpReadChannel(struct Mentor_Controller* c, uint32_t value)
+void dma_SetUsbMode_PacedEpReadChannel(struct _hctrl_t* c, uint32_t value)
 {
     uint32_t mask = MB86H60_DMA_USB_MODE_PACED_EP_READ_CHANNEL;
     value = (value << 5) & mask;
@@ -302,7 +303,7 @@ void dma_SetUsbMode_PacedEpReadChannel(struct Mentor_Controller* c, uint32_t val
 }
 
 
-uint8_t MGC_Read8(struct Mentor_Controller* c, uint16_t offset)
+uint8_t MGC_Read8(struct _hctrl_t* c, uint16_t offset)
 {
     uint8_t data;
 	dma_SetUsbMode_LengthInput(c, 0);
@@ -311,7 +312,7 @@ uint8_t MGC_Read8(struct Mentor_Controller* c, uint16_t offset)
 }
 
 
-uint16_t MGC_Read16(struct Mentor_Controller* c, uint16_t offset)
+uint16_t MGC_Read16(struct _hctrl_t* c, uint16_t offset)
 {
     uint16_t data;
 	dma_SetUsbMode_LengthInput(c, 1);
@@ -320,7 +321,7 @@ uint16_t MGC_Read16(struct Mentor_Controller* c, uint16_t offset)
 }
 
 
-uint32_t MGC_Read32(struct Mentor_Controller* c, uint16_t offset)
+uint32_t MGC_Read32(struct _hctrl_t* c, uint16_t offset)
 {
     uint32_t data;
 	dma_SetUsbMode_LengthInput(c, 2);
@@ -329,21 +330,21 @@ uint32_t MGC_Read32(struct Mentor_Controller* c, uint16_t offset)
 }
 
 
-void MGC_Write8(struct Mentor_Controller* c, uint16_t offset, uint8_t data)
+void MGC_Write8(struct _hctrl_t* c, uint16_t offset, uint8_t data)
 {
 	dma_SetUsbMode_LengthInput(c, 0);
     ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
 }
 
 
-void MGC_Write16(struct Mentor_Controller* c, uint16_t offset, uint16_t data)
+void MGC_Write16(struct _hctrl_t* c, uint16_t offset, uint16_t data)
 {
 	dma_SetUsbMode_LengthInput(c, 1);
     ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
 }
 
 
-void MGC_Write32(struct Mentor_Controller* c, uint16_t offset, uint32_t data)
+void MGC_Write32(struct _hctrl_t* c, uint16_t offset, uint32_t data)
 {
 	dma_SetUsbMode_LengthInput(c, 2);
     ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
@@ -354,7 +355,7 @@ void MGC_Write32(struct Mentor_Controller* c, uint16_t offset, uint32_t data)
 
 
 /* 0x0000611c - complete */
-int mentor_slogf(struct Mentor_Controller* a, 
+int mentor_slogf(struct _hctrl_t* a, 
         int opcode, int severity, int verbosity,
         const char* fmt, ...)
 {
@@ -380,7 +381,7 @@ int mentor_slogf(struct Mentor_Controller* a,
 
 
 /* 0x00004cbc - todo */
-void MENTOR_ProcessControlDone(struct Mentor_Controller* r5)
+void MENTOR_ProcessControlDone(struct _hctrl_t* r5)
 {
 #if 0
     fprintf(stderr, "MENTOR_ProcessControlDone: TODO\n");
@@ -510,7 +511,7 @@ void MENTOR_ProcessControlDone(struct Mentor_Controller* r5)
 
 
 /* 0x00004220 - todo */
-struct fp_0x34_Inner_0x18_Inner_0x10* mentor_fifo_alloc(struct Mentor_Controller* r5,
+struct fp_0x34_Inner_0x18_Inner_0x10* mentor_fifo_alloc(struct _hctrl_t* r5,
         int fp_0x2c, 
         struct Struct_0xa4* c,
         int fp_0x30)
@@ -604,7 +605,7 @@ struct fp_0x34_Inner_0x18_Inner_0x10* mentor_fifo_alloc(struct Mentor_Controller
 
 
 /* 0x00008284 - todo */
-int MENTOR_AllocEtd(struct Mentor_Controller* r5, 
+int MENTOR_AllocEtd(struct _hctrl_t* r5, 
         struct Struct_0xa4* r6, 
         int r8)
 {
@@ -704,7 +705,7 @@ int MENTOR_AllocEtd(struct Mentor_Controller* r5,
 }
 
 
-void MENTOR_EtdConfigureTX(struct Mentor_Controller* a, 
+void MENTOR_EtdConfigureTX(struct _hctrl_t* a, 
     struct Struct_0xa4* b, int c)
 {
 #if 0
@@ -757,7 +758,7 @@ void MENTOR_EtdConfigureTX(struct Mentor_Controller* a,
 
 
 /* 0x00004898 - todo */
-void MENTOR_EtdConfigureRX(struct Mentor_Controller* a, 
+void MENTOR_EtdConfigureRX(struct _hctrl_t* a, 
     struct Struct_0xa4* b, int c)
 {
 #if 1
@@ -866,7 +867,7 @@ void MENTOR_EtdConfigureRX(struct Mentor_Controller* a,
 
 
 /* 0x00006cc0 - todo */
-void MENTOR_StartEtd(struct Mentor_Controller* r4, 
+void MENTOR_StartEtd(struct _hctrl_t* r4, 
     struct _musb_transfer* r6)
 {
 #if 0
@@ -917,7 +918,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 "devu-dm816x-mg.so", "MENTOR_StartEtd", wCsr);
         }
         //loc_6de0
-        int r5 = r6->xfer_length - r6->bytes_xfered;
+        uint32_t r5 = r6->xfer_length - r6->bytes_xfered;
 
 #if 1
         fprintf(stderr, "MENTOR_StartEtd: r5=%d, r6->flags=0x%x\n",
@@ -942,6 +943,10 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 
             if (r5 > r8->Data_0x30->Data_0)
             {
+#if 0
+                fprintf(stderr, "MENTOR_StartEtd: r8->Data_0x30->Data_0=%d\n",
+                    r8->Data_0x30->Data_0);
+#endif
                 r5 = r8->Data_0x30->Data_0;
             }
             r6->Data_0x10 = r5;
@@ -1022,6 +1027,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                     //0x00006f84
                     sl = sb & 0x2792;
                     sl |= (RXCSR_DMA_REQ_EN | RXCSR_AUTOREQ); //0x6000;
+//                    sl |= RXCSR_AUTOCLEAR;
 
                     mentor_start_dma_transfer(r4,
                         r8,
@@ -1091,7 +1097,7 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 
 
 /* 0x00006cc0 - todo */
-void MENTOR_RestartEtd(struct Mentor_Controller* r4, 
+void MENTOR_RestartEtd(struct _hctrl_t* r4, 
     struct _musb_transfer* r6)
 {
 #if 0
@@ -1160,6 +1166,10 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
 
             if (r5 > r8->Data_0x30->Data_0)
             {
+#if 0
+                fprintf(stderr, "MENTOR_RestartEtd: r8->Data_0x30->Data_0=%d\n",
+                    r8->Data_0x30->Data_0);
+#endif
                 r5 = r8->Data_0x30->Data_0;
             }
             r6->Data_0x10 = r5;
@@ -1294,7 +1304,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
 
 
 /* 0x000025c8 - todo */
-int mentor_start_dma_transfer(struct Mentor_Controller* r0, 
+int mentor_start_dma_transfer(struct _hctrl_t* r0, 
     struct Struct_0xa4* r1, struct _musb_transfer* td/*r2*/, int rx/*r3*/,
     int ep/*r4*//*sp_0x2c*/, int f/*sp_0x30*/, 
     uint32_t start_addr_paddr/*r6*//*sp_0x34*/, uint32_t length/*r5*//*sp_0x38*/)
@@ -1490,7 +1500,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 }
 
 
-void MENTOR_AbortDMA_TX(struct Mentor_Controller* a, struct Struct_0xa4* b)
+void MENTOR_AbortDMA_TX(struct _hctrl_t* a, struct Struct_0xa4* b)
 {
 #if 1
     fprintf(stderr, "MENTOR_AbortDMA_TX: TODO!!!\n");
@@ -1499,7 +1509,7 @@ void MENTOR_AbortDMA_TX(struct Mentor_Controller* a, struct Struct_0xa4* b)
 }
 
 
-void MENTOR_AbortDMA_RX(struct Mentor_Controller* a, struct Struct_0xa4* b)
+void MENTOR_AbortDMA_RX(struct _hctrl_t* a, struct Struct_0xa4* b)
 {
 #if 1
     fprintf(stderr, "MENTOR_AbortDMA_RX: TODO!!!\n");
@@ -1509,7 +1519,7 @@ void MENTOR_AbortDMA_RX(struct Mentor_Controller* a, struct Struct_0xa4* b)
 
 
 /* 0x00005738 - todo */
-int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
+int MENTOR_ProcessETDDone(struct _hctrl_t* sl, uint16_t r5)
 {
 #if 0 //No printf in ISR
     fprintf(stderr, "MENTOR_ProcessETDDone: TODO!!!\n");
@@ -1705,7 +1715,7 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
 
 
 /* 0x000029a8 - complete */
-int mentor_alloc_dma_sched(struct Mentor_Controller* a, struct Struct_0xa4* b)
+int mentor_alloc_dma_sched(struct _hctrl_t* a, struct Struct_0xa4* b)
 {
 #if 1
     fprintf(stderr, "mentor_alloc_dma_sched\n");
@@ -1716,7 +1726,7 @@ int mentor_alloc_dma_sched(struct Mentor_Controller* a, struct Struct_0xa4* b)
 
 
 /* 0x000025b8 - complete */
-int mentor_claim_dma_channel(struct Mentor_Controller* a, struct _musb_transfer* b, int c, int* d)
+int mentor_claim_dma_channel(struct _hctrl_t* a, struct _musb_transfer* b, int c, int* d)
 {
 #if 1
     fprintf(stderr, "mentor_claim_dma_channel\n");
@@ -1728,7 +1738,7 @@ int mentor_claim_dma_channel(struct Mentor_Controller* a, struct _musb_transfer*
 
 
 /* 0x00002a80 - complete */
-void mentor_get_ext_intstatus(struct Mentor_Controller* ctrl, 
+void mentor_get_ext_intstatus(struct _hctrl_t* ctrl, 
             uint16_t* int_rx, uint16_t* int_tx, uint16_t* int_usb)
 {
 #if 0
@@ -1772,7 +1782,7 @@ void mentor_get_ext_intstatus(struct Mentor_Controller* ctrl,
 
 
 /* 0x00002ac4 - complete */
-void mentor_clr_ext_int(struct Mentor_Controller* a)
+void mentor_clr_ext_int(struct _hctrl_t* a)
 {
 #if 0
     fprintf(stderr, "mentor_clr_ext_int: TODO\n");
@@ -1783,7 +1793,7 @@ void mentor_clr_ext_int(struct Mentor_Controller* a)
 }
 
 
-int MENTOR_RemoveTDFromEndpoint(struct Mentor_Controller* a, 
+int MENTOR_RemoveTDFromEndpoint(struct _hctrl_t* a, 
     struct Struct_10bab4* b, 
     struct Struct_0xa4* c)
 {
@@ -1796,7 +1806,7 @@ int MENTOR_RemoveTDFromEndpoint(struct Mentor_Controller* a,
 
 
 /* 0x000079c0 - todo */
-void MENTOR_URB_complete(struct Mentor_Controller* r5,
+void MENTOR_URB_complete(struct _hctrl_t* r5,
     struct Struct_0xa4 * r7, 
     struct _musb_transfer* r4, 
     int transferType, int err)
@@ -1974,7 +1984,7 @@ void MENTOR_URB_complete(struct Mentor_Controller* r5,
 
 
 /* 0x00007e38 - todo */
-void mentor_bottom_half(struct Mentor_Controller* r5)
+void mentor_bottom_half(struct _hctrl_t* r5)
 {
 #if 0
     fprintf(stderr, "mentor_bottom_half: TODO\n");
@@ -2031,7 +2041,7 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
 {
 //    fprintf(stderr, "mentor_interrupt_handler: TODO\n");
 
-    struct Mentor_Controller *r4 = a;
+    struct _hctrl_t *r4 = a;
     uint16_t int_usb;
     uint16_t int_tx;
     uint16_t int_rx;
@@ -2146,7 +2156,7 @@ static void* mentor_interrupt_thread(void* a)
     fprintf(stderr, "mentor_interrupt_thread: TODO\n");
 
     struct USB_Controller* r7 = a;
-    struct Mentor_Controller* r4 = r7->hc_data;
+    struct _hctrl_t* r4 = r7->hc_data;
 
     if (ThreadCtl(1, 0) == -1)
     {
@@ -2155,16 +2165,8 @@ static void* mentor_interrupt_thread(void* a)
         return (void*)-1;
     }
     //loc_8000
-#if 0
-    r4->intr_event.sigev_notify = 4;
-    r4->intr_event.sigev_id = r4->coid;
-    r4->intr_event.sigev_priority = getprio(0);
-    r4->intr_event.sigev_value.sival_int = 0;
-    r4->intr_event.sigev_code = 1;
-#else
     SIGEV_PULSE_INIT( &r4->intr_event, r4->coid, 
-        getprio(0), MUSB_PULSE_INTR/*1*/, 0 );
-#endif
+        getprio(0), MUSB_PULSE_INTR, 0 );
 
     while ((r4->flags & 0x10) == 0)
     {
@@ -2191,17 +2193,7 @@ static void* mentor_interrupt_thread(void* a)
     while (1)
     {
         //loc_8100
-#if 0
-        struct 
-        {
-            int fill_0; //0
-            int8_t bData_4; //4
-            int fill_8[2]; //8
-            //16
-        } fp_0x30;
-#else
         struct _pulse pulse; //fp_0x30
-#endif
 
 #if 0
         fprintf(stderr, "mentor_interrupt_thread: before MsgReceivePulse\n");
@@ -2219,7 +2211,7 @@ static void* mentor_interrupt_thread(void* a)
             pulse.code);
 #endif
         //0x0000811c
-        if (pulse.code == MUSB_PULSE_INTR) //if (fp_0x30.bData_4 == 1)
+        if (pulse.code == MUSB_PULSE_INTR)
         {
             //0x00008128
             mentor_bottom_half(r4);
@@ -2269,7 +2261,7 @@ int find_block_list(struct Mentor_Controller_Inner_0x8c* a, unsigned long b)
 
 
 /* 0x000043a0 - todo */
-int mentor_init_fifo_config(struct Mentor_Controller* fp_0x40, 
+int mentor_init_fifo_config(struct _hctrl_t* fp_0x40, 
         char* fconfig_string/*r6*/)
 {
 #if 0
@@ -2414,7 +2406,7 @@ int mentor_init_fifo_config(struct Mentor_Controller* fp_0x40,
 
 
 /* 0x000045cc - complete */
-int mentor_fifo_init(struct Mentor_Controller* cntrl, char* fconfig)
+int mentor_fifo_init(struct _hctrl_t* cntrl, char* fconfig)
 {
 #if 0
     fprintf(stderr, "mentor_fifo_init: TODO\n");
@@ -2553,7 +2545,7 @@ int mentor_controller_shutdown()
 
 
 /* 0x00005f98 - todo */
-int MENTOR_AllocateTD(struct Mentor_Controller* r4)
+int MENTOR_AllocateTD(struct _hctrl_t* r4)
 {
 #if 0
     fprintf(stderr, "MENTOR_AllocateTD: TODO!!!\n");
@@ -2585,7 +2577,7 @@ int MENTOR_AllocateTD(struct Mentor_Controller* r4)
 
 
 /* 0x00006050 - todo */
-int MENTOR_AllocateED(struct Mentor_Controller* r5)
+int MENTOR_AllocateED(struct _hctrl_t* r5)
 {
 #if 0
     fprintf(stderr, "MENTOR_AllocateED: TODO!!!\n");
@@ -2630,7 +2622,7 @@ int MENTOR_AllocateED(struct Mentor_Controller* r5)
 
 
 /* 0x00005340 - todo */
-struct Struct_0xa4* MENTOR_GetEDPool(struct Mentor_Controller* a)
+struct Struct_0xa4* MENTOR_GetEDPool(struct _hctrl_t* a)
 {
 #if 0
     fprintf(stderr, "MENTOR_GetEDPool: TODO!!!\n");
@@ -2679,7 +2671,7 @@ struct Struct_0xa4* MENTOR_GetEDPool(struct Mentor_Controller* a)
 
 
 /* 0x0000544c - todo */
-int MENTOR_BuildEDList(struct Mentor_Controller* a, struct Struct_0xa4** b)
+int MENTOR_BuildEDList(struct _hctrl_t* a, struct Struct_0xa4** b)
 {
 #if 0
     fprintf(stderr, "MENTOR_BuildEDList: TODO!!!\n");
@@ -2705,7 +2697,7 @@ int MENTOR_BuildEDList(struct Mentor_Controller* a, struct Struct_0xa4** b)
 }
 
 
-int mentor_abort_dma_transfer(struct Mentor_Controller* a, struct Struct_0xa4* b)
+int mentor_abort_dma_transfer(struct _hctrl_t* a, struct Struct_0xa4* b)
 {
 #if 1
     fprintf(stderr, "mentor_abort_dma_transfer: TODO\n");
@@ -2716,7 +2708,7 @@ int mentor_abort_dma_transfer(struct Mentor_Controller* a, struct Struct_0xa4* b
 
 
 /* 0x000028e8 - complete */
-struct Struct_0xe4_Inner_0x1c* lookup_by_paddr(struct Mentor_Controller* r3, uint32_t b)
+struct Struct_0xe4_Inner_0x1c* lookup_by_paddr(struct _hctrl_t* r3, uint32_t b)
 {
 #if 0
     fprintf(stderr, "lookup_by_paddr: TODO\n");
@@ -2759,7 +2751,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
     fprintf(stderr, "dma_interrupt_handler: TODO\n");
 #endif
 
-    struct Mentor_Controller* r5 = a;
+    struct _hctrl_t* r5 = a;
     struct Struct_0xe4* r7 = r5->dma_hdl;
 
 #ifdef MB86H60
@@ -2837,7 +2829,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
         int r8 = 0;
         //int sb = &r5->Data_0xd0;
         //int sl = 0;
-        //struct Mentor_Controller* r6 = r5;
+        //struct _hctrl_t* r6 = r5;
 
         while (r4 != 0)
         {
@@ -3033,7 +3025,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
 }
 
 
-static int create_bds(struct Mentor_Controller* r6)
+static int create_bds(struct _hctrl_t* r6)
 {
 #ifdef MB86H60
 #if 1
@@ -3135,7 +3127,7 @@ static int create_bds(struct Mentor_Controller* r6)
 }
 
 
-static int dma_init(struct Mentor_Controller* r6)
+static int dma_init(struct _hctrl_t* r6)
 {
     int sl;
     struct Struct_0xe4* r4_ = r6->dma_hdl;
@@ -3262,7 +3254,7 @@ static int dma_init(struct Mentor_Controller* r6)
 
 
 /* 0x00002e08 - todo */
-int mentor_board_specific_init1(struct Mentor_Controller* r6)
+int mentor_board_specific_init1(struct _hctrl_t* r6)
 {
 #if 1
     fprintf(stderr, "mentor_board_specific_init1: TODO!!!\n");
@@ -3367,7 +3359,7 @@ int mentor_board_specific_init1(struct Mentor_Controller* r6)
 
 
 /* 0x000029b4 - complete */
-int mentor_board_specific_init2(struct Mentor_Controller* ctrl)
+int mentor_board_specific_init2(struct _hctrl_t* ctrl)
 {
 #if 0
     fprintf(stderr, "mentor_board_specific_init2: TODO!!!\n");
@@ -3411,7 +3403,7 @@ int mentor_board_specific_init2(struct Mentor_Controller* ctrl)
 }
 
 
-int mentor_board_specific_shutdown2(struct Mentor_Controller* ctrl)
+int mentor_board_specific_shutdown2(struct _hctrl_t* ctrl)
 {
 #if 1
     fprintf(stderr, "mentor_board_specific_shutdown2: TODO!!!\n");
@@ -3422,7 +3414,7 @@ int mentor_board_specific_shutdown2(struct Mentor_Controller* ctrl)
 }
 
 
-int mentor_board_specific_shutdown1(struct Mentor_Controller* a)
+int mentor_board_specific_shutdown1(struct _hctrl_t* a)
 {
 #if 1
     fprintf(stderr, "mentor_board_specific_shutdown1: TODO!!!\n");
@@ -3433,7 +3425,7 @@ int mentor_board_specific_shutdown1(struct Mentor_Controller* a)
 }
 
 
-int MENTOR_FreeED(struct Mentor_Controller* a)
+int MENTOR_FreeED(struct _hctrl_t* a)
 {
 #if 1
     fprintf(stderr, "MENTOR_FreeED: TODO!!!\n");
@@ -3443,7 +3435,7 @@ int MENTOR_FreeED(struct Mentor_Controller* a)
 }
 
 
-int MENTOR_FreeTD(struct Mentor_Controller* a)
+int MENTOR_FreeTD(struct _hctrl_t* a)
 {
 #if 1
     fprintf(stderr, "MENTOR_FreeTD: TODO!!!\n");
@@ -3486,7 +3478,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
 {
     fprintf(stderr, "mentor_controller_init: r5='%s'\n", r5);
 
-    struct Mentor_Controller* r4;
+    struct _hctrl_t* r4;
 
 #ifdef MB86H60
     r7->cname = "mb86h60";
@@ -3494,7 +3486,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     r7->cname = "dm816x";
 #endif
 
-    if ((r7->hc_data = r4 = calloc(1, 0xe8)) == NULL)
+    if ((r7->hc_data = r4 = calloc(1, sizeof(struct _hctrl_t))) == NULL)
     {
         return 12;
     }
@@ -3614,7 +3606,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
         return errno;
     }
     //loc_6584
-    struct Mentor_Controller* sb = r7->hc_data;
+    struct _hctrl_t* sb = r7->hc_data;
 
     sb->chid = ChannelCreate(0x08);
     if (sb->chid < 0)
@@ -3657,7 +3649,7 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
             else
             {
                 //loc_6700
-                struct Mentor_Controller* r2 = r7->hc_data;
+                struct _hctrl_t* r2 = r7->hc_data;
 
                 r7->AvailableBandwidth = 1000;
                 r7->capabilities = 0x4000064f;
@@ -3832,7 +3824,7 @@ void mentor_board_specific_reset()
 /* 0x00006b1c - todo */
 int mentor_check_port_status(struct USB_Controller* a, uint32_t* b)
 {
-    struct Mentor_Controller* r4 = a->hc_data;
+    struct _hctrl_t* r4 = a->hc_data;
 
 #if 0
     fprintf(stderr, "mentor_check_port_status: r4->Data_0x6c=0x%x\n", r4->Data_0x6c);
@@ -3935,7 +3927,7 @@ int mentor_clear_port_feature(struct USB_Controller* a, int b, int c)
     fprintf(stderr, "mentor_clear_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
 #endif
 
-    struct Mentor_Controller* ctrl = a->hc_data;
+    struct _hctrl_t* ctrl = a->hc_data;
 
     switch (c)
     {
@@ -3974,7 +3966,7 @@ int mentor_set_port_feature(struct USB_Controller* a, int b, int c)
     fprintf(stderr, "mentor_set_port_feature: b=%d, c=%d, TODO!!!\n", b, c);
 #endif
 
-    struct Mentor_Controller* ctrl = a->hc_data;
+    struct _hctrl_t* ctrl = a->hc_data;
 
     switch (c)
     {
@@ -4040,7 +4032,7 @@ int mentor_get_root_device_speed(struct USB_Controller* a, int b)
     fprintf(stderr, "mentor_get_root_device_speed: b=%d, TODO!!!\n", b);
 #endif
 
-    struct Mentor_Controller* ctrl = a->hc_data;
+    struct _hctrl_t* ctrl = a->hc_data;
 
     delay(200);
 
@@ -4080,7 +4072,7 @@ int mentor_get_timer_from_controller(struct USB_Controller* a)
 
 
 /* 5278 - todo */
-void MENTOR_PutEDPool(struct Mentor_Controller* r4, struct Struct_0xa4* r5)
+void MENTOR_PutEDPool(struct _hctrl_t* r4, struct Struct_0xa4* r5)
 {
 #if 1
     fprintf(stderr, "MENTOR_PutEDPool: TODO!!!\n");
@@ -4090,7 +4082,7 @@ void MENTOR_PutEDPool(struct Mentor_Controller* r4, struct Struct_0xa4* r5)
 
 
 /* 99d0 - todo */
-int MENTOR_InitializeEndpoint(struct Mentor_Controller* r7, 
+int MENTOR_InitializeEndpoint(struct _hctrl_t* r7, 
     struct USB_Controller_Inner_0x7c* r5, 
     struct Struct_112b08* r4)
 {
@@ -4178,7 +4170,7 @@ int MENTOR_InitializeEndpoint(struct Mentor_Controller* r7,
 }
 
 
-int MENTOR_FreeEtd(struct Mentor_Controller* a, 
+int MENTOR_FreeEtd(struct _hctrl_t* a, 
     struct Struct_0xa4* r4)
 {
 #if 1
@@ -4189,7 +4181,7 @@ int MENTOR_FreeEtd(struct Mentor_Controller* a,
 
 
 /* 51b4 - todo */
-int MENTOR_HookED(struct Mentor_Controller* a, 
+int MENTOR_HookED(struct _hctrl_t* a, 
     struct Struct_0xa4* r6, 
     struct Struct_0xa4* r4)
 {
@@ -4230,7 +4222,7 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
         a, b, c);
 #endif
 
-    struct Mentor_Controller* r5 = a->hc_data;
+    struct _hctrl_t* r5 = a->hc_data;
     struct Struct_0xa4* r7 = c->Data_0xc;
 
 #if 1
@@ -4255,7 +4247,7 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
 
 
 /* 0x00008184 - todo */
-struct _musb_transfer* MENTOR_TD_Setup(struct Mentor_Controller* a, 
+struct _musb_transfer* MENTOR_TD_Setup(struct _hctrl_t* a, 
     struct Struct_10bab4* b, struct Struct_0xa4* c, int flags)
 {
 #if 0
@@ -4294,7 +4286,7 @@ struct _musb_transfer* MENTOR_TD_Setup(struct Mentor_Controller* a,
 
 
 /* 0x00004628 - todo */
-void MENTOR_ReadFIFO(struct Mentor_Controller* a, 
+void MENTOR_ReadFIFO(struct _hctrl_t* a, 
     struct _musb_transfer* b, uint16_t r6, int d, uint16_t r7)
 {
 #ifdef MB86H60
@@ -4345,7 +4337,7 @@ void MENTOR_ReadFIFO(struct Mentor_Controller* a,
 
 
 /* 0x000046c8 - todo */
-void MENTOR_LoadFIFO(struct Mentor_Controller* a, uint16_t b, int c, uint16_t r8)
+void MENTOR_LoadFIFO(struct _hctrl_t* a, uint16_t b, int c, uint16_t r8)
 {
 #ifdef MB86H60
     fprintf(stderr, "MENTOR_LoadFIFO: b=%d, r8=%d\n", b, r8);
@@ -4404,7 +4396,7 @@ int mentor_transfer_abort(struct USB_Controller* a,
     fprintf(stderr, "mentor_transfer_abort: TODO!!!\n");
 #endif
 
-    struct Mentor_Controller* r4 = a->hc_data;
+    struct _hctrl_t* r4 = a->hc_data;
 
     if (pthread_mutex_lock(&r4->Data_4/*r7*/) != 0)
     {
@@ -4526,7 +4518,7 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
     fprintf(stderr, "MENTOR_WaitEndControl: TODO!!!\n");
 #endif
 
-    struct Mentor_Controller* r8 = fp_0x30->hc_data;
+    struct _hctrl_t* r8 = fp_0x30->hc_data;
 
     pthread_sleepon_lock();
     //->loc_9444
@@ -4566,7 +4558,7 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
 }
 
 
-int MENTOR_ProcessMultiOutComplete(struct Mentor_Controller* a,
+int MENTOR_ProcessMultiOutComplete(struct _hctrl_t* a,
         struct _musb_transfer* b, int c, int d)
 {
 #if 1
@@ -4579,12 +4571,17 @@ int MENTOR_ProcessMultiOutComplete(struct Mentor_Controller* a,
 
 
 /* 0x00007348 - todo */
-int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
+int MENTOR_ProcessMultiInComplete(struct _hctrl_t* r6,
         struct _musb_transfer* r4, uint32_t r2, int r7)
 {
 #if 0
     fprintf(stderr, "MENTOR_ProcessMultiInComplete: TODO!!!\n");
 #endif
+
+    if (r7 != 0)
+    {
+        fprintf(stderr, "MENTOR_ProcessMultiInComplete: r7=%d\n", r7);
+    }
 
     struct Struct_0xa4* r5 = r4->Data_0x30;
     
@@ -4645,7 +4642,9 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
             r3->Data_0x34 += r4->bytes_xfered;
             r4->Data_0x24++;
 
-            struct _musb_transfer_Inner_0x18_Inner_8* r3_ = &r4->Data_0x1c[r4->Data_0x24];
+            struct _musb_transfer_Inner_0x18_Inner_8* r3_;
+            
+            r3_ = &r4->Data_0x1c__[r4->Data_0x24];
             r4->xfer_buffer_paddr = r3_->Data_0;
             r4->xfer_length = r3_->Data_8;
             r4->bytes_xfered = 0;
@@ -4661,7 +4660,7 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
 
 
 /* 0x000074ec - todo */
-int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
+int MENTOR_ProcessInComplete(struct _hctrl_t* r6,
         struct _musb_transfer* r5, int r8, int r7)
 {
 #if 0
@@ -4715,7 +4714,7 @@ int MENTOR_ProcessInComplete(struct Mentor_Controller* r6,
 
 
 /* 0x0000549c - todo */
-int MENTOR_ProcessOutComplete(struct Mentor_Controller* r6,
+int MENTOR_ProcessOutComplete(struct _hctrl_t* r6,
         struct _musb_transfer* r4, int r2, int r3)
 {
 #if 0
@@ -4818,7 +4817,7 @@ int MENTOR_ProcessOutComplete(struct Mentor_Controller* r6,
 }
 
 
-int MENTOR_ProcessOutDMAComplete(struct Mentor_Controller* a,
+int MENTOR_ProcessOutDMAComplete(struct _hctrl_t* a,
         struct _musb_transfer* b, int c, int d)
 {
 #if 1
@@ -4847,7 +4846,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
     }
 #endif
 
-    struct Mentor_Controller* r6 = ctrl->hc_data;
+    struct _hctrl_t* r6 = ctrl->hc_data;
     struct Struct_0xa4* r5 = r2->Data_0xc;
     struct _musb_transfer* td; //r4;
 
@@ -4891,9 +4890,14 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
             struct _musb_transfer_Inner_0x18_Inner_8* r2 = r3->Data_8;
 
             td->Data_0x18 = r3;
-            td->Data_0x1c = r3->Data_8;
+            td->Data_0x1c__ = r3->Data_8;
             td->Data_0x20 = r3->wData_0 - 1;
             td->Data_0x24 = 0;
+
+#if 1
+            fprintf(stderr, "mentor_bulk_transfer: multi: td->Data_0x20=%d, r2->Data_0=0x%x, r2->Data_8=%d\n",
+                td->Data_0x20, r2->Data_0, r2->Data_8);
+#endif
 
             td->xfer_buffer_paddr = r2->Data_0;
             td->xfer_length = r2->Data_8;
@@ -5136,7 +5140,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
     int res;
 
     struct _musb_transfer* td; //fp_0x38
-    struct Mentor_Controller* r5 = sl->hc_data;
+    struct _hctrl_t* r5 = sl->hc_data;
     struct Struct_0xa4* fp_0x30/*fp48*/ = sb->Data_0xc;
 
     if (pthread_mutex_lock(&r5->Data_0xc/*r7*/) != 0)
@@ -5424,7 +5428,7 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
         a, b, r6);
 #endif
 
-    struct Mentor_Controller* r5 = a->hc_data;
+    struct _hctrl_t* r5 = a->hc_data;
     struct Struct_0xa4* r4 = r6->Data_0xc;
 
 #if 1

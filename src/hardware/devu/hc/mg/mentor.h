@@ -17,12 +17,14 @@
 	#define RXCSR_DMA_REQ_TYPE0				( 0 << 11 )
 	#define RXCSR_DMA_REQ_TYPE1				( 1 << 11 )
 	#define RXCSR_DMA_REQ_EN				( 1 << 13 )
+	#define RXCSR_AUTOCLEAR					( 1 << 15 )
 
 	/* host mode */ 	
 	//#define RXCSR_RXPKTRDY				( 1 << 0 )
 	//#define RXCSR_DMA_REQ_MODE			( 1 << 11 )
 	//#define RXCSR_DMA_REQ_EN				( 1 << 13 )
 	#define RXCSR_AUTOREQ					( 1 << 14 )
+	//#define RXCSR_AUTOCLEAR				( 1 << 15 )
 
 
 #define MUSB_COUNT0					0x108	// 16-bit
@@ -35,7 +37,7 @@
 //#undef MB86H60
 
 
-static inline uint8_t HW_Read8( struct Mentor_Controller* c/*uint8_t * iobase*/, uint32_t offset ) {
+static inline uint8_t HW_Read8( struct _hctrl_t* c/*uint8_t * iobase*/, uint32_t offset ) {
 	uint8_t data;
 #ifdef MB86H60
 	dma_SetUsbMode_LengthInput(c, 0);
@@ -48,7 +50,7 @@ static inline uint8_t HW_Read8( struct Mentor_Controller* c/*uint8_t * iobase*/,
 
 
 
-static inline uint16_t HW_Read16( struct Mentor_Controller* c, uint32_t offset ) {
+static inline uint16_t HW_Read16( struct _hctrl_t* c, uint32_t offset ) {
     uint16_t data;
 #ifdef MB86H60
 	dma_SetUsbMode_LengthInput(c, 1);
@@ -61,7 +63,7 @@ static inline uint16_t HW_Read16( struct Mentor_Controller* c, uint32_t offset )
 
 
 
-static inline void HW_Write8( struct Mentor_Controller* c, uint32_t offset, uint8_t data ) {
+static inline void HW_Write8( struct _hctrl_t* c, uint32_t offset, uint8_t data ) {
 #ifdef MB86H60
 	dma_SetUsbMode_LengthInput(c, 0);
     ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
@@ -72,7 +74,7 @@ static inline void HW_Write8( struct Mentor_Controller* c, uint32_t offset, uint
 
 
 
-static inline void HW_Write16( struct Mentor_Controller* c, uint32_t offset, uint16_t data ) {
+static inline void HW_Write16( struct _hctrl_t* c, uint32_t offset, uint16_t data ) {
 #ifdef MB86H60
 	dma_SetUsbMode_LengthInput(c, 1);
     ((volatile uint32_t*)(c->Data_0x14))[offset] = data;
