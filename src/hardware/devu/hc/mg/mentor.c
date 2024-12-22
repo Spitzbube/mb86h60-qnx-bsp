@@ -180,14 +180,14 @@ struct Mentor_Controller
     int fill_0x30[2]; //0x30
     int Data_0x38; //0x38
     pthread_t Data_0x3c; //0x3c
-    int Data_0x40; //0x40
-    int Data_0x44; //0x44
+    int chid; //0x40
+    int coid; //0x44
     int irq; //0x48
     int intr_id; //0x4c
     int flags; //0x50
     int Data_0x54; //0x54
     int Data_0x58; //0x58
-    struct sigevent Data_0x5c;
+    struct sigevent intr_event; //0x5c
     int Data_0x6c; //0x6c
     uint32_t Data_0x70; //0x70
     uint32_t num_td; //0x74
@@ -963,8 +963,14 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
 
             if (r6->flags & 0x800)
             {
-                //0x00006e94
+                //0x00006e94: write RXMAXP
+#if 1
+                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", r8->wData_0x18);
+#endif
                 HW_Write16(r4, 0x104 + r7, r8->wData_0x18);
+#if 1
+                fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n", sb & 0x2792);
+#endif
                 HW_Write16(r4, 0x106 + r7, sb & 0x2792);
 
                 if (r6->flags & 0x400)
@@ -976,7 +982,12 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                         r5);
                 }
                 //loc_6f00
-                HW_Write16(r4, 0x106 + r7, HW_Read16(r4, 0x106 + r7) | 
+                uint32_t r0 = HW_Read16(r4, 0x106 + r7);
+#if 1
+                fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n", 
+                    r0 | RXCSR_DMA_REQ_EN | 0x6d);
+#endif
+                HW_Write16(r4, 0x106 + r7, r0 | 
                     RXCSR_DMA_REQ_EN | 0x6d);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
@@ -1203,7 +1214,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                 //loc_6f58: write RXMAXP
                 fp_0x2c |= (r3 << 11);
 #if 0
-                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", fp_0x2c);
+                fprintf(stderr, "MENTOR_RestartEtd: 0x104 <- 0x%x\n", fp_0x2c);
 #endif
                 HW_Write16(r4, 0x104 + r7, fp_0x2c);
 
@@ -1217,7 +1228,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                 {
                     //0x00006f84
                     sl = sb & 0x2792;
-                    sl |= 0x6000;
+                    sl |= (RXCSR_DMA_REQ_EN | RXCSR_AUTOREQ); //0x6000;
 
                     mentor_start_dma_transfer(r4,
                         r8,
@@ -1561,7 +1572,7 @@ int MENTOR_ProcessETDDone(struct Mentor_Controller* sl, uint16_t r5)
                             } //if ((1 << r6) & sl->Data_0x54)
                             else
                             {
-                                //loc_587c
+                                //loc_587c: Read RXCOUNT
                                 r3 = HW_Read16(sl, 0x108 + r7);
                                 fp_0x34 = r3/*r1*/;
                                 if ((r3/*r1*/ + r8->bytes_xfered) > r8->xfer_length)
@@ -2125,7 +2136,7 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
         return NULL;
     }
 
-    return &r4->Data_0x5c;
+    return &r4->intr_event;
 }
 
 
@@ -2144,11 +2155,16 @@ static void* mentor_interrupt_thread(void* a)
         return (void*)-1;
     }
     //loc_8000
-    r4->Data_0x5c.sigev_notify = 4;
-    r4->Data_0x5c.sigev_id = r4->Data_0x44;
-    r4->Data_0x5c.sigev_priority = getprio(0);
-    r4->Data_0x5c.sigev_value.sival_int = 0;
-    r4->Data_0x5c.sigev_code = 1;
+#if 0
+    r4->intr_event.sigev_notify = 4;
+    r4->intr_event.sigev_id = r4->coid;
+    r4->intr_event.sigev_priority = getprio(0);
+    r4->intr_event.sigev_value.sival_int = 0;
+    r4->intr_event.sigev_code = 1;
+#else
+    SIGEV_PULSE_INIT( &r4->intr_event, r4->coid, 
+        getprio(0), MUSB_PULSE_INTR/*1*/, 0 );
+#endif
 
     while ((r4->flags & 0x10) == 0)
     {
@@ -2175,6 +2191,7 @@ static void* mentor_interrupt_thread(void* a)
     while (1)
     {
         //loc_8100
+#if 0
         struct 
         {
             int fill_0; //0
@@ -2182,15 +2199,27 @@ static void* mentor_interrupt_thread(void* a)
             int fill_8[2]; //8
             //16
         } fp_0x30;
+#else
+        struct _pulse pulse; //fp_0x30
+#endif
 
-        if (MsgReceivePulse(r4->Data_0x40, &fp_0x30, 16, 0) == -1)
+#if 0
+        fprintf(stderr, "mentor_interrupt_thread: before MsgReceivePulse\n");
+#endif
+
+        if (MsgReceivePulse(r4->chid, &pulse, sizeof(pulse), 0) == -1)
         {
             //->loc_8154
             InterruptDetach(r4->intr_id);
             break;
         }
+
+#if 1
+        fprintf(stderr, "mentor_interrupt_thread: after MsgReceivePulse, code=%d\n",
+            pulse.code);
+#endif
         //0x0000811c
-        if (fp_0x30.bData_4 == 1)
+        if (pulse.code == MUSB_PULSE_INTR) //if (fp_0x30.bData_4 == 1)
         {
             //0x00008128
             mentor_bottom_half(r4);
@@ -2996,7 +3025,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
 #if 1
     if (!SIMPLEQ_EMPTY(&r5->transfer_complete_q))
     {
-        return &r5->Data_0x5c;
+        return &r5->intr_event;
     }
 #endif
 
@@ -3132,7 +3161,7 @@ static int dma_init(struct Mentor_Controller* r6)
     }
     //loc_30cc
 #ifdef MB86H60
-    r4_->Data_8 = mmap(NULL, 8/*size: TODO!!!*/ * 0x40, 0xb00, 0x90002, -1, 0);
+    r4_->Data_8 = mmap(NULL, 16/*size: TODO!!!*/ * 0x40, 0xb00, 0x90002, -1, 0);
 #else
     if (dma_nums == 0)
     {
@@ -3173,7 +3202,7 @@ static int dma_init(struct Mentor_Controller* r6)
     //r0 = 0x38;
     uint32_t i;
 #ifdef MB86H60
-    for (i = 0; i < 8/*size: TODO!!!*/; i++)
+    for (i = 0; i < 16/*size: TODO!!!*/; i++)
     {
         //loc_3440
         LIST_INSERT_HEAD(&r4_->dma_free_q, &r4_->Data_8[i], link);
@@ -3587,8 +3616,8 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     //loc_6584
     struct Mentor_Controller* sb = r7->hc_data;
 
-    sb->Data_0x40 = ChannelCreate(0x08);
-    if (sb->Data_0x40 < 0)
+    sb->chid = ChannelCreate(0x08);
+    if (sb->chid < 0)
     {
         mentor_slogf(r4, 12, 2, 0, "%s : %s - Unable to create channel", "", "");
         //->loc_66f8
@@ -3597,8 +3626,8 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
     else
     {
         //loc_65e4
-        sb->Data_0x44 = ConnectAttach(0, 0, sb->Data_0x40, 0x40000000, 0);
-        if (sb->Data_0x44 < 0)
+        sb->coid = ConnectAttach(0, 0, sb->chid, 0x40000000, 0);
+        if (sb->coid < 0)
         {
             mentor_slogf(r4, 12, 2, 0, "%s : %s - Unable to connect to channel", "", "");
             //->loc_66f0
@@ -3619,9 +3648,9 @@ int mentor_controller_init(struct USB_Controller* r7, int b, char* r5)
             {
                 mentor_slogf(r4, 12, 2, 0, "%s : %s - Unable to create interrupt thread", "", "");
 
-                ConnectDetach(sb->Data_0x44);
+                ConnectDetach(sb->coid);
                 //loc_66f0
-                ChannelDestroy(sb->Data_0x40);
+                ChannelDestroy(sb->chid);
                 //loc_66f8
                 //TODO!!!
             }

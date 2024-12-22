@@ -1,5 +1,10 @@
 
 
+#define MUSB_PULSE_INTR  				(_PULSE_CODE_MINAVAIL+1)
+
+
+
+
 #define MUSB_CSR0					0x102  // 16-bit
 
 
