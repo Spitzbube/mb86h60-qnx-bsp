@@ -33,6 +33,24 @@ struct Struct_0x94
     struct _musb_transfer* Data_0; //0
 };
 
+
+struct _musb_transfer_Inner_0x18_Inner_8
+{
+    int Data_0; //0
+    int fill_4; //4
+    int Data_8; //8
+    //???
+};
+
+struct _musb_transfer_Inner_0x18
+{
+    uint16_t wData_0; //0
+    int fill_4; //4
+    struct _musb_transfer_Inner_0x18_Inner_8* Data_8; //8
+    //???
+};
+
+
 struct _musb_transfer
 {
     volatile uint32_t xfer_length; //0
@@ -41,16 +59,16 @@ struct _musb_transfer
     uint32_t xfer_buffer; //0xc
     int Data_0x10; //0x10
     volatile uint32_t bytes_xfered; //0x14
-    int Data_0x18; //0x18
-    int Data_0x1c__; //0x1c
+    struct _musb_transfer_Inner_0x18* Data_0x18; //0x18
+    struct _musb_transfer_Inner_0x18_Inner_8* Data_0x1c; //0x1c
     int Data_0x20; //0x20
     volatile int Data_0x24; //0x24
     int status; //0x28
     SIMPLEQ_ENTRY(_musb_transfer) link; //0x2c
     struct Struct_0xa4* Data_0x30; //0x30
     struct Struct_10bab4* Data_0x34; //0x34
-    void (*Func_0x38)(); //0x38
-    void (*Func_0x3c)(); //0x3c
+    void (*Func_0x38)(struct Mentor_Controller*, struct _musb_transfer*, uint32_t, int); //0x38
+    void (*Func_0x3c)(struct Mentor_Controller*, struct _musb_transfer*, uint32_t, int); //0x3c
     int fill_0x40; //0x40
     //0x44
 };
@@ -948,14 +966,21 @@ void MENTOR_StartEtd(struct Mentor_Controller* r4,
                 if (r6->flags & 0x400)
                 {
                     //0x00006ec8
-#if 1
+#if 0
                     fprintf(stderr, "MENTOR_StartEtd: 0x00006ec8: TODO!!!\n");
+#else
+                    mentor_start_dma_transfer(r4, r8, r6, 1/*rx*/,
+                        ep, r8->Data_0x2c, 
+                        r6->xfer_buffer_paddr + r6->bytes_xfered, 
+                        r5);
 #endif
-                    //TODO!!!
                 }
                 //loc_6f00
-                HW_Write16(r4, 0x106 + r7, 
-                    HW_Read16(r4, 0x106 + r7) | 0x2040 | 0x2d);
+                HW_Write16(r4, 0x106 + r7, HW_Read16(r4, 0x106 + r7) | 
+                    RXCSR_DMA_REQ_EN | 
+//                    RXCSR_DMA_REQ_TYPE1 |
+//                    RXCSR_AUTOREQ |
+                    0x40 | 0x2d);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -1071,7 +1096,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
     fprintf(stderr, "MENTOR_RestartEtd: TODO!!!\n");
 #endif
 
-    int fp_0x30;
+    int ep; //fp_0x30;
     //fp_0x2c = _GLOBAL_OFFSET_TABLE_;
 
     struct Struct_0xa4* r8 = r6->Data_0x30;
@@ -1086,11 +1111,11 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
         //0x00006cf4
         r8->bData_0x1f = 0;
 
-        fp_0x30 = r8->Data_0x28;
-        r4->Data_0xc4[fp_0x30] = r6;
+        ep = r8->Data_0x28;
+        r4->Data_0xc4[ep] = r6;
         r6->flags |= 0x100;
 
-        int r7 = fp_0x30 * 16;
+        int r7 = ep * 16;
 
         uint16_t wCsr;
         int retry/*r5*/ = 1000;
@@ -1108,7 +1133,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                 "devu-dm816x-mg.so", "MENTOR_RestartEtd", wCsr);
         }
         //loc_6de0
-        int r5 = r6->xfer_length - r6->bytes_xfered;
+        uint32_t r5 = r6->xfer_length - r6->bytes_xfered;
 
 #if 0
         fprintf(stderr, "MENTOR_RestartEtd: r5=%d, r6->flags=0x%x\n",
@@ -1130,8 +1155,12 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
         {
             //loc_6e38
             r6->flags &= ~0x800;
-            r6->Data_0x10 = (r5 > r8->Data_0x30->Data_0)?
-                r8->Data_0x30->Data_0: r5;
+
+            if (r5 > r8->Data_0x30->Data_0)
+            {
+                r5 = r8->Data_0x30->Data_0;
+            }
+            r6->Data_0x10 = r5;
         }
         //loc_6e58
         if (r6->flags & 0x04)
@@ -1157,10 +1186,14 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                 if (r6->flags & 0x400)
                 {
                     //0x00006ec8
-#if 1
+#if 0
                     fprintf(stderr, "MENTOR_RestartEtd: 0x00006ec8: TODO!!!\n");
+#else
+                    mentor_start_dma_transfer(r4, r8, r6, 1/*rx*/,
+                        ep, r8->Data_0x2c, 
+                        r6->xfer_buffer_paddr + r6->bytes_xfered, 
+                        r5);
 #endif
-                    //TODO!!!
                 }
                 //loc_6f00
                 HW_Write16(r4, 0x106 + r7, 
@@ -1204,7 +1237,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
                         r8,
                         r6,
                         1,
-                        fp_0x30,
+                        ep,
                         r8->Data_0x2c,
                         r6->xfer_buffer_paddr + r6->bytes_xfered,
                         r5);
@@ -1253,7 +1286,7 @@ void MENTOR_RestartEtd(struct Mentor_Controller* r4,
             //loc_7160
             HW_Write16(r4, 0x100 + r7, sl | (r0 << 11));
 
-            MENTOR_LoadFIFO(r4, fp_0x30, r6->xfer_buffer, r5);
+            MENTOR_LoadFIFO(r4, ep, r6->xfer_buffer, r5);
 
             HW_Write16(r4, 0x102 + r7, 
                 (sb & ~0x9400) | 0x2080 | 0x27);
@@ -1269,7 +1302,7 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
     int ep/*r4*//*sp_0x2c*/, int f/*sp_0x30*/, 
     uint32_t start_addr_paddr/*r6*//*sp_0x34*/, uint32_t length/*r5*//*sp_0x38*/)
 {
-#if 1
+#if 0
     fprintf(stderr, "mentor_start_dma_transfer: rx=%d, ep=%d, f=%d, start_addr_paddr=0x%x, length=%d\n",
         rx, ep, f, start_addr_paddr, length);
 #endif
@@ -1298,6 +1331,12 @@ int mentor_start_dma_transfer(struct Mentor_Controller* r0,
 
     uint32_t fifo_addr = 0x880 + (ep << 4);
     uint32_t maxPacketSize = 512;
+
+    if (length > maxPacketSize)
+    {
+        length = maxPacketSize;
+    }
+
     uint32_t line = length / maxPacketSize;
 
     if (rx)
@@ -2065,6 +2104,7 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
     if (status & (7 << 4))
     {
         //USB EP DMA Read IRQ
+#if 0
         int ep;
         for (ep = 1; ep <= 3; ep++)
         {
@@ -2085,6 +2125,9 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
                 HW_Write16(r4, 0x106 + ep * 16, rxCsr);
             }
         }
+#else
+        MENTOR_ProcessETDDone(r4, (status & (7 << 4)) >> 3);
+#endif
 //        dma_SetUsbIntClear(r4, (7 << 4));
     }
 #endif
@@ -2808,7 +2851,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     //0x00003df8
                     InterruptUnlock(&r5->Data_0xd0/*sb*/);
 
-                    (td->Data_0x3c)(r5/*r6*/, td, r5_->Data_0xc__, 0/*sl*/);
+                    (td->Func_0x3c)(r5/*r6*/, td, r5_->Data_0xc__, 0/*sl*/);
 
                     InterruptLock(&r5->Data_0xd0/*sb*/);
                     //0x00003e54
@@ -2875,7 +2918,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     if ((td != NULL) && (td->flags & 0x800))
                     {
                         //0x00003f94
-                        (td->Data_0x3c)(r5, td, td->Data_0x10, 0);
+                        (td->Func_0x3c)(r5, td, td->Data_0x10, 0);
                     }
                     //0x00003fac
                     InterruptLock(&r5->Data_0xd0/*fp_0x4c*/);
@@ -2934,7 +2977,7 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                                 //0x000040dc
                                 mentor_abort_dma_transfer(r5/*r7*/, r4->Data_0x30);
 
-                                (r4->Data_0x3c)(r5/*r7*/, r4, NULL, 8);
+                                (r4->Func_0x3c)(r5/*r7*/, r4, 0, 8);
                             }
                             //0x00004100
                         }
@@ -4531,16 +4574,16 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
         //0x00007374
         r4->bytes_xfered += r2;
 
-        int r3;
+        int remaining;
         if ((r2 != 0) && ((r2 % r5->wData_0x18) == 0))
         {
             //0x0000739c
-            r3 = r4->xfer_length - r4->bytes_xfered;
+            remaining = r4->xfer_length - r4->bytes_xfered;
 
-            if ((r7 == 1) && (r3 > 0)) //TODO!!!
+            if ((r7 == 0) && (remaining > 0))
             {
                 //0x000073c0
-                MENTOR_StartEtd(r6, r4);
+                MENTOR_RestartEtd(r6, r4);
                 //->0x000074e4
                 return 0;
             }
@@ -4549,12 +4592,12 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
         else
         {
             //0x000073d0
-            r3 = 0;
+            remaining = 0;
         }
         //0x000073d4
         if ((r7 != 0) ||
             ((r4->Data_0x24 + 1) > r4->Data_0x20) ||
-            (r3 == 0))
+            (remaining == 0))
         {
             //0x000073f8
             InterruptLock(&r6->Data_0xd0);
@@ -4583,18 +4626,9 @@ int MENTOR_ProcessMultiInComplete(struct Mentor_Controller* r6,
             r3->Data_0x34 += r4->bytes_xfered;
             r4->Data_0x24++;
 
-#if 1 //TODO!!!
-            struct Struct_0x1c
-            {
-                int Data_0; //0
-                int fill_4[2]; //4
-                //12
-            };
-        
-            r4->xfer_buffer_paddr = *((int*)(r4->Data_0x1c__ + r4->Data_0x24 * 12));
-#endif
-
-            r4->xfer_length = r3->Data_8;
+            struct _musb_transfer_Inner_0x18_Inner_8* r3_ = &r4->Data_0x1c[r4->Data_0x24];
+            r4->xfer_buffer_paddr = r3_->Data_0;
+            r4->xfer_length = r3_->Data_8;
             r4->bytes_xfered = 0;
 
             MENTOR_StartEtd(r6, r4);
@@ -4834,24 +4868,11 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
         if (flags/*sb*/ & 0x20/*PIPE_FLAGS_MULTI_XFER?*/)
         {
             //0x00008f0c
-            struct
-            {
-                uint16_t wData_0; //0
-                int fill_4; //4
-                int Data_8; //8
-                //???
-            }* r3 = r8 + 1;
-
-            struct
-            {
-                int Data_0; //0
-                int fill_4; //4
-                int Data_8; //8
-                //???
-            }* r2 = r3->Data_8;
+            struct _musb_transfer_Inner_0x18* r3 = r8 + 1;
+            struct _musb_transfer_Inner_0x18_Inner_8* r2 = r3->Data_8;
 
             td->Data_0x18 = r3;
-            td->Data_0x1c__ = r3->Data_8;
+            td->Data_0x1c = r3->Data_8;
             td->Data_0x20 = r3->wData_0 - 1;
             td->Data_0x24 = 0;
 
