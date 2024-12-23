@@ -973,9 +973,6 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
                 fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", r8->wData_0x18);
 #endif
                 HW_Write16(r4, 0x104 + r7, r8->wData_0x18);
-#if 1
-                fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n", sb & 0x2792);
-#endif
                 HW_Write16(r4, 0x106 + r7, sb & 0x2792);
 
                 if (r6->flags & 0x400)
@@ -988,12 +985,15 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
                 }
                 //loc_6f00
                 uint32_t r0 = HW_Read16(r4, 0x106 + r7);
+                r0 |= RXCSR_DMA_REQ_EN 
+//                    | RXCSR_AUTOREQ | RXCSR_AUTOCLEAR
+//                    | RXCSR_DMA_REQ_MODE
+                    | 0x6d;
+//                r0 &= ~RXCSR_REQ_PKT;
 #if 1
-                fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n", 
-                    r0 | RXCSR_DMA_REQ_EN | 0x6d);
+                fprintf(stderr, "MENTOR_StartEtd: 0x106 <- 0x%x\n", r0);
 #endif
-                HW_Write16(r4, 0x106 + r7, r0 | 
-                    RXCSR_DMA_REQ_EN | 0x6d);
+                HW_Write16(r4, 0x106 + r7, r0);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -1027,7 +1027,6 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
                     //0x00006f84
                     sl = sb & 0x2792;
                     sl |= (RXCSR_DMA_REQ_EN | RXCSR_AUTOREQ); //0x6000;
-//                    sl |= RXCSR_AUTOCLEAR;
 
                     mentor_start_dma_transfer(r4,
                         r8,
@@ -1204,8 +1203,11 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
                         r5);
                 }
                 //loc_6f00
-                HW_Write16(r4, 0x106 + r7, HW_Read16(r4, 0x106 + r7) | 
-                    RXCSR_DMA_REQ_EN | 0x6d);
+                uint32_t r0 = HW_Read16(r4, 0x106 + r7);
+                r0 |= RXCSR_DMA_REQ_EN 
+//                    | RXCSR_AUTOREQ | RXCSR_AUTOCLEAR
+                    | 0x6d;
+                HW_Write16(r4, 0x106 + r7, r0);
                 //->loc_71bc
             } //if (r6->flags & 0x800)
             else
@@ -2092,53 +2094,7 @@ const struct sigevent * mentor_interrupt_handler(void* a, int b)
     //loc_5a90
     mentor_clr_ext_int(r4);
 #ifdef MB86H60
-//        dma_SetUsbIntClear(r4, 1);
     } //if (status & 1)
-    
-    if (status & (7 << 1))
-    {
-        //USB EP DMA Write IRQ
-        int ep;
-        for (ep = 1; ep <= 3; ep++)
-        {
-            int ep_mask = (1 << ep);
-            if (status & ep_mask)
-            {
-                //Handle write irq  for ep...
-            }
-        }
-//        dma_SetUsbIntClear(r4, (7 << 1));
-    }
-    
-    if (status & (7 << 4))
-    {
-        //USB EP DMA Read IRQ
-#if 0
-        int ep;
-        for (ep = 1; ep <= 3; ep++)
-        {
-            int ep_mask = (1 << (3 + ep));
-            if (status & ep_mask)
-            {
-                //Handle read irq  for ep...
-                //Refer: MGC_HdrcDmaChannelStatusChanged()
-
-                uint32_t rxCsr = HW_Read16(r4, 0x106 + ep * 16);
-                //Clear Packet Ready Bit
-                //TODO: Remainder in the FIFO for transfer length %4 != 0???
-                rxCsr &= ~RXCSR_RXPKTRDY;
-                HW_Write16(r4, 0x106 + ep * 16, rxCsr);
-
-                //Clear DMA bits
-                rxCsr &= ~RXCSR_DMA_REQ_EN;
-                HW_Write16(r4, 0x106 + ep * 16, rxCsr);
-            }
-        }
-#else
-        MENTOR_ProcessETDDone(r4, (status & (7 << 4)) >> 3);
-#endif
-//        dma_SetUsbIntClear(r4, (7 << 4));
-    }
 #endif
 
     if (SIMPLEQ_EMPTY(&r4->transfer_complete_q))
@@ -2774,7 +2730,26 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
     if (r5_ != NULL)
     {
         //0x00003d74
-        struct _musb_transfer* td/*ip*/ = r5_->td;
+        struct _musb_transfer* td = r5_->td;
+        struct Struct_0xa4* r4 = td->Data_0x30;
+
+        //Clear all RXCSR bits
+#if 0
+        HW_Write16(r5, 0x106 + r4->Data_0x28 * 16, 0);
+#else
+        uint32_t r0 = HW_Read16(r5, 0x106 + r4->Data_0x28 * 16);
+        if ((r0 & RXCSR_AUTOCLEAR) == 0)
+        {
+            r0 &= ~RXCSR_RXPKTRDY;
+            HW_Write16(r5, 0x106 + r4->Data_0x28 * 16, r0);
+        }
+        r0 &= ~RXCSR_DMA_REQ_EN; 
+//            | RXCSR_AUTOREQ | RXCSR_AUTOCLEAR
+//                    | RXCSR_DMA_REQ_MODE
+//            | 0x6d;
+//
+        HW_Write16(r5, 0x106 + r4->Data_0x28 * 16, r0);
+#endif
 
         (td->Func_0x3c)(r5, td, r5_->Data_0xc__, 0);
 
@@ -3374,7 +3349,7 @@ int mentor_board_specific_init2(struct _hctrl_t* ctrl)
     uint32_t dma_usb_int_mask = 0x7f;
     dma_usb_int_mask &= ~(1 << 0); //Bit 0: USB General IRQ
 //    dma_usb_int_mask &= ~(7 << 1); //Bit 1...3: USB DMA Endpoint Write Request IRQ
-    dma_usb_int_mask &= ~(7 << 4); //Bit 4...6: USB DMA Endpoint Read Request IRQ
+//    dma_usb_int_mask &= ~(7 << 4); //Bit 4...6: USB DMA Endpoint Read Request IRQ
 //    dma_usb_int_mask &= ~(1 << 5);
     dma_SetUsbIntMask(ctrl, dma_usb_int_mask); 
 
