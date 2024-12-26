@@ -57,7 +57,7 @@ struct _musb_transfer
     volatile uint32_t flags; //4
     uint32_t xfer_buffer_paddr; //8
     uint32_t xfer_buffer; //0xc
-    uint32_t Data_0x10; //0x10
+    volatile uint32_t Data_0x10; //0x10
     volatile uint32_t bytes_xfered; //0x14
     struct _musb_transfer_Inner_0x18* Data_0x18; //0x18
     struct _musb_transfer_Inner_0x18_Inner_8* Data_0x1c__; //0x1c
@@ -82,7 +82,7 @@ struct Struct_0xa4
     struct Struct_0x94* Data_0xc; //12
     int Data_0x10; //0x10 = 16
     int Data_0x14; //0x14 = 20
-    uint16_t wData_0x18; //0x18 = 24
+    uint16_t mps; //0x18 = 24
     uint8_t transferType; //0x1a = 26
     uint8_t bData_0x1b; //0x1b = 27
     uint8_t bData_0x1c; //0x1c = 28
@@ -91,7 +91,7 @@ struct Struct_0xa4
     uint8_t bData_0x1f; //0x1f = 31
     int Data_0x20; //0x20
     int Data_0x24; //0x24
-    int Data_0x28; //0x28
+    int num; //0x28
     int Data_0x2c; //0x2c
     struct fp_0x34_Inner_0x18_Inner_0x10* Data_0x30; //0x30
     struct Struct_112b08* Data_0x34; //0x34
@@ -442,7 +442,7 @@ void MENTOR_ProcessControlDone(struct _hctrl_t* r5)
 
                 r4->bytes_xfered += sl;
 
-                if ((r6->wData_0x18 == sl) && (r4->xfer_length > r4->bytes_xfered))
+                if ((r6->mps == sl) && (r4->xfer_length > r4->bytes_xfered))
                 {
                     //0x00004d94
                     HW_Write16(r5, MUSB_CSR0, wCsr | 0x20);
@@ -460,7 +460,7 @@ void MENTOR_ProcessControlDone(struct _hctrl_t* r5)
             if (r4->xfer_length > r4->bytes_xfered)
             {
                 //0x00004dc8
-                uint32_t r6_ = r6->wData_0x18;
+                uint32_t r6_ = r6->mps;
                 if (r6_ >= (r4->xfer_length - r4->bytes_xfered))
                 {
                     r6_ = r4->xfer_length - r4->bytes_xfered;
@@ -524,7 +524,7 @@ struct fp_0x34_Inner_0x18_Inner_0x10* mentor_fifo_alloc(struct _hctrl_t* r5,
     int r8;
     uint32_t r3;
     struct Mentor_Controller_Inner_0x8c* r4 = r5->Data_0x8c;
-    int r6 = c->wData_0x18;
+    int r6 = c->mps;
     //r7 = 0x24;
     //sb = 0x20;
     //->loc_4364
@@ -613,7 +613,7 @@ int MENTOR_AllocEtd(struct _hctrl_t* r5,
     fprintf(stderr, "MENTOR_AllocEtd: TODO!!!\n");
 #endif
 
-    int r4 = r6->Data_0x28;
+    int r4 = r6->num;
     if ((r4 > 0) && (r4 < r5->Data_0x18))
     {
         //->loc_84f0
@@ -688,7 +688,7 @@ int MENTOR_AllocEtd(struct _hctrl_t* r5,
         mentor_slogf(r5, 12, 2, 1, 
             "%s - %s: Allocate FIFO failed, bEnd=%d, maxPacketSize=%d",
             "devu-dm816x-mg.so", "MENTOR_AllocEtd",
-            r4, r6->wData_0x18);
+            r4, r6->mps);
 
         r4 = -1;
         //->loc_84f0
@@ -696,7 +696,7 @@ int MENTOR_AllocEtd(struct _hctrl_t* r5,
     else
     {
         //loc_84d4
-        r6->Data_0x28 = r4;
+        r6->num = r4;
         r6->bData_0x1f = 0;
         r5->Data_0xc8[r4] = r6;
     }
@@ -874,26 +874,23 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
     fprintf(stderr, "MENTOR_StartEtd: TODO!!!\n");
 #endif
 
-    int ep; //fp_0x30;
-    //fp_0x2c = _GLOBAL_OFFSET_TABLE_;
-
     struct Struct_0xa4* r8 = r6->Data_0x30;
 
 #if 1
-    fprintf(stderr, "MENTOR_StartEtd: r8=%p, r8->Data_0x28=%d\n",
-        r8, r8->Data_0x28);
+    fprintf(stderr, "MENTOR_StartEtd: r8=%p, r8->num=%d\n",
+        r8, r8->num);
 #endif
 
-    if (r8->Data_0x28 >= 0)
+    if (r8->num >= 0)
     {
         //0x00006cf4
         r8->bData_0x1f = 0;
 
-        ep = r8->Data_0x28;
-        r4->Data_0xc4[ep] = r6;
+        int ep_num/*fp_0x30*/ = r8->num;
+        r4->Data_0xc4[ep_num] = r6;
         r6->flags |= 0x100;
 
-        int r7 = ep * 16;
+        int r7 = ep_num * 16;
 
         uint16_t wCsr;
         int retry/*r5*/ = 1000;
@@ -927,8 +924,8 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
 
         if ((r6->flags & 0x400) &&
             (r4->flags & 0x200) &&
-            (r5 > r8->wData_0x18) &&
-            ((r8->wData_0x18 & 0x3f) == 0) &&
+            (r5 > r8->mps) &&
+            ((r8->mps & 0x3f) == 0) &&
             (r8->transferType == USB_ATTRIB_BULK)) //2))
         {
             //0x00006e24
@@ -970,16 +967,16 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
             {
                 //0x00006e94: write RXMAXP
 #if 1
-                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", r8->wData_0x18);
+                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", r8->mps);
 #endif
-                HW_Write16(r4, 0x104 + r7, r8->wData_0x18);
+                HW_Write16(r4, 0x104 + r7, r8->mps);
                 HW_Write16(r4, 0x106 + r7, sb & 0x2792);
 
                 if (r6->flags & 0x400)
                 {
                     //0x00006ec8
-                    mentor_start_dma_transfer(r4, r8, r6, 1/*rx*/,
-                        ep, r8->Data_0x2c, 
+                    mentor_start_dma_transfer(r4, r8, r6, 1,
+                        ep_num, r8->Data_0x2c, 
                         r6->xfer_buffer_paddr + r6->bytes_xfered, 
                         r5);
                 }
@@ -999,22 +996,17 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
             else
             {
                 //loc_6f24
-                int fp_0x34;
-                int fp_0x2c;
-
-                fp_0x34 = fp_0x2c = r8->wData_0x18;
-                uint32_t r3 = 0;
-                int r0 = r6->Data_0x10 / r8->wData_0x18;
-                if ((r0 - 1) > 0)
+                uint32_t m = 0;
+                int r0 = (r6->Data_0x10 / r8->mps) -1;
+                if (r0 > 0)
                 {
-                    r3 = (r6->Data_0x10 / fp_0x34) - 1;
+                    m = (r6->Data_0x10 / r8->mps) - 1;
                 }
                 //loc_6f58: write RXMAXP
-                fp_0x2c |= (r3 << 11);
-#if 1
-                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", fp_0x2c);
+#if 0
+                fprintf(stderr, "MENTOR_StartEtd: 0x104 <- 0x%x\n", r8->mps | (m << 11));
 #endif
-                HW_Write16(r4, 0x104 + r7, fp_0x2c);
+                HW_Write16(r4, 0x104 + r7, r8->mps | (m << 11));
 
                 int sl;
                 if ((r6->flags & 0x400) == 0)
@@ -1028,12 +1020,8 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
                     sl = sb & 0x2792;
                     sl |= (RXCSR_DMA_REQ_EN | RXCSR_AUTOREQ); //0x6000;
 
-                    mentor_start_dma_transfer(r4,
-                        r8,
-                        r6,
-                        1,
-                        ep,
-                        r8->Data_0x2c,
+                    mentor_start_dma_transfer(r4, r8, r6, 1,
+                        ep_num, r8->Data_0x2c,
                         r6->xfer_buffer_paddr + r6->bytes_xfered,
                         r5);
                 }
@@ -1051,44 +1039,81 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
         else
         {
             //loc_6fe4
-            int32_t r0 = r6->Data_0x10;
-            uint32_t sl = r8->wData_0x18;
-            r0 = r0 - 1;
-            r0 = r0 + sl;
-            r0 = r0 / sl;
-            r0 = r0 - 1;
-            if (r0 <= 0)
+            uint32_t m = 0;
+            //uint32_t sl = r8->mps;
+            int r0_ = ((r6->Data_0x10 + r8->mps - 1) / r8->mps) - 1;
+            if (r0_ > 0)
             {
-                r0 = 0; 
-                //->loc_7024
-            }
-            else
-            {
-                //0x0000700c
-                r0 = r6->Data_0x10;
-                r0 = r0 - 1;
-                r0 = r0 + sl;
-                r0 = r0 / sl;
-                r0 = r0 - 1;
+                m = ((r6->Data_0x10 + r8->mps - 1) / r8->mps) - 1;
             }
             //loc_7024
-            int sb = HW_Read16(r4, 0x102 + r7);
+            int txCsr/*sb*/ = HW_Read16(r4, 0x102 + r7);
 
             if (r6->flags & 0x600)
             {
                 //0x00007044
-#if 1
-                fprintf(stderr, "MENTOR_StartEtd: 0x00007044: TODO!!!\n");
-#endif
-                //TODO!!!
+                if (r6->flags & 0x800)
+                {
+                    //0x00007050
+                    HW_Write16(r4, 0x100 + r7, r8->mps);
+
+                    int r3 = (txCsr & 0x7b5a) | TXCSR_MODE/*0x2000*/;
+                    HW_Write16(r4, 0x102 + r7, r3);
+
+                    mentor_start_dma_transfer(r4, r8, r6, 1,
+                        ep_num, r8->Data_0x2c, 
+                        r6->xfer_buffer_paddr + r6->bytes_xfered, r5);
+
+                    HW_Write16(r4, 0x102 + r7, 
+                        HW_Read16(r4, 0x102 + r7) |
+                        TXCSR_DMA_REQ_EN | //0x1480
+                        TXCSR_DMA_REQ_MODE |
+                        TXCSR_NAK_TIMEOUT |
+                        TXCSR_RX_STALL | //0x26
+                        TXCSR_ERROR |
+                        TXCSR_FIFO_NOT_EMPTY);
+                    //->loc_71bc
+                } //if (r6->flags & 0x800)
+                else
+                {
+                    //loc_70d0
+                    HW_Write16(r4, 0x100 + r7, r8->mps | (m << 11));
+
+                    if (r6->flags & 0x400)
+                    {
+                        //0x000070f0
+                        int r2 = (txCsr | 
+                            TXCSR_MODE | //0x3000
+                            TXCSR_DMA_REQ_EN);
+                        HW_Write16(r4, 0x102 + r7, 
+                            (r2 & ~TXCSR_DMA_REQ_MODE/*0x400*/) |
+                            TXCSR_NAK_TIMEOUT | //0xa6
+                            TXCSR_RX_STALL |
+                            TXCSR_ERROR |
+                            TXCSR_FIFO_NOT_EMPTY);
+                    }
+                    //loc_7118
+                    mentor_start_dma_transfer(r4, r8, r6, 
+                        ((r6->flags >> 9) ^ 1) & 0x01,
+                        ep_num, r8->Data_0x2c,
+                        r6->xfer_buffer_paddr + r6->bytes_xfered, r5);
+                    //->loc_71bc
+                }
+            } //if (r6->flags & 0x600)
+            else
+            {
+                //loc_7160
+                HW_Write16(r4, 0x100 + r7, r8->mps | (m << 11));
+
+                MENTOR_LoadFIFO(r4, ep_num, r6->xfer_buffer, r5);
+
+                HW_Write16(r4, 0x102 + r7, 
+                    (txCsr & ~0x9400) | 0x2080 | 
+                    TXCSR_RX_STALL | //0x27
+                    TXCSR_ERROR |
+                    TXCSR_FIFO_NOT_EMPTY |
+                    TXCSR_TXPKTRDY);
             }
-            //loc_7160
-            HW_Write16(r4, 0x100 + r7, sl | (r0 << 11));
-
-            MENTOR_LoadFIFO(r4, ep, r6->xfer_buffer, r5);
-
-            HW_Write16(r4, 0x102 + r7, 
-                (sb & ~0x9400) | 0x2080 | 0x27);
         }
     }
     //loc_71bc
@@ -1103,26 +1128,25 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
     fprintf(stderr, "MENTOR_RestartEtd: TODO!!!\n");
 #endif
 
-    int ep; //fp_0x30;
     //fp_0x2c = _GLOBAL_OFFSET_TABLE_;
 
     struct Struct_0xa4* r8 = r6->Data_0x30;
 
 #if 0
-    fprintf(stderr, "MENTOR_RestartEtd: r8=%p, r8->Data_0x28=%d\n",
-        r8, r8->Data_0x28);
+    fprintf(stderr, "MENTOR_RestartEtd: r8=%p, r8->num=%d\n",
+        r8, r8->num);
 #endif
 
-    if (r8->Data_0x28 >= 0)
+    if (r8->num >= 0)
     {
         //0x00006cf4
         r8->bData_0x1f = 0;
 
-        ep = r8->Data_0x28;
-        r4->Data_0xc4[ep] = r6;
+        //int ep/*fp_0x30*/ = r8->num;
+        r4->Data_0xc4[r8->num] = r6;
         r6->flags |= 0x100;
 
-        int r7 = ep * 16;
+        int r7 = r8->num * 16;
 
         uint16_t wCsr;
         int retry/*r5*/ = 1000;
@@ -1149,8 +1173,8 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
 
         if ((r6->flags & 0x400) &&
             (r4->flags & 0x200) &&
-            (r5 > r8->wData_0x18) &&
-            ((r8->wData_0x18 & 0x3f) == 0) &&
+            (r5 > r8->mps) &&
+            ((r8->mps & 0x3f) == 0) &&
             (r8->transferType == USB_ATTRIB_BULK)) //2))
         {
             //0x00006e24
@@ -1191,14 +1215,14 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
             if (r6->flags & 0x800)
             {
                 //0x00006e94
-                HW_Write16(r4, 0x104 + r7, r8->wData_0x18);
+                HW_Write16(r4, 0x104 + r7, r8->mps);
                 HW_Write16(r4, 0x106 + r7, sb & 0x2792);
 
                 if (r6->flags & 0x400)
                 {
                     //0x00006ec8
-                    mentor_start_dma_transfer(r4, r8, r6, 1/*rx*/,
-                        ep, r8->Data_0x2c, 
+                    mentor_start_dma_transfer(r4, r8, r6, 1,
+                        r8->num, r8->Data_0x2c, 
                         r6->xfer_buffer_paddr + r6->bytes_xfered, 
                         r5);
                 }
@@ -1213,22 +1237,14 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
             else
             {
                 //loc_6f24
-                int fp_0x34;
-                int fp_0x2c;
-
-                fp_0x34 = fp_0x2c = r8->wData_0x18;
-                uint32_t r3 = 0;
-                int r0 = r6->Data_0x10 / r8->wData_0x18;
-                if ((r0 - 1) > 0)
+                uint32_t m = 0;
+                int r0 = (r6->Data_0x10 / r8->mps) -1;
+                if (r0 > 0)
                 {
-                    r3 = (r6->Data_0x10 / fp_0x34) - 1;
+                    m = (r6->Data_0x10 / r8->mps) - 1;
                 }
                 //loc_6f58: write RXMAXP
-                fp_0x2c |= (r3 << 11);
-#if 0
-                fprintf(stderr, "MENTOR_RestartEtd: 0x104 <- 0x%x\n", fp_0x2c);
-#endif
-                HW_Write16(r4, 0x104 + r7, fp_0x2c);
+                HW_Write16(r4, 0x104 + r7, r8->mps | (m << 11));
 
                 int sl;
                 if ((r6->flags & 0x400) == 0)
@@ -1242,12 +1258,8 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
                     sl = sb & 0x2792;
                     sl |= (RXCSR_DMA_REQ_EN | RXCSR_AUTOREQ); //0x6000;
 
-                    mentor_start_dma_transfer(r4,
-                        r8,
-                        r6,
-                        1,
-                        ep,
-                        r8->Data_0x2c,
+                    mentor_start_dma_transfer(r4, r8, r6, 1,
+                        r8->num, r8->Data_0x2c,
                         r6->xfer_buffer_paddr + r6->bytes_xfered,
                         r5);
                 }
@@ -1261,25 +1273,11 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
         else
         {
             //loc_6fe4
-            int32_t r0 = r6->Data_0x10;
-            uint32_t sl = r8->wData_0x18;
-            r0 = r0 - 1;
-            r0 = r0 + sl;
-            r0 = r0 / sl;
-            r0 = r0 - 1;
-            if (r0 <= 0)
+            uint32_t m = 0;
+            int r0_ = (r6->Data_0x10 - 1 + r8->mps) / r8->mps;
+            if ((r0_ - 1) > 0)
             {
-                r0 = 0; 
-                //->loc_7024
-            }
-            else
-            {
-                //0x0000700c
-                r0 = r6->Data_0x10;
-                r0 = r0 - 1;
-                r0 = r0 + sl;
-                r0 = r0 / sl;
-                r0 = r0 - 1;
+                m = ((r6->Data_0x10 - 1 + r8->mps) / r8->mps) - 1;
             }
             //loc_7024
             int sb = HW_Read16(r4, 0x102 + r7);
@@ -1287,18 +1285,53 @@ void MENTOR_RestartEtd(struct _hctrl_t* r4,
             if (r6->flags & 0x600)
             {
                 //0x00007044
-#if 1
-                fprintf(stderr, "MENTOR_RestartEtd: 0x00007044: TODO!!!\n");
-#endif
-                //TODO!!!
+                if (r6->flags & 0x800)
+                {
+                    //0x00007050
+                    HW_Write16(r4, 0x100 + r7, r8->mps);
+
+                    int r3 = (sb & 0x7b5a) | 0x2000;
+                    HW_Write16(r4, 0x102 + r7, r3);
+
+                    mentor_start_dma_transfer(r4, r8, r6, 1, 
+                        r8->num, r8->Data_0x2c, 
+                        r6->xfer_buffer_paddr + r6->bytes_xfered, r5);
+
+                    HW_Write16(r4, 0x102 + r7, 
+                        HW_Read16(r4, 0x102 + r7) |
+                        0x1480 | 0x26);
+                    //->loc_71bc
+                } //if (r6->flags & 0x800)
+                else
+                {
+                    //loc_70d0
+                    HW_Write16(r4, 0x100 + r7, r8->mps | (m << 11));
+
+                    if (r6->flags & 0x400)
+                    {
+                        //0x000070f0
+                        int r2 = (sb | 0x3000);
+                        HW_Write16(r4, 0x102 + r7, (r2 & ~0x400) |
+                            0xa6);
+                    }
+                    //loc_7118
+                    mentor_start_dma_transfer(r4, r8, r6, 
+                        ((r6->flags >> 9) ^ 1) & 0x01,
+                        r8->num, r8->Data_0x2c,
+                        r6->xfer_buffer_paddr + r6->bytes_xfered, r5);
+                    //->loc_71bc
+                }
+            } //if (r6->flags & 0x600)
+            else
+            {
+                //loc_7160
+                HW_Write16(r4, 0x100 + r7, r8->mps | (m << 11));
+
+                MENTOR_LoadFIFO(r4, r8->num, r6->xfer_buffer, r5);
+
+                HW_Write16(r4, 0x102 + r7, 
+                    (sb & ~0x9400) | 0x2080 | 0x27);
             }
-            //loc_7160
-            HW_Write16(r4, 0x100 + r7, sl | (r0 << 11));
-
-            MENTOR_LoadFIFO(r4, ep, r6->xfer_buffer, r5);
-
-            HW_Write16(r4, 0x102 + r7, 
-                (sb & ~0x9400) | 0x2080 | 0x27);
         }
     }
     //loc_71bc
@@ -1339,7 +1372,7 @@ int mentor_start_dma_transfer(struct _hctrl_t* r0,
     int ch_offset = 0x40 * channel;
 
     uint32_t fifo_addr = 0x880 + (ep << 4);
-    uint32_t maxPacketSize = 512;
+    uint32_t maxPacketSize = r1->mps;
 
 #if 1
     if (length > maxPacketSize)
@@ -1349,8 +1382,9 @@ int mentor_start_dma_transfer(struct _hctrl_t* r0,
 #endif
 
     uint32_t line = length / maxPacketSize;
+    uint32_t dwConfig;
 
-    if (rx)
+    if (td->flags & 0x04)
     {
         //rx
         dma_SetUsbMode_PacedEpReadChannel(r0, ep);
@@ -1365,18 +1399,29 @@ int mentor_start_dma_transfer(struct _hctrl_t* r0,
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLINE + ch_offset)/sizeof(uint32_t)] = line;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRINC + ch_offset)/sizeof(uint32_t)] = maxPacketSize;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLPADDR + ch_offset)/sizeof(uint32_t)] = 0;
-
-        uint32_t dwConfig = (0x07 << 8) | (1 << 2);
-
-        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_CONFIG + ch_offset)/sizeof(uint32_t)] = dwConfig;
+        //Peripheral Address Read: 0x7 = USB DMA Channel
+        dwConfig = (0x07 << 8);
     }
     else
     {
         //tx
         dma_SetUsbMode_PacedEpWriteChannel(r0, ep);
 
-        //TODO!!!
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LENGTH + ch_offset)/sizeof(uint32_t)] = length;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LLADDR + ch_offset)/sizeof(uint32_t)] = 0;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDADDR + ch_offset)/sizeof(uint32_t)] = start_addr_paddr;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDLINE + ch_offset)/sizeof(uint32_t)] = line;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDINC + ch_offset)/sizeof(uint32_t)] = maxPacketSize;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_RDLPADDR + ch_offset)/sizeof(uint32_t)] = 0;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRADDR + ch_offset)/sizeof(uint32_t)] = fifo_addr;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLINE + ch_offset)/sizeof(uint32_t)] = 0;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRINC + ch_offset)/sizeof(uint32_t)] = 4;
+        ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_WRLPADDR + ch_offset)/sizeof(uint32_t)] = fifo_addr;
+        //Peripheral Address Write: 0x7 = USB DMA Channel
+        dwConfig = (0x07 << 16);
     }
+
+    ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_CONFIG + ch_offset)/sizeof(uint32_t)] = dwConfig | (1 << 2);
 
 #endif
 
@@ -1431,7 +1476,7 @@ int mentor_start_dma_transfer(struct _hctrl_t* r0,
         {
             //0x00002768
             *((volatile uint32_t*)((uint8_t*)(ip->Data_0) + 4*(ep + 0x1f))) =
-                (r1->wData_0x18 - 1 + length) & -r1->wData_0x18;
+                (r1->mps - 1 + length) & -r1->mps;
 
             //->0x000027a4
         }
@@ -2162,7 +2207,7 @@ static void* mentor_interrupt_thread(void* a)
             break;
         }
 
-#if 1
+#if 0
         fprintf(stderr, "mentor_interrupt_thread: after MsgReceivePulse, code=%d\n",
             pulse.code);
 #endif
@@ -2724,8 +2769,6 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
     // Clear IRQ
     ((volatile uint32_t*)(dma_regs))[MB86H60_DMA_INT_CLEAR/sizeof(uint32_t)] = status;
 
-    //RX Case:
-#if 1
     struct Struct_0xe4_Inner_0x1c* r5_ = lookup_by_paddr(r5, 0);
     if (r5_ != NULL)
     {
@@ -2733,35 +2776,41 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
         struct _musb_transfer* td = r5_->td;
         struct Struct_0xa4* r4 = td->Data_0x30;
 
-        //Clear all RXCSR bits
-#if 0
-        HW_Write16(r5, 0x106 + r4->Data_0x28 * 16, 0);
-#else
-        uint32_t r0 = HW_Read16(r5, 0x106 + r4->Data_0x28 * 16);
-        if ((r0 & RXCSR_AUTOCLEAR) == 0)
+        if (td->flags & 0x04)
         {
-            r0 &= ~RXCSR_RXPKTRDY;
-            HW_Write16(r5, 0x106 + r4->Data_0x28 * 16, r0);
+            uint32_t rxCsr = HW_Read16(r5, MUSB_RXCSR(r4->num));
+            if ((rxCsr & RXCSR_AUTOCLEAR) == 0)
+            {
+                rxCsr &= ~RXCSR_RXPKTRDY;
+                HW_Write16(r5, MUSB_RXCSR(r4->num), rxCsr);
+            }
+            rxCsr &= ~RXCSR_DMA_REQ_EN; 
+//            | RXCSR_AUTOREQ | RXCSR_AUTOCLEAR | RXCSR_DMA_REQ_MODE
+            HW_Write16(r5, MUSB_RXCSR(r4->num), rxCsr);
+
+            (td->Func_0x3c)(r5, td, r5_->Data_0xc__, 0);
+
+            InterruptLock(&r5->Data_0xd0);
+
+            LIST_INSERT_HEAD(&r7->dma_free_q, r5_, link);
+
+            InterruptUnlock(&r5->Data_0xd0);
         }
-        r0 &= ~RXCSR_DMA_REQ_EN; 
-//            | RXCSR_AUTOREQ | RXCSR_AUTOCLEAR
-//                    | RXCSR_DMA_REQ_MODE
-//            | 0x6d;
-//
-        HW_Write16(r5, 0x106 + r4->Data_0x28 * 16, r0);
+        else
+        {
+            //TX Case: TODO!!!
+#if 0
+            fprintf(stderr, "dma_interrupt_handler: tx: TODO\n");
 #endif
+            (td->Func_0x3c)(r5, td, td->Data_0x10, 0);
 
-        (td->Func_0x3c)(r5, td, r5_->Data_0xc__, 0);
+            InterruptLock(&r5->Data_0xd0);
 
-        InterruptLock(&r5->Data_0xd0);
-        //0x00003e54
-        LIST_INSERT_HEAD(&r7->dma_free_q, r5_, link);
-        //0x00003e74
-        InterruptUnlock(&r5->Data_0xd0);
+            LIST_INSERT_HEAD(&r7->dma_free_q, r5_, link);
+
+            InterruptUnlock(&r5->Data_0xd0);
+        }
     }
-#endif
-
-    //TX Case: TODO!!!
 
 #else
 
@@ -2827,10 +2876,10 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
                     {
                         //0x00003db4
                         *((volatile uint32_t*)(r7->Data_0 + 0xd0)) &= 
-                            ~(0x03 << ((r5_->Data_0x30->Data_0x28 - 1) << 1));
+                            ~(0x03 << ((r5_->Data_0x30->num - 1) << 1));
 
                         *((volatile uint32_t*)(r7->Data_0 + 0x74)) &= 
-                            ~(0x03 << ((r5_->Data_0x30->Data_0x28 - 1) << 1));
+                            ~(0x03 << ((r5_->Data_0x30->num - 1) << 1));
                     }
                     //0x00003df8
                     InterruptUnlock(&r5->Data_0xd0/*sb*/);
@@ -4079,11 +4128,11 @@ int MENTOR_InitializeEndpoint(struct _hctrl_t* r7,
         //9a40
         r4->Data_0xc = r1;
         r1->Data_0x34 = r4;
-        r1->Data_0x28 = -1;
+        r1->num = -1;
     }
     //9a50
     r1->transferType = r4->endpoint_descriptor.bmAttributes & 0x03;
-    r1->wData_0x18 = r4->endpoint_descriptor.wMaxPacketSize;
+    r1->mps = r4->endpoint_descriptor.wMaxPacketSize;
     r1->bData_0x1b = r4->endpoint_descriptor.bEndpointAddress & ~0x7f;
     r1->Data_0x20 = 0;
     r1->Data_0x14 = ((r5->device_address & 0x7f) << 4) | 
@@ -4384,7 +4433,7 @@ int mentor_transfer_abort(struct USB_Controller* a,
     struct Struct_0xa4* r5;
     int r8;
 
-    if (((r5 = r5_->Data_0xc) == NULL) || ((r8 = r5->Data_0x28) < 0))
+    if (((r5 = r5_->Data_0xc) == NULL) || ((r8 = r5->num) < 0))
     {
         //0x00005bc0
         if (pthread_mutex_unlock(&r4->Data_4/*r7*/) != 0)
@@ -4566,7 +4615,7 @@ int MENTOR_ProcessMultiInComplete(struct _hctrl_t* r6,
         r4->bytes_xfered += r2;
 
         int remaining;
-        if ((r2 != 0) && ((r2 % r5->wData_0x18) == 0))
+        if ((r2 != 0) && ((r2 % r5->mps) == 0))
         {
             //0x0000739c
             remaining = r4->xfer_length - r4->bytes_xfered;
@@ -4597,7 +4646,7 @@ int MENTOR_ProcessMultiInComplete(struct _hctrl_t* r6,
 
             r4->status = r7;
 
-            r6->Data_0xc4[r5->Data_0x28] = NULL;
+            r6->Data_0xc4[r5->num] = NULL;
 
             if ((r5->Data_8__ = r4->link.sqe_next) == NULL)
             {
@@ -4636,33 +4685,28 @@ int MENTOR_ProcessMultiInComplete(struct _hctrl_t* r6,
 
 /* 0x000074ec - todo */
 int MENTOR_ProcessInComplete(struct _hctrl_t* r6,
-        struct _musb_transfer* r5, int r8, int r7)
+        struct _musb_transfer* r5, uint32_t r8, int r7)
 {
 #if 0
     fprintf(stderr, "MENTOR_ProcessInComplete: TODO!!!\n");
 #endif
 
-    struct Struct_0xa4* r4;
+    struct Struct_0xa4* r4 = r5->Data_0x30;
 
-    r4 = r5->Data_0x30;
     if (r4->bData_0x1f == 0)
     {
         //0x0000751c
         r5->bytes_xfered += r8;
 
         if ((r7 != 0) || (r5->bytes_xfered >= r5->xfer_length) ||  
-            ((r8 % r4->wData_0x18) || ((1 - r8) > 0)))  //TODO!!!
+            ((r8 % r4->mps) || (r8 == 0)))
         {
             //0x00007564
-#ifdef MB86H60
-            HW_Write16(r6, 0x106 + r4->Data_0x28 * 16, 0);
-#else
-            ((volatile uint16_t*)(r6->Data_0x14))[0x106 + r4->Data_0x28 * 16] = 0;
-#endif
+            HW_Write16(r6, MUSB_RXCSR(r4->num), 0);
 
             InterruptLock(&r6->Data_0xd0);
 
-            r6->Data_0xc4[r4->Data_0x28] = NULL;
+            r6->Data_0xc4[r4->num] = NULL;
             r4->Data_0x10 &= ~0x01;
             r5->status = r7;
 
@@ -4708,10 +4752,10 @@ int MENTOR_ProcessOutComplete(struct _hctrl_t* r6,
             //loc_54e8
             InterruptLock(&r6->Data_0xd0);
 
-            r6->Data_0xc4[r5->Data_0x28] = NULL;
+            r6->Data_0xc4[r5->num] = NULL;
             r5->Data_0x10 &= ~0x01;
 
-            HW_Write16(r6, 0x102 + r5->Data_0x28 * 16, 0);
+            HW_Write16(r6, MUSB_TXCSR(r5->num), 0);
 
             r4->Data_0x10 = 0;
             r4->status = r3;
@@ -4741,30 +4785,17 @@ int MENTOR_ProcessOutComplete(struct _hctrl_t* r6,
                 r3 = r4->xfer_length - r4->bytes_xfered;
             }
             r4->Data_0x10 = r3;
-            int r0 = r4->Data_0x10;
-            uint32_t r7 = r5->wData_0x18;
-            int r8 = r7;
-            r0 = r0 - 1;
-            r0 = r0 + r7;
-            r0 = r0 / r7;
-            r0 = r0 - 1;
-            uint32_t r0_;
-            if (r0 <= 0)
-            {
-                r0_ = 0;
-                //->0x00005614
-            }
-            else
+
+            uint32_t m = 0;
+            int r0 = ((r4->Data_0x10 + r5->mps - 1) / r5->mps) - 1;
+            if (r0 > 0)
             {
                 //0x000055fc
-                r0 = r4->Data_0x10;
-                r0 = r0 - 1;
-                r0 = r0 + r7;
-                r0_ = (r0 / r7) - 1;
+                m = ((r4->Data_0x10 + r5->mps - 1) / r5->mps) - 1;
             }
             //0x00005614
-            HW_Write16(r6, 0x100 + r5->Data_0x28 * 16,
-                r7 | (r0_ << 11));
+            HW_Write16(r6, MUSB_TXMAXP(r5->num),
+                r5->mps | (m << 11));
 
             if (r4->flags & 0x600)
             {
@@ -4779,11 +4810,11 @@ int MENTOR_ProcessOutComplete(struct _hctrl_t* r6,
             else
             {
                 //0x0000568c
-                MENTOR_LoadFIFO(r6, r5->Data_0x28, 
+                MENTOR_LoadFIFO(r6, r5->num, 
                     r4->xfer_buffer + r4->bytes_xfered, r4->Data_0x10);
                 
-                HW_Write16(r6, 0x102 + r5->Data_0x28 * 16, 
-                    HW_Read16(r6, 0x102 + r5->Data_0x28 * 16) | 0x01);
+                HW_Write16(r6, 0x102 + r5->num * 16, 
+                    HW_Read16(r6, 0x102 + r5->num * 16) | 0x01);
             }
         }
     }
@@ -4792,12 +4823,26 @@ int MENTOR_ProcessOutComplete(struct _hctrl_t* r6,
 }
 
 
+/* 0x00004a98 - todo */
 int MENTOR_ProcessOutDMAComplete(struct _hctrl_t* a,
         struct _musb_transfer* b, int c, int d)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_ProcessOutDMAComplete: TODO!!!\n");
 #endif
+
+    struct Struct_0xa4* ep = b->Data_0x30;
+
+    if (ep->bData_0x1f == 0)
+    {
+        uint32_t txCsr = HW_Read16(a, MUSB_TXCSR(ep->num));
+
+        txCsr = (txCsr & ~0x9400) 
+            | TXCSR_MODE | TXCSR_NAK_TIMEOUT //0x2080 
+            | TXCSR_RX_STALL | TXCSR_ERROR | TXCSR_FIFO_NOT_EMPTY | TXCSR_TXPKTRDY; //0x27;
+
+        HW_Write16(a, MUSB_TXCSR(ep->num), txCsr);
+    }
 
     return 0;
 }
@@ -4908,7 +4953,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
         else
         {
             //0x00008fa8
-            if ((length/*fp4*/ > r5->wData_0x18) || 
+            if ((length/*fp4*/ > r5->mps) || 
                 (length/*fp4*/ > 0x40))
             {
                 //0x00008fcc
@@ -4992,7 +5037,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
         //0x000090e4
         InterruptUnlock(&r6->Data_0xd0);
 
-        if (r5->Data_0x28 == -1)
+        if (r5->num == -1)
         {
             //0x00009108
             if (MENTOR_AllocEtd(r6, r5, td->flags & 0x04) < 0)
@@ -5027,13 +5072,13 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
             if (flags/*sb*/ & 0x04/*PIPE_FLAGS_TOKEN_IN?*/)
             {
                 //0x00009220
-                MENTOR_EtdConfigureRX(r6, r5, r5->Data_0x28);
+                MENTOR_EtdConfigureRX(r6, r5, r5->num);
                 //->0x00009244
             }
             else
             {
                 //0x00009234
-                MENTOR_EtdConfigureTX(r6, r5, r5->Data_0x28);
+                MENTOR_EtdConfigureTX(r6, r5, r5->num);
             }
         }
         //0x00009244
@@ -5052,7 +5097,7 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
             {
                 //0x00009288
                 if (mentor_claim_dma_channel(r6, td, 
-                        r5->Data_0x28, &r5->Data_0x2c) != 0)
+                        r5->num, &r5->Data_0x2c) != 0)
                 {
                     td->flags &= ~0x600;
                 }
@@ -5194,7 +5239,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
     {
         //0x000096a4
         fp_0x30->Data_0x10 |= 1;
-        fp_0x30->Data_0x28 = 0;
+        fp_0x30->num = 0;
 
         r5->Data_0xc4[0] = td;
         //0x000096bc
@@ -5297,7 +5342,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         else if (r2->flags & PIPE_FLAGS_TOKEN_OUT) //8)
         {
             //0x00009828
-            int r3 = fp_0x30->wData_0x18;
+            int r3 = fp_0x30->mps;
             if (r3 > r2->xfer_length)
             {
                 r3 = r2->xfer_length;
@@ -5424,7 +5469,7 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
         //loc_9c6c
         if (r4 != NULL)
         {
-            if (r4->Data_0x28 > 0)
+            if (r4->num > 0)
             {
                 MENTOR_FreeEtd(r5, r4);
             }
