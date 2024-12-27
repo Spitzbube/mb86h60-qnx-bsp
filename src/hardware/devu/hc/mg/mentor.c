@@ -1066,6 +1066,7 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
 
                     HW_Write16(r4, 0x102 + r7, 
                         HW_Read16(r4, 0x102 + r7) |
+                        TXCSR_AUTOSET |
                         TXCSR_DMA_REQ_EN | //0x1480
                         TXCSR_DMA_REQ_MODE |
                         TXCSR_NAK_TIMEOUT |
@@ -1083,6 +1084,7 @@ void MENTOR_StartEtd(struct _hctrl_t* r4,
                     {
                         //0x000070f0
                         int r2 = (txCsr | 
+                            TXCSR_AUTOSET |
                             TXCSR_MODE | //0x3000
                             TXCSR_DMA_REQ_EN);
                         HW_Write16(r4, 0x102 + r7, 
@@ -1374,13 +1376,6 @@ int mentor_start_dma_transfer(struct _hctrl_t* r0,
     uint32_t fifo_addr = 0x880 + (ep << 4);
     uint32_t maxPacketSize = r1->mps;
 
-#if 1
-    if (length > maxPacketSize)
-    {
-        length = maxPacketSize;
-    }
-#endif
-
     uint32_t line = length / maxPacketSize;
     uint32_t dwConfig;
 
@@ -1388,6 +1383,13 @@ int mentor_start_dma_transfer(struct _hctrl_t* r0,
     {
         //rx
         dma_SetUsbMode_PacedEpReadChannel(r0, ep);
+
+#if 1
+        if (length > maxPacketSize)
+        {
+            length = maxPacketSize;
+        }
+#endif
 
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LENGTH + ch_offset)/sizeof(uint32_t)] = length;
         ((volatile uint32_t*)(dma_regs))[(MB86H60_DMA_CH_LLADDR + ch_offset)/sizeof(uint32_t)] = 0;
@@ -2798,11 +2800,30 @@ const struct sigevent * dma_interrupt_handler(void* a, int b)
         }
         else
         {
-            //TX Case: TODO!!!
-#if 0
-            fprintf(stderr, "dma_interrupt_handler: tx: TODO\n");
-#endif
-            (td->Func_0x3c)(r5, td, td->Data_0x10, 0);
+            uint32_t txCsr = HW_Read16(r5, MUSB_TXCSR(r4->num));
+
+            int r6_ = 0;
+            int r4_ = 0;
+            while ((r6_ <= 4) && (r4_ <= 19999/*sb*/))
+            {
+                if (txCsr & 0x03)
+                {
+                    r6_ = 0;
+                }
+                else
+                {
+                    r6_++;
+                }
+                nanospin_ns(1000);
+
+                r4_++;
+                txCsr = HW_Read16(r5, MUSB_TXCSR(r4->num));
+            }
+
+            if ((td != NULL) && (td->flags & 0x800))
+            {
+                (td->Func_0x3c)(r5, td, td->Data_0x10, 0);
+            }
 
             InterruptLock(&r5->Data_0xd0);
 
@@ -4194,13 +4215,87 @@ int MENTOR_InitializeEndpoint(struct _hctrl_t* r7,
 }
 
 
-int MENTOR_FreeEtd(struct _hctrl_t* a, 
-    struct Struct_0xa4* r4)
+/* 0x00004384 - complete */
+void mentor_fifo_free(struct _hctrl_t* a, struct fp_0x34_Inner_0x18_Inner_0x10* b)
 {
-#if 1
+#if 0
+    fprintf(stderr, "mentor_fifo_free\n");
+#endif
+
+    b->Data_0xc->Data_0xc |= (1 << b->Data_8);
+}
+
+
+
+/* 0x000029b0 - complete */
+void mentor_free_dma_sched()
+{
+#if 0
+    fprintf(stderr, "mentor_free_dma_sched\n");
+#endif
+
+}
+
+
+/* 0x000025c0 - complete */
+int mentor_free_dma_channel()
+{
+#if 0
+    fprintf(stderr, "mentor_free_dma_channel\n");
+#endif
+
+    return 0;
+}
+
+
+
+/* 0x00005ab4 - todo */
+int MENTOR_FreeEtd(struct _hctrl_t* r6, struct Struct_0xa4* r4)
+{
+#if 0
     fprintf(stderr, "MENTOR_FreeEtd: TODO!!!\n");
 #endif
 
+    int r5 = r4->num;
+
+    if (r4->Data_0x30 != NULL)
+    {
+        mentor_fifo_free(r6, r4->Data_0x30);
+    }
+
+    r4->Data_0x30 = NULL;
+
+    if (r4->Data_0x38 != 0)
+    {
+        //0x00005aec
+        mentor_free_dma_sched(r6);
+
+        r4->Data_0x38 = 0;
+    }
+    //loc_5afc
+    if (r4->Data_0x2c != -1)
+    {
+        mentor_free_dma_channel(r6);
+
+        r4->Data_0x2c = -1;
+    }
+    //loc_5b18
+    if ((r5 > 0) && (r5 < r6->Data_0x18))
+    {
+        //0x00005b2c
+        r4->num = -1;
+        r4->Data_0x2c = -1;
+
+        r6->Data_0xc8[r5] = NULL;
+        //->loc_5b4c
+    }
+    else
+    {
+        //loc_5b48
+        r5 = -1;
+    }
+
+    return r5;
 }
 
 
@@ -4582,13 +4677,74 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
 }
 
 
+/* 0x000071e8 - todo */
 int MENTOR_ProcessMultiOutComplete(struct _hctrl_t* a,
         struct _musb_transfer* b, int c, int d)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_ProcessMultiOutComplete: TODO!!!\n");
 #endif
 
+    struct Struct_0xa4* ip = b->Data_0x30;
+
+    if (ip->bData_0x1f == 0)
+    {
+        //0x00007208
+        b->bytes_xfered += c;
+
+        if (d == 0)
+        {
+            if (b->bytes_xfered < b->xfer_length)
+            {
+                //->0x0000733c
+                goto l_733c;
+            }
+
+            if ((b->Data_0x24 + 1) <= b->Data_0x20)
+            {
+                //0x000072f4
+                goto l_72f4;
+            }
+            //0x00007240
+        }
+        //0x00007240
+        InterruptLock(&a->Data_0xd0);
+
+        a->Data_0xc4[ip->num] = NULL;
+
+        ip->Data_0x10 &= ~0x01;
+
+        HW_Write16(a, MUSB_TXCSR(ip->num), 0);
+
+        b->Data_0x10 = 0;
+        b->status = d;
+
+        if ((ip->Data_8__ = b->link.sqe_next) == NULL)
+        {
+            ip->Data_0xc = &ip->Data_8__;
+        }
+
+        SIMPLEQ_INSERT_TAIL(&a->transfer_complete_q, b, link);
+
+        InterruptUnlock(&a->Data_0xd0);
+
+        return 0;
+
+l_72f4:
+        //0x000072f4
+        b->Data_0x34->Data_0x34 += b->bytes_xfered;
+        b->Data_0x24++;
+
+        struct _musb_transfer_Inner_0x18_Inner_8 * r3 = &b->Data_0x1c__[b->Data_0x24];
+        b->xfer_buffer_paddr = r3->Data_0;
+        b->xfer_length = r3->Data_8;
+        b->bytes_xfered = 0;
+
+l_733c:
+        //0x0000733c
+        MENTOR_StartEtd(a, b);
+    }
+    //0x00007340
     return 0;
 }
 
@@ -4915,8 +5071,8 @@ int mentor_bulk_transfer(struct USB_Controller* ctrl,
             td->Data_0x24 = 0;
 
 #if 1
-            fprintf(stderr, "mentor_bulk_transfer: multi: td->Data_0x20=%d, r2->Data_0=0x%x, r2->Data_8=%d\n",
-                td->Data_0x20, r2->Data_0, r2->Data_8);
+            fprintf(stderr, "mentor_bulk_transfer: multi: td->Data_0x20=%d, r2->Data_0=0x%x, r2->Data_8=%d, r6->Data_0x38=0x%x\n",
+                td->Data_0x20, r2->Data_0, r2->Data_8, r6->Data_0x38);
 #endif
 
             td->xfer_buffer_paddr = r2->Data_0;
