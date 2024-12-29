@@ -1928,12 +1928,10 @@ void MENTOR_URB_complete(struct _hctrl_t* r5,
             //->0x00007e14
             break;
 
-#if 0
-        case USB_ATTRIB_ISOCHRONOUS: //1:
-            //
-            //TODO!!!
-            break;
-#endif
+        case USB_ATTRIB_INTERRUPT: //3:
+            //0x00007af4
+            r5->Data_0x84++;
+            //break; /* fall through */
 
         case USB_ATTRIB_BULK: //2:
             //0x00007b00
@@ -2014,8 +2012,8 @@ void MENTOR_URB_complete(struct _hctrl_t* r5,
             break;
 
 #if 0
-        case USB_ATTRIB_INTERRUPT: //3:
-            //
+        case USB_ATTRIB_ISOCHRONOUS: //1:
+            //0x00007d40
             //TODO!!!
             break;
 #endif
@@ -4304,7 +4302,7 @@ int MENTOR_HookED(struct _hctrl_t* a,
     struct Struct_0xa4* r6, 
     struct Struct_0xa4* r4)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_HookED: TODO!!!\n");
 #endif
 
@@ -4318,7 +4316,7 @@ int MENTOR_HookED(struct _hctrl_t* a,
     r4->Data_0 = r6;
     r6->Data_4 = r4;
     r4->Data_4 = r6->Data_4;
-    r4->Data_8__ = 0;
+    r4->Data_8__ = NULL;
     r4->Data_0xc = &r4->Data_8__;
 
     if (pthread_mutex_unlock(&a->Data_4) != 0)
@@ -4329,6 +4327,39 @@ int MENTOR_HookED(struct _hctrl_t* a,
 
     return 0;
 }
+
+
+/* 0x00009bb8 - complete */
+int mentor_int_endpoint_enable(struct USB_Controller* a, 
+    struct USB_Controller_Inner_0x7c* b, 
+    struct Struct_112b08* r6)
+{
+#if 1
+    fprintf(stderr, "mentor_int_endpoint_enable: a=%p, b=%p, c=%p\n",
+        a, b, r6);
+#endif
+
+    struct _hctrl_t* r5 = a->hc_data;
+    struct Struct_0xa4* r4 = r6->Data_0xc;
+
+    int res = MENTOR_InitializeEndpoint(r5, b, r6);
+
+    if ((res == 0) && (r4 == NULL))
+    {
+        MENTOR_HookED(r5, r5->Data_0xb8, r6->Data_0xc);
+    }
+    else 
+    {
+        //loc_9bfc
+        if ((r4 != NULL) && (r4->num > 0))
+        {
+            MENTOR_FreeEtd(r5, r4);
+        }
+    }
+
+    return res;    
+}
+
 
 
 /* 9c9c - complete */
@@ -4349,9 +4380,9 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
         r5, r7);
 #endif
 
-    int r4 = MENTOR_InitializeEndpoint(r5, b, c);
+    int res = MENTOR_InitializeEndpoint(r5, b, c);
 
-    if (r4 == 0)
+    if (res == 0)
     {
         if (r7 == NULL)
         {
@@ -4361,7 +4392,7 @@ int mentor_ctrl_endpoint_enable(struct USB_Controller* a,
         }
     }
 
-    return r4;
+    return res;
 }
 
 
@@ -5004,6 +5035,208 @@ int MENTOR_ProcessOutDMAComplete(struct _hctrl_t* a,
 }
 
 
+/* 0x00008990 - todo */ 
+int mentor_int_transfer(struct USB_Controller* ctrl, 
+    struct Struct_10bab4* r8, 
+    struct Struct_112b08* r2, 
+    void* buffer/*fp_0x34*//*fp52*/, 
+    uint32_t length/*sb*//*arg0*/, 
+    int flags/*arg4*//*fp8*/)
+{
+#if 0
+    fprintf(stderr, "mentor_int_transfer: buffer=%p, length=%d, flags=0x%x: TODO!!!\n",
+        buffer, length, flags);
+#endif
+
+    struct _hctrl_t* r5 = ctrl->hc_data;
+    struct Struct_0xa4* r4 = r2->Data_0xc;
+    struct _musb_transfer* td; //r6;
+
+    if (pthread_mutex_lock(&r5->Data_4/*sl*/) != 0)
+    {
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+            0x593);
+    }
+    //loc_89f0
+    td = MENTOR_TD_Setup(r5, r8, r4, flags/*arg4*/);
+    if (td == NULL)
+    {
+        if (pthread_mutex_unlock(&r5->Data_4/*sl*/) != 0)
+        {
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+                0x596);
+        }
+        //loc_8a3c
+        r8->Data_8 = 0x2000010;
+        return 12; //->loc_8dd8
+    }
+    //loc_8a4c
+    td->xfer_buffer = (uint32_t) buffer; //fp_0x34;
+    td->xfer_buffer_paddr = r8->Data_0x5c->pData;
+    td->xfer_length = length;
+
+    r5->Data_0x84++;
+
+    if ((length > r4->mps) || (length > 64))
+    {
+        td->flags |= r5->Data_0x38;
+    }
+
+    if (flags & 0x04)/*fp_0x30*/
+    {
+        //0x00008ab0
+        td->Func_0x3c = td->Func_0x38 = MENTOR_ProcessInComplete;
+        //->0x00008af8
+    }
+    else
+    {
+        //0x00008ac4
+        td->Func_0x38 = MENTOR_ProcessOutComplete;
+
+        if ((r5->Data_0x38 & 0x400) == 0)
+        {
+            //0x00008adc
+            td->Func_0x3c = MENTOR_ProcessOutComplete;
+            //->0x00008af8
+        }
+        else
+        {
+            //0x00008aec
+            td->Func_0x3c = MENTOR_ProcessOutDMAComplete;
+        }
+    }
+    //0x00008af8
+    InterruptLock(&r5->Data_0xd0);
+
+#if 1
+    td->link.sqe_next = NULL;
+    r4->Data_0xc->Data_0 = td;
+
+#if 0
+    struct Struct_0x94* fp_0x30;
+    fp_0x30 = &td->Data_0x2c;
+#else
+#endif
+    r4->Data_0xc = &td->link.sqe_next; //sb;
+#else
+    SIMPLEQ_INSERT_TAIL()
+#endif
+
+    if ((r4->Data_0x10 & 0x01) == 0)
+    {
+        //0x00008b50
+        InterruptUnlock(&r5->Data_0xd0);
+
+        if (r4->num == -1)
+        {
+            //0x00008b74
+            if (MENTOR_AllocEtd(r5, r4, td->flags & 0x04) < 0)
+            {
+                //0x00008b90
+                mentor_slogf(r5, 12, 2, 1, "%s - %s Call to MENTOR_AllocEtd() failed",
+                    "devu-dm816x-mg.so", "mentor_int_transfer");
+
+                InterruptLock(&r5->Data_0xd0);
+
+                r4->Data_8__ = SIMPLEQ_NEXT(td, link);
+                if (r4->Data_8__ == 0)
+                {
+                    r4->Data_0xc = &r4->Data_8__;
+                }
+
+                SIMPLEQ_INSERT_TAIL(&r5->transfer_free_q, td, link);
+
+                InterruptUnlock(&r5->Data_0xd0);
+
+                if (pthread_mutex_unlock(&r5->Data_4/*sl*/) != 0)
+                {
+                    //0x00008c50
+                    fprintf(stderr, "mutex lock %s %d\n", 
+                        "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+                        0x5be);
+                }
+                //0x00008c70
+                r8->Data_8 = 0x2000010;
+                return 12; //->0x00008dd8
+            } //if (MENTOR_AllocEtd() < 0)
+            //0x00008c80
+            if (flags/*fp_0x30*/ & 0x04/*PIPE_FLAGS_TOKEN_IN?*/)
+            {
+                //0x00008c8c
+                MENTOR_EtdConfigureRX(r5, r4, r4->num);
+                //->0x00008cb0
+            }
+            else
+            {
+                //0x00008ca0
+                MENTOR_EtdConfigureTX(r5, r4, r4->num);
+            }
+        }
+        //0x00008cb0
+        if ((td->flags & 0x600) && (r4->Data_0x38 == 0))
+        {
+            //0x00008cc8
+            r4->Data_0x38 = mentor_alloc_dma_sched(r5, r4);
+            if (r4->Data_0x38 == 0)
+            {
+                td->flags &= ~0x600;
+            }
+
+            if (((r5->flags & 0x04) == 0) &&
+                (r4->Data_0x2c == -1))
+            {
+                //0x00008d00
+                if (mentor_claim_dma_channel(r5, td, 
+                        r4->num, &r4->Data_0x2c) != 0)
+                {
+                    td->flags &= ~0x600;
+                }
+            }
+        }
+        //0x00008d24
+        if (r4->Data_8__ != NULL)
+        {
+            //0x00008d30
+            r4->Data_0x10 |= 0x01;
+            r5->Data_0xc0 = r4;
+
+            MENTOR_StartEtd(r5, r4->Data_8__);
+        }
+        //->0x00008da4
+    } //if ((r4->Data_0x10 & 0x01) == 0)
+    else
+    {
+        //0x00008d4c
+        InterruptUnlock(&r5->Data_0xd0);
+
+        if (pthread_mutex_unlock(&r5->Data_4/*sl*/) != 0)
+        {
+            //0x00008d74
+            fprintf(stderr, "mutex lock %s %d\n", 
+                "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+                0x5e0);
+        }
+        //0x00008d94
+        r8->Data_8 = 0x200000f;
+
+        return 0x10; //->0x00008dd8
+    }
+    //0x00008da4
+    if (pthread_mutex_unlock(&r5->Data_4/*sl*/) != 0)
+    {
+        //0x00008db4
+        fprintf(stderr, "mutex lock %s %d\n", 
+            "C:/projects/beaglebone/bsp-ti-beaglebone-src/src/hardware/devu/hc/mg/mentor.c",
+            0x5e5);
+    }
+
+    return 0;
+}
+
+
+
 /* 0x00008e20 - todo */ /* refer musb_transfer */
 int mentor_bulk_transfer(struct USB_Controller* ctrl, 
     struct Struct_10bab4* r8, 
@@ -5594,6 +5827,17 @@ int mentor_ctrl_endpoint_disable(struct USB_Controller* a, struct Struct_112b08*
 
 
 
+int mentor_int_endpoint_disable(struct USB_Controller* a, struct Struct_112b08* b)
+{
+#if 1
+    fprintf(stderr, "mentor_int_endpoint_disable: TODO!!!\n");
+#endif
+
+    return 0;
+}
+
+
+
 /* 0x00009c24 - complete */
 int mentor_bulk_endpoint_enable(struct USB_Controller* a, 
     struct USB_Controller_Inner_0x7c* b, 
@@ -5612,9 +5856,9 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
         r5, r4);
 #endif
 
-    int r7 = MENTOR_InitializeEndpoint(r5, b, r6);
+    int res = MENTOR_InitializeEndpoint(r5, b, r6);
 
-    if ((r7 == 0) && (r4 == NULL))
+    if ((res == 0) && (r4 == NULL))
     {
         r4 = r6->Data_0xc;
 
@@ -5634,7 +5878,7 @@ int mentor_bulk_endpoint_enable(struct USB_Controller* a,
     //loc_9c8c
     r4->Data_0x24 = 0;
 
-    return r7;
+    return res;
 }
 
 
@@ -5651,6 +5895,7 @@ int mentor_bulk_endpoint_disable(struct USB_Controller* a, struct Struct_112b08*
 
 static hc_methods_t mentor_controller_methods; //0x0000bf64
 static hc_pipe_methods_t mentor_ctrl_pipe_methods; //0x0000bf98
+static hc_pipe_methods_t mentor_int_pipe_methods; //0x0000bfac
 static hc_pipe_methods_t mentor_bulk_pipe_methods; //0x0000bfc0
 
 struct _io_usb_dll_entry io_usb_dll_entry = //0x0000bf40
@@ -5661,9 +5906,9 @@ struct _io_usb_dll_entry io_usb_dll_entry = //0x0000bf40
     mentor_shutdown,
     &mentor_controller_methods,
     &mentor_ctrl_pipe_methods,
-#if 1 //TODO
-    0, //&mentor_int_pipe_methods,
+    &mentor_int_pipe_methods,
     &mentor_bulk_pipe_methods,
+#if 1 //TODO
     0, //&mentor_isoch_pipe_methods,
 #endif
 };
@@ -5692,6 +5937,16 @@ static hc_pipe_methods_t mentor_ctrl_pipe_methods = //0x0000bf98
     mentor_ctrl_transfer,
     mentor_ctrl_transfer_abort,
     NULL
+};
+
+
+static hc_pipe_methods_t mentor_int_pipe_methods = //0x0000bfac
+{
+    mentor_int_endpoint_enable,
+    mentor_int_endpoint_disable,
+    mentor_int_transfer,
+    mentor_transfer_abort,
+    NULL   
 };
 
 
