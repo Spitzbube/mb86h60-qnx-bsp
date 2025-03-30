@@ -6,17 +6,17 @@
     #tnto -vvvv
     #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6-instr -vvvv
     #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.new -vvvv
-    PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.openqnx640 -vvvv
-
+    #PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib procnto-v6.openqnx640 -vvvv
+    PATH=:/proc/boot:/bin:/usr/bin LD_LIBRARY_PATH=:/proc/boot:/lib:/usr/lib:/lib/dll procnto-v6-instr-qnx650_cd -vvvvv
 }
 [+script] .script = {
-    display_msg Welcome to QNX Neutrino 6.4 on the MB86H60
+    display_msg Welcome to QNX Neutrino 6.5 on the MB86H60
 
     procmgr_symlink /proc/boot/libc.so /usr/lib/ldqnx.so.2
 
-    uname -a
+#    uname -a
 
-#    slogger
+    slogger
     pipe
 
     #######################################################################
@@ -33,12 +33,22 @@
     ## USB OTG Host Controller driver
     #######################################################################
     display_msg Starting USB OTG Host driver...
-    my-io-usb  -vvvvv -d mb86h60-mg ioport=0xc7000800,irq=21
+#    my-io-usb  -vvvvv -d mb86h60-mg ioport=0xc7000800,irq=21
+    io-usb  -vvvvv -d mb86h60-mg ioport=0xc7000800,irq=21,nodma
+#    io-usb  -vvvvv -d mb86h60-mg ioport=0xc7000800,irq=21
     #io-usb -vvv -d dm816x-mg ioport=0x47401c00,irq=19
     #io-usb -d ehci-mx28 ioport=0x80080100,irq=93
-    #waitfor /dev/io-usb/io-usb 4
+    waitfor /dev/io-usb/io-usb 4
     display_msg USB device node available
-    #devb-umass cam pnp
+#    devb-umass cam pnp
+#    waitfor /dev/hd0 4
+#    mount -t dos -o exe=all /dev/hd0t12 /mnt
+#    mount -t ext2 /dev/hd0t131 /mnt
+#    mount -t qnx6 /dev/hd0t131 /mnt
+#    waitfor /mnt 4
+
+#    io-pkt-v4 -vvvvv -dasix verbose=4
+#    dhcp.client -i en0
 
 
     #######################################################################
@@ -123,33 +133,68 @@
 # Programs require the runtime linker (ldqnx.so) to be at a fixed location
 
 libc.so
+libm.so
+
 libmy-usbdi.so
+libusbdi.so
+libcam.so
+io-blk.so
+cam-disk.so
+fs-ext2.so
+fs-dos.so
+#fs-nt.so
+#fs-qnx6.so
 
 [data=copy]
-[data=c]
+#[data=c]
 
 devc-serdebug
 
 ldd
-hello_world
+#hello_world
 ls
 ksh
 #esh
-#slogger
+slogger
+sloginfo
 #pipe
 #esh_new
 waitfor
 pipe
 #ps
 use
-top
-uname
-cat
-#io-usb
+#top
+#uname
+#cat
 #devu-ehci-mx28.so
 my-io-usb
 devu-mb86h60-mg.so
-my-usb
+#my-usb
+io-usb
+usb
+devb-umass
+#/lib/dll/io-blk.so=io-blk.so
+#/lib/dll/cam-disk.so=cam-disk.so
+my-devb-umass
+mount
+touch
+df
+cp
+#mkqnx6fs
+chmod
+
+###########################################################################
+## Uncomment for network driver
+###########################################################################
+io-pkt-v4
+devn-asix.so
+devnp-shim.so
+libsocket.so
+nicinfo
+ping
+ifconfig
+dhcp.client
+
 
 ###########################################################################
 ## END OF BUILD SCRIPT

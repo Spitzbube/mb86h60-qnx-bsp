@@ -1860,7 +1860,9 @@ void MENTOR_URB_complete(struct _hctrl_t* r5,
     struct _musb_transfer* r4, 
     int transferType, int err)
 {
-#if 1
+#if 0
+    if (transferType != 0)
+    {
     fprintf(stderr, "MENTOR_URB_complete: transferType=%d, r4->flags=0x%x, r4->xfer_length=%d\n",
         transferType, r4->flags, r4->xfer_length);
 
@@ -1877,6 +1879,7 @@ void MENTOR_URB_complete(struct _hctrl_t* r5,
             fprintf(stderr, "MENTOR_URB_complete: r4->xfer_buffer_paddr=0x%x\n",
                 r4->xfer_buffer_paddr);
         }
+    }
     }
 #endif
 
@@ -1965,7 +1968,7 @@ void MENTOR_URB_complete(struct _hctrl_t* r5,
             else
             {
                 //0x00007bf4
-                if (((r6->Data_0 & 0x04) == 0) &&
+                if (((r6->Data_0___ & 0x04) == 0) &&
                     ((r4->flags & 0x04) != 0))
                 {
                     //0x00007c0c
@@ -4490,8 +4493,10 @@ void MENTOR_ReadFIFO(struct _hctrl_t* a,
 void MENTOR_LoadFIFO(struct _hctrl_t* a, uint16_t b, int c, uint16_t r8)
 {
 #ifdef MB86H60
+#if 0
     fprintf(stderr, "MENTOR_LoadFIFO: b=%d, r8=%d\n", b, r8);
     hex_dump("MENTOR_LoadFIFO", c, r8);
+#endif
     int i;
     for (i = 0; i < r8; i++)
     {
@@ -4664,7 +4669,7 @@ int MENTOR_WaitEndControl(struct USB_Controller* fp_0x30,
     struct Struct_112b08* fp_0x2c,
     struct _musb_transfer* fp_0x34)
 {
-#if 1
+#if 0
     fprintf(stderr, "MENTOR_WaitEndControl: TODO!!!\n");
 #endif
 
@@ -5529,7 +5534,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
     uint32_t length/*fp4*/, 
     uint32_t flags/*fp8*/)
 {
-#if 1
+#if 0
     fprintf(stderr, "mentor_ctrl_transfer: buffer=%p, length=%d, flags=0x%x\n", 
         buffer, length, flags);
 
@@ -5635,7 +5640,7 @@ int mentor_ctrl_transfer(struct USB_Controller* sl,
         InterruptUnlock(&r5->Data_0xd0);
         //0x000096d0
         struct _musb_transfer* r2 = fp_0x30->Data_8__;
-#if 1
+#if 0
         fprintf(stderr, "r2->xfer_length=%d, r2->flags=0x%x, r2->xfer_buffer=%p, \n",
             r2->xfer_length, r2->flags, (void*) r2->xfer_buffer);
 #endif

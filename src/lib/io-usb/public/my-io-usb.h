@@ -60,9 +60,9 @@ struct usbd_urb
 
 
 
-struct Struct_10bab4
+struct Struct_10bab4 //_st_URB_TRANSFER = _iousb_transfer
 {
-    int Data_0; //0
+    int Data_0___; //0
     int Data_4; //4
     int Data_8; //8
     int fill_0xc; //0xc
@@ -88,7 +88,7 @@ struct Struct_10bab4
     struct usbd_urb* Data_0x5c; //0x5c
     struct USB_Client* Data_0x60; //0x60
     //0x64
-};
+}; //iousb_transfer_t
 
 
 struct USB_Controller_Inner4
@@ -152,7 +152,7 @@ struct Struct_1047a8
 };
 
 
-struct Struct_112b08 //TODO: struct UsbEndpoint
+struct Struct_112b08 //TODO: struct UsbEndpoint = _st_ENDPOINT_DESCRIPTOR = _iousb_endpoint_t
 {
     usbd_endpoint_descriptor_t endpoint_descriptor; //0
     int fill_8; //8
@@ -184,7 +184,7 @@ struct Struct_112b08 //TODO: struct UsbEndpoint
     pthread_mutex_t Data_0x30; //0x30
     pthread_cond_t Data_0x38; //0x38
     //0x40
-};
+}; //iousb_endpoint_t
 
 
 struct USB_Controller_Inner_0x7c

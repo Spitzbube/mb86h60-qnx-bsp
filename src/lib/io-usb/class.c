@@ -31,7 +31,7 @@ void* ccache_get_addr_cache(struct Struct_112b08* fp_0x10,
 
     pthread_mutex_lock(&usb_mmutex);
 
-    if ((fp_0x14->Data_0 & 0x20000) == 0)
+    if ((fp_0x14->Data_0___ & 0x20000) == 0)
     {
         fp_0x18 = usbd_mphys(fp_0x18);
     }
@@ -496,7 +496,7 @@ void CLASS_CreateUrb(struct Struct_10bab4* fp_0x10,
     fp_0x10->Data_0x20 = 0;
     fp_0x10->Data_0x24 = 0;
     fp_0x10->Data_0x28 = 0;
-    fp_0x10->Data_0 = 0;
+    fp_0x10->Data_0___ = 0;
     fp_0x10->direction = (fp_0x1c == 1)? 
         USB_DIRECTION_HOST: //Device to Host
         USB_DIRECTION_DEVICE; //Host to Device

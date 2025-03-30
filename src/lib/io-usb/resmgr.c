@@ -668,7 +668,7 @@ int udi_alloc_surb(struct USB_Controller* sb,
             r7->Data_0x20 = r6->Data_0x2c;
             r7->Data_0x24 = r6->Data_0x30;
             r7->Data_0x28 = r6->Data_0x38 & 0x0f;
-            r7->Data_0 = r6->Data_0x24 | 0x20000;
+            r7->Data_0___ = r6->Data_0x24 | 0x20000;
             r7->Data_0x34 = 0; //fp;
             r7->pData = r6->pData;
             r7->dwLength = r6->dwLength;
